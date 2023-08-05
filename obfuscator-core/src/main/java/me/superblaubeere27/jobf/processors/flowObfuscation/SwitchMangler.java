@@ -49,7 +49,7 @@ class SwitchMangler
                 for (int i = switchInsnNode.min; i <= switchInsnNode.max; i++)
                 {
                     insnList.add(new VarInsnNode(Opcodes.ILOAD, resultSlot));
-                    insnList.add(NumberObfuscationTransformer.getInstructions(i));
+                    insnList.add(NumberObfuscationTransformer.obfuscateIntInsn(i));
                     insnList.add(new JumpInsnNode(Opcodes.IF_ICMPEQ, switchInsnNode.labels.get(j)));
 
                     j++;
@@ -72,7 +72,7 @@ class SwitchMangler
                 {
                     Integer key = keys.get(i);
                     insnList.add(new VarInsnNode(Opcodes.ILOAD, resultSlot));
-                    insnList.add(NumberObfuscationTransformer.getInstructions(key));
+                    insnList.add(NumberObfuscationTransformer.obfuscateIntInsn(key));
                     insnList.add(new JumpInsnNode(Opcodes.IF_ICMPEQ, switchInsnNode.labels.get(i)));
 
                 }

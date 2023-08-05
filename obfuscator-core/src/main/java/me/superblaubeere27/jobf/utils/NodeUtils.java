@@ -126,17 +126,25 @@ public class NodeUtils
     public static boolean isIntegerNumber(AbstractInsnNode ain)
     {
         if (ain.getOpcode() == BIPUSH || ain.getOpcode() == SIPUSH)
-        {
             return true;
-        }
         if (ain.getOpcode() >= ICONST_M1 && ain.getOpcode() <= ICONST_5)
-        {
             return true;
-        }
         if (ain instanceof LdcInsnNode)
         {
             LdcInsnNode ldc = (LdcInsnNode) ain;
             return ldc.cst instanceof Integer;
+        }
+        return false;
+    }
+
+    public static boolean isEnum(AbstractInsnNode ain)
+    {
+        if (ain instanceof FieldInsnNode)
+        {
+            FieldInsnNode fin = (FieldInsnNode) ain;
+            return fin.desc.startsWith("L")
+                    && fin.desc.endsWith(";")
+                    && fin.desc.substring(1, fin.desc.length() - 1).equals(Utils.getInternalName(Type.getType(Enum.class)));
         }
         return false;
     }
@@ -162,17 +170,11 @@ public class NodeUtils
     public static int getIntValue(AbstractInsnNode node)
     {
         if (node.getOpcode() >= ICONST_M1 && node.getOpcode() <= ICONST_5)
-        {
             return node.getOpcode() - 3;
-        }
         if (node.getOpcode() == SIPUSH || node.getOpcode() == BIPUSH)
-        {
             return ((IntInsnNode) node).operand;
-        }
         if (node instanceof LdcInsnNode && ((LdcInsnNode) node).cst instanceof Integer)
-        {
             return (int) ((LdcInsnNode) node).cst;
-        }
 
         throw new IllegalArgumentException(node + " isn't an integer node");
     }

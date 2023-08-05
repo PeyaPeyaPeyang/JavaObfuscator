@@ -19,6 +19,7 @@ import me.superblaubeere27.jobf.utils.NodeUtils;
 import me.superblaubeere27.jobf.utils.values.BooleanValue;
 import me.superblaubeere27.jobf.utils.values.DeprecationLevel;
 import me.superblaubeere27.jobf.utils.values.EnabledValue;
+import org.apache.commons.lang3.RandomUtils;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
@@ -61,9 +62,8 @@ public class NumberObfuscationTransformer implements IClassTransformer
         list.add(NodeUtils.generateIntPush(value));
 
         for (int i = 0; i < (INSTANCE.multipleInstructions.getObject() ? iterations: 1); i++)
-        {
             list = obfuscateInsnList(list);
-        }
+
         return list;
     }
 
@@ -76,25 +76,24 @@ public class NumberObfuscationTransformer implements IClassTransformer
                 int number = NodeUtils.getIntValue(abstractInsnNode);
 
                 if (number == Integer.MIN_VALUE)
-                {
                     continue;
-                }
-                list.insert(abstractInsnNode, getInstructions(number));
+
+                list.insert(abstractInsnNode, obfuscateIntInsn(number));
                 list.remove(abstractInsnNode);
             }
         }
         return list;
     }
 
-    public static InsnList getInstructions(int value)
+    public static InsnList obfuscateIntInsn(int value)
     {
         InsnList methodInstructions = new InsnList();
 
         if (value == 0 && INSTANCE.obfuscateZero.getObject())
         {
             int randomInt = random.nextInt(100);
-            methodInstructions.add(getInstructions(randomInt));
-            methodInstructions.add(getInstructions(randomInt));
+            methodInstructions.add(obfuscateIntInsn(randomInt));
+            methodInstructions.add(obfuscateIntInsn(randomInt));
             methodInstructions.add(new InsnNode(Opcodes.ICONST_M1));
             methodInstructions.add(new InsnNode(Opcodes.IXOR));
             methodInstructions.add(new InsnNode(Opcodes.IAND));
@@ -105,48 +104,13 @@ public class NumberObfuscationTransformer implements IClassTransformer
 
         if (shiftOutput[1] > 0 && INSTANCE.shift.getObject())
         {
-            methodInstructions.add(getInstructions(shiftOutput[0]));
-            methodInstructions.add(getInstructions(shiftOutput[1]));
+            methodInstructions.add(obfuscateIntInsn(shiftOutput[0]));
+            methodInstructions.add(obfuscateIntInsn(shiftOutput[1]));
             methodInstructions.add(new InsnNode(Opcodes.ISHL));
             return methodInstructions;
         }
-//        if (value == Integer.MIN_VALUE) {
-//            methodInstructions.add(NodeUtils.generateIntPush(Integer.MAX_VALUE));
-//            methodInstructions.add(new InsnNode(Opcodes.ICONST_M1));
-//            methodInstructions.add(new InsnNode(Opcodes.IXOR));
-//
-//            return methodInstructions;
-//        }
-//        if (value == Integer.MAX_VALUE) {
-//            methodInstructions.add(NodeUtils.generateIntPush(Integer.MIN_VALUE));
-//            methodInstructions.add(new InsnNode(Opcodes.ICONST_M1));
-//            methodInstructions.add(new InsnNode(Opcodes.IXOR));
-//
-//            return methodInstructions;
-//        }
 
-        int method;
-
-        boolean lenghtMode = true;
-        boolean xorMode = true;
-        boolean simpleMathMode = true;
-        if (lenghtMode && (Math.abs(value) < 4 || (!xorMode && !simpleMathMode)))
-            method = 0;
-        else if (xorMode && (Math.abs(value) < Byte.MAX_VALUE || (!lenghtMode && !simpleMathMode)))
-            method = 1;
-        else
-        {
-            if (!INSTANCE.and.getObject() && Math.abs(value) > 0xFF)
-            {
-                method = 3;
-            }
-            else
-            {
-                method = 2;
-            }
-
-        }
-
+        int method = getMethod(value);
         final boolean negative = value < 0;
 
         if (negative)
@@ -202,6 +166,26 @@ public class NumberObfuscationTransformer implements IClassTransformer
         return methodInstructions;
     }
 
+    private static int getMethod(int value)
+    {
+        int method;
+
+        boolean lenghtMode = RandomUtils.nextBoolean();
+        boolean xorMode = RandomUtils.nextBoolean();
+        boolean simpleMathMode = RandomUtils.nextBoolean();
+
+        if (lenghtMode && (Math.abs(value) < 4 || (!xorMode && !simpleMathMode)))
+            method = 0;
+        else if (xorMode && (Math.abs(value) < Byte.MAX_VALUE || (!lenghtMode && !simpleMathMode)))
+            method = 1;
+        else if (!INSTANCE.and.getObject() && Math.abs(value) > 0xFF)
+            method = 3;
+        else
+            method = 2;
+
+        return method;
+    }
+
     private static int[] splitToAnd(int number)
     {
         int number2 = random.nextInt(Short.MAX_VALUE) & ~number;
@@ -224,34 +208,25 @@ public class NumberObfuscationTransformer implements IClassTransformer
     @Override
     public void process(ProcessorCallback callback, ClassNode node)
     {
-        if (!this.enabled.getObject()) return;
+        if (!this.enabled.getObject())
+            return;
 
-        int i = 0;
+        int proceed = 0;
         String fieldName = NameUtils.generateFieldName(node.name);
         List<Integer> integerList = new ArrayList<>();
         for (MethodNode method : node.methods)
-        {
             for (AbstractInsnNode abstractInsnNode : method.instructions.toArray())
             {
-                if (abstractInsnNode == null)
-                {
-                    throw new RuntimeException("AbstractInsnNode is null. WTF?");
-                }
                 if (NodeUtils.isIntegerNumber(abstractInsnNode))
                 {
                     int number = NodeUtils.getIntValue(abstractInsnNode);
 
                     if (number == Integer.MIN_VALUE)
-                    {
                         continue;
-                    }
-//                    if (abstractInsnNode instanceof LdcInsnNode && ((LdcInsnNode) abstractInsnNode).cst instanceof Number && ((int) ((LdcInsnNode) abstractInsnNode).cst) == Integer.MIN_VALUE) {
-//                        System.out.println(((LdcInsnNode) abstractInsnNode).cst + "/" + number);
-//                    }
-                    if (!Modifier.isInterface(node.access)
-//                            && mode == 1
-                            && this.extractToArray.getObject()
-                    )
+
+                    boolean isExcluded = Modifier.isInterface(node.access);
+
+                    if (!isExcluded && this.extractToArray.getObject())
                     {
                         int containedSlot = -1;
                         int j = 0;
@@ -260,12 +235,15 @@ public class NumberObfuscationTransformer implements IClassTransformer
                             if (integer == number) containedSlot = j;
                             j++;
                         }
-                        if (containedSlot == -1) integerList.add(number);
+                        if (containedSlot == -1)
+                            integerList.add(number);
                         method.instructions.insertBefore(abstractInsnNode, new FieldInsnNode(Opcodes.GETSTATIC, node.name, fieldName, "[I"));
-                        method.instructions.insertBefore(abstractInsnNode, NodeUtils.generateIntPush(containedSlot == -1 ? i: containedSlot));
+                        method.instructions.insertBefore(abstractInsnNode, NodeUtils.generateIntPush(containedSlot == -1 ? proceed: containedSlot));
                         method.instructions.insertBefore(abstractInsnNode, new InsnNode(Opcodes.IALOAD));
                         method.instructions.remove(abstractInsnNode);
-                        if (containedSlot == -1) i++;
+                        if (containedSlot == -1)
+                            proceed++;
+
                         method.maxStack += 2;
                     }
                     else
@@ -277,8 +255,8 @@ public class NumberObfuscationTransformer implements IClassTransformer
                     }
                 }
             }
-        }
-        if (i != 0)
+
+        if (proceed != 0)
         {
             node.fields.add(new FieldNode(((node.access & Opcodes.ACC_INTERFACE) != 0 ? Opcodes.ACC_PUBLIC: Opcodes.ACC_PRIVATE) | (node.version > Opcodes.V1_8 ? 0: Opcodes.ACC_FINAL) | Opcodes.ACC_STATIC, fieldName, "[I", null, null));
             MethodNode clInit = NodeUtils.getMethod(node, "<clinit>");
@@ -292,16 +270,12 @@ public class NumberObfuscationTransformer implements IClassTransformer
 
             InsnList toAdd = new InsnList();
 
-//            if (clInit.instructions.getFirst() == null)
-//                clInit.instructions.insert(NodeUtils.generateIntPush(i));
-//            else
-            toAdd.add(NodeUtils.generateIntPush(i));
+            toAdd.add(NodeUtils.generateIntPush(proceed));
 
             toAdd.add(new IntInsnNode(Opcodes.NEWARRAY, Opcodes.T_INT));
-//            toAdd.insert(new IntInsnNode(Opcodes.NEWARRAY, 0));
             toAdd.add(new FieldInsnNode(Opcodes.PUTSTATIC, node.name, fieldName, "[I"));
 
-            for (int j = 0; j < i; j++)
+            for (int j = 0; j < proceed; j++)
             {
                 toAdd.add(new FieldInsnNode(Opcodes.GETSTATIC, node.name, fieldName, "[I"));
                 toAdd.add(NodeUtils.generateIntPush(j));
@@ -315,16 +289,16 @@ public class NumberObfuscationTransformer implements IClassTransformer
             generateIntegers.maxStack = 6;
             node.methods.add(generateIntegers);
 
-            if (clInit.instructions == null || clInit.instructions.getFirst() == null)
+            if (clInit.instructions == null)
+                clInit.instructions = new InsnList();
+
+            if (clInit.instructions.getFirst() == null)
             {
                 clInit.instructions.add(new MethodInsnNode(Opcodes.INVOKESTATIC, node.name, generateIntegers.name, generateIntegers.desc, false));
                 clInit.instructions.add(new InsnNode(Opcodes.RETURN));
             }
             else
-            {
                 clInit.instructions.insertBefore(clInit.instructions.getFirst(), new MethodInsnNode(Opcodes.INVOKESTATIC, node.name, generateIntegers.name, generateIntegers.desc, false));
-            }
-//            clInit.maxStack = Math.max(clInit.maxStack, 6);
         }
         this.inst.setWorkDone();
     }
