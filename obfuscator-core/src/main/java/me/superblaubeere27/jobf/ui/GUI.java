@@ -290,11 +290,11 @@ public class GUI extends JFrame
     {
         this.configPanel.setText(ConfigManager.generateConfig(
                         new Configuration(
+                                this.libraryList,
                                 this.inputTextField.getText(),
                                 this.outputTextField.getText(),
                                 this.scriptArea.getText(),
-                                this.threadsSlider.getValue(),
-                                this.libraryList
+                                this.threadsSlider.getValue()
                         ),
                         this.prettyPrintCheckBox.isSelected()
                 )
@@ -494,11 +494,11 @@ public class GUI extends JFrame
 
                 JavaObfuscator.VERBOSE = this.verbose.isSelected();
                 Configuration config = new Configuration(
+                        this.libraryList,
                         this.inputTextField.getText(),
                         this.outputTextField.getText(),
                         this.scriptArea.getText(),
-                        this.threadsSlider.getValue(),
-                        this.libraryList
+                        this.threadsSlider.getValue()
                 );
 
                 boolean succeed = JavaObfuscator.runObfuscator(config);

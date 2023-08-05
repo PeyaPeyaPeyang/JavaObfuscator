@@ -195,7 +195,7 @@ public class JavaObfuscator
                 "Script?:     " + (scriptContent != null ? "Yes": "No")
         )));
 
-        Configuration config = new Configuration(jarIn, jarOut, scriptContent, threads, libraries);
+        Configuration config = new Configuration(libraries, jarIn, jarOut, scriptContent, threads);
 
         if (configPath != null)
         {
