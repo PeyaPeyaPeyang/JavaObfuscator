@@ -26,15 +26,12 @@ import me.superblaubeere27.jobf.ui.GUI;
 import me.superblaubeere27.jobf.utils.ConsoleUtils;
 import me.superblaubeere27.jobf.utils.Templates;
 import me.superblaubeere27.jobf.utils.Utils;
-import me.superblaubeere27.jobf.utils.VersionComparator;
 import me.superblaubeere27.jobf.utils.values.ConfigManager;
 import me.superblaubeere27.jobf.utils.values.Configuration;
 
 import java.awt.GraphicsEnvironment;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -65,9 +62,6 @@ public class JavaObfuscator
             VERBOSE = true;
 
         Class.forName(JarObfuscator.class.getCanonicalName());
-
-        String currentVersion = JavaObfuscator.class.getPackage().getImplementationVersion();
-        boolean outdated = checkOutdated(currentVersion);
 
         OptionParser parser = new OptionParser();
         parser.accepts("jarIn").withRequiredArg().required();
@@ -116,7 +110,7 @@ public class JavaObfuscator
                 for (Object cp : options.valuesOf("cp"))
                     libraries.add(cp.toString());
 
-            printHeader(embedded, outdated);
+            printHeader(embedded);
             runObfuscator(jarIn, jarOut, configPath, libraries, embedded, scriptContent, threads);
         }
         catch (OptionException e)
@@ -154,11 +148,11 @@ public class JavaObfuscator
 
             Packager.INSTANCE.isEnabled();
 
-            gui = new GUI(currentVersion);
+            gui = new GUI();
         }
     }
 
-    private static void printHeader(boolean embedded, boolean outdated)
+    private static void printHeader(boolean embedded)
     {
 
         log.info("\n" +
@@ -168,16 +162,8 @@ public class JavaObfuscator
                 "  / _ \\| '_ \\|  _| | | / __|/ __/ _` | __/ _ \\| '__|\n" +
                 " | (_) | |_) | | | |_| \\__ \\ (_| (_| | || (_) | |   \n" +
                 "  \\___/|_.__/|_|  \\__,_|___/\\___\\__,_|\\__\\___/|_|   \n" +
-                "   " + SHORT_VERSION + (embedded ? " (EMBEDDED)": outdated ? " (OUTDATED)": " (LATEST)") +
+                "   " + SHORT_VERSION + (embedded ? " (EMBEDDED)" : "") +
                 "\n\n");
-
-        if (outdated)
-            log.warn(ConsoleUtils.formatBox("Outdated", true, Arrays.asList(
-                    "An update is available.",
-                    "(Current version: " + SHORT_VERSION + ")",
-                    "The latest version can be downloaded at",
-                    "https://github.com/PeyaPeyaPeyang/JavaObfuscator/releases/latest"
-            )));
     }
 
     public static boolean runObfuscator(String jarIn,
@@ -284,28 +270,4 @@ public class JavaObfuscator
         JavaObfuscator.currentSession = null;
         return succeed;
     }
-
-    private static boolean checkOutdated(String version)
-    {
-        // If the ImplementationVersion is null, the build wasn't built by maven.
-        if (version == null)
-            return false;
-
-        try (InputStream is = new URL("https://raw.githubusercontent.com/PeyaPeyaPeyang/javaObfuscator/master/version")
-                .openStream())
-        {
-            String latestVersion = new String(ByteStreams.toByteArray(is), StandardCharsets.UTF_8);
-
-            VersionComparator comparator = new VersionComparator();
-
-            return comparator.compare(version, latestVersion) < 0;
-        }
-        catch (Exception e)
-        {
-            log.warn("Update check failed: " + e.getMessage());
-        }
-
-        return false;
-    }
-
 }

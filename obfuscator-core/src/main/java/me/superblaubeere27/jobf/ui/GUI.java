@@ -109,7 +109,7 @@ public class GUI extends JFrame
         $$$setupUI$$$();
     }
 
-    public GUI(String updateCheckResult)
+    public GUI()
     {
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setContentPane(this.panel1);
@@ -246,29 +246,6 @@ public class GUI extends JFrame
 
 
         setVisible(true);
-
-        if (updateCheckResult != null)
-        {
-            JLabel label = new JLabel("<html>You are using an outdated version of obfuscator. Latest: " + updateCheckResult + "<br/> You can download the latest version at: <a>https://github.com/superblaubeere27/obfuscator/releases/latest</a> <br/>(Click on the link to open it)</html>");
-
-            label.addMouseListener(new MouseAdapter()
-            {
-                @Override
-                public void mouseClicked(MouseEvent e)
-                {
-                    try
-                    {
-                        Desktop.getDesktop().browse(new URI("https://github.com/superblaubeere27/obfuscator/releases/latest"));
-                    }
-                    catch (IOException | URISyntaxException e1)
-                    {
-                        e1.printStackTrace();
-                    }
-                }
-            });
-
-            JOptionPane.showMessageDialog(this, label, "Update available", JOptionPane.INFORMATION_MESSAGE);
-        }
     }
 
     private void updateLibraries()
