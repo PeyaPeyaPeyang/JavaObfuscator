@@ -60,7 +60,7 @@ public class Appender extends AppenderBase<ILoggingEvent>
         DEBUG_ATT = new SimpleAttributeSet();
         DEBUG_ATT.addAttribute(StyleConstants.CharacterConstants.Bold, Boolean.FALSE);
         DEBUG_ATT.addAttribute(StyleConstants.CharacterConstants.Italic, Boolean.TRUE);
-        DEBUG_ATT.addAttribute(StyleConstants.CharacterConstants.Foreground, new Color(64, 64, 64));
+        DEBUG_ATT.addAttribute(StyleConstants.CharacterConstants.Foreground, new Color(128, 128, 128));
 
         // TRACE
         TRACE_ATT = new SimpleAttributeSet();
