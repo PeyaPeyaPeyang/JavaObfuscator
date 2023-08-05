@@ -20,6 +20,7 @@ import me.superblaubeere27.jobf.utils.values.DeprecationLevel;
 import me.superblaubeere27.jobf.utils.values.EnabledValue;
 import me.superblaubeere27.jobf.utils.values.FilePathValue;
 import me.superblaubeere27.jobf.utils.values.StringValue;
+import me.superblaubeere27.jobf.utils.values.ValueManager;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.ClassRemapper;
@@ -48,31 +49,43 @@ public class NameObfuscation implements INameObfuscationProcessor
 {
     private static final String PROCESSOR_NAME = "NameObfuscation";
     private static final Random random = new Random();
-    private final EnabledValue enabled = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.OK, false);
-    private final StringValue excludedClasses = new StringValue(PROCESSOR_NAME, "Excluded classes", null, DeprecationLevel.GOOD, "me.name.Class\nme.name.*\nio.netty.**", 5);
-    private final StringValue excludedMethods = new StringValue(PROCESSOR_NAME, "Excluded methods", null, DeprecationLevel.GOOD, "me.name.Class.method\nme.name.Class**\nme.name.Class.*", 5);
-    private final StringValue excludedFields = new StringValue(PROCESSOR_NAME, "Excluded fields", null, DeprecationLevel.GOOD, "me.name.Class.field\nme.name.Class.*\nme.name.**", 5);
-    private final BooleanValue shouldPackage = new BooleanValue(PROCESSOR_NAME, "Package", DeprecationLevel.OK, false);
-    private final StringValue newPackage = new StringValue(PROCESSOR_NAME, "New Packages", null, DeprecationLevel.GOOD, "", 5);
-    private final BooleanValue acceptMissingLibraries = new BooleanValue(PROCESSOR_NAME, "Accept Missing Libraries", DeprecationLevel.GOOD, false);
-    private final FilePathValue mappingsToSave = new FilePathValue(PROCESSOR_NAME, "Mappings to save", null, DeprecationLevel.GOOD, null);
+    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.OK, false);
+    private static final StringValue V_EXCLUDED_CLASSES = new StringValue(PROCESSOR_NAME, "Excluded classes", null, DeprecationLevel.GOOD, "me.name.Class\nme.name.*\nio.netty.**", 5);
+    private static final StringValue V_EXCLUDED_METHODS = new StringValue(PROCESSOR_NAME, "Excluded methods", null, DeprecationLevel.GOOD, "me.name.Class.method\nme.name.Class**\nme.name.Class.*", 5);
+    private static final StringValue V_EXCLUDED_FIELDS = new StringValue(PROCESSOR_NAME, "Excluded fields", null, DeprecationLevel.GOOD, "me.name.Class.field\nme.name.Class.*\nme.name.**", 5);
+    private static final BooleanValue V_SHOULD_PACKAGE = new BooleanValue(PROCESSOR_NAME, "Package", DeprecationLevel.OK, false);
+    private static final StringValue V_NEW_PACKAGE = new StringValue(PROCESSOR_NAME, "New Packages", null, DeprecationLevel.GOOD, "", 5);
+    private static final BooleanValue V_ACCEPT_MISSING_LIBRARIES = new BooleanValue(PROCESSOR_NAME, "Accept Missing Libraries", DeprecationLevel.GOOD, false);
+    private static final FilePathValue V_MAPPINGS_TO_SAVE = new FilePathValue(PROCESSOR_NAME, "Mappings to save", null, DeprecationLevel.GOOD, null);
+
+    static {
+        ValueManager.registerClass(NameObfuscation.class);
+    }
+
+    private final JarObfuscator obfuscator;
     private final List<Pattern> excludedClassesPatterns = new ArrayList<>();
     private final List<Pattern> excludedMethodsPatterns = new ArrayList<>();
     private final List<Pattern> excludedFieldsPatterns = new ArrayList<>();
+
     private List<String> packageNames;
+
+    public NameObfuscation(JarObfuscator obfuscator)
+    {
+        this.obfuscator = obfuscator;
+    }
 
     public void setupPackages()
     {
-        if (this.shouldPackage.getObject())
+        if (V_SHOULD_PACKAGE.get())
         {
-            String[] newPackages = this.newPackage.getObject().split("\n");
+            String[] newPackages = V_NEW_PACKAGE.get().split("\n");
             this.packageNames = Arrays.asList(newPackages);
         }
     }
 
     public String getPackageName()
     {
-        if (!this.shouldPackage.getObject())
+        if (!V_SHOULD_PACKAGE.get())
             return "";
 
         String retVal;
@@ -92,15 +105,15 @@ public class NameObfuscation implements INameObfuscationProcessor
 
     private void compileExcludePatterns()
     {
-        for (String s : this.excludedClasses.getObject().split("\n"))
+        for (String s : V_EXCLUDED_CLASSES.get().split("\n"))
             this.excludedClassesPatterns.add(compileExcludePattern(s));
-        for (String s : this.excludedMethods.getObject().split("\n"))
+        for (String s : V_EXCLUDED_METHODS.get().split("\n"))
             this.excludedMethodsPatterns.add(compileExcludePattern(s));
-        for (String s : this.excludedFields.getObject().split("\n"))
+        for (String s : V_EXCLUDED_FIELDS.get().split("\n"))
             this.excludedFieldsPatterns.add(compileExcludePattern(s));
     }
 
-    private static List<ClassWrapper> buildHierarchies(Collection<? extends ClassNode> nodes, boolean ifAcceptMissingLib)
+    private List<ClassWrapper> buildHierarchies(Collection<? extends ClassNode> nodes, boolean ifAcceptMissingLib)
     {
         List<ClassWrapper> classWrappers = new ArrayList<>();
 
@@ -109,7 +122,7 @@ public class NameObfuscation implements INameObfuscationProcessor
             ClassWrapper cw = new ClassWrapper(value, false, new byte[0]);
             classWrappers.add(cw);
 
-            JarObfuscator.INSTANCE.buildHierarchy(cw, null, ifAcceptMissingLib);
+            this.obfuscator.buildHierarchy(cw, null, ifAcceptMissingLib);
         }
 
         return classWrappers;
@@ -118,7 +131,7 @@ public class NameObfuscation implements INameObfuscationProcessor
     @Override
     public void transformPost(JarObfuscator inst, HashMap<String, ClassNode> nodes)
     {
-        if (!this.enabled.getObject())
+        if (!V_ENABLED.get())
             return;
 
         try
@@ -128,7 +141,7 @@ public class NameObfuscation implements INameObfuscationProcessor
             compileExcludePatterns();
 
             log.info("Building Hierarchy...");
-            List<ClassWrapper> classWrappers = buildHierarchies(nodes.values(), this.acceptMissingLibraries.getObject());
+            List<ClassWrapper> classWrappers = buildHierarchies(nodes.values(), V_ACCEPT_MISSING_LIBRARIES.get());
             log.info("Finished building hierarchy");
 
             long current = System.currentTimeMillis();
@@ -137,16 +150,16 @@ public class NameObfuscation implements INameObfuscationProcessor
             NameUtils.setup();
             this.setupPackages();
 
-            processClasses(classWrappers, mappings);
+            this.processClasses(classWrappers, mappings);
 
-            if (this.mappingsToSave.getObject() != null)
+            if (V_MAPPINGS_TO_SAVE.get() != null)
                 this.saveMappingsFile(mappings);
 
             log.info(String.format("... Finished generating mappings (%s)", Utils.formatTime(System.currentTimeMillis() - current)));
 
             log.info("Applying mappings...");
             current = System.currentTimeMillis();
-            writeClasses(mappings, classWrappers);
+            this.writeClasses(mappings, classWrappers);
             log.info(String.format("... Finished applying mappings (%s)", Utils.formatTime(System.currentTimeMillis() - current)));
         }
         finally
@@ -161,7 +174,7 @@ public class NameObfuscation implements INameObfuscationProcessor
     {
         classWrappers.stream()
                 .filter(classWrapper -> !this.isClassExcluded(classWrapper))
-                .forEach(classWrapper -> processClass(classWrapper, mappings));
+                .forEach(classWrapper -> this.processClass(classWrapper, mappings));
     }
 
     private void processClass(ClassWrapper clazz, Map<String, String> mappings)
@@ -172,10 +185,10 @@ public class NameObfuscation implements INameObfuscationProcessor
         // Inner を引っ張り出したときに, static がついてるとバグる
         clazz.classNode.access &= ~Opcodes.ACC_STATIC;
 
-        processFields(clazz, mappings);
-        processMethods(clazz, mappings);
+        this.processFields(clazz, mappings);
+        this.processMethods(clazz, mappings);
 
-        if (hasNativeMethodInClass(clazz.classNode) || true)
+        if (hasNativeMethodInClass(clazz.classNode))
         {
             log.info("Renaming class " + clazz.originalName + " is automatically excluded because it has native methods.");
             mappings.put(clazz.originalName, clazz.originalName);
@@ -198,10 +211,10 @@ public class NameObfuscation implements INameObfuscationProcessor
 
         classWrapper.methods.stream()
                 .filter(isExclude.negate())
-                .forEach(methodWrapper -> processMethod(methodWrapper, classWrapper.originalName, mappings));
+                .forEach(methodWrapper -> this.processMethod(methodWrapper, classWrapper.originalName, mappings));
     }
 
-    private static void processMethod(MethodWrapper methodWrapper, String ownerClassName, Map<String, String> mappings)
+    private void processMethod(MethodWrapper methodWrapper, String ownerClassName, Map<String, String> mappings)
     {
         if (Modifier.isPrivate(methodWrapper.methodNode.access) || Modifier.isProtected(methodWrapper.methodNode.access))
         {
@@ -213,7 +226,7 @@ public class NameObfuscation implements INameObfuscationProcessor
         if (Modifier.isNative(methodWrapper.methodNode.access))
             log.warn("Native method found in class " + ownerClassName + " method " + methodWrapper.methodNode.name + methodWrapper.methodNode.desc);
         else
-            renameMethodTree(mappings, new HashSet<>(), methodWrapper, ownerClassName, NameUtils.generateMethodName(ownerClassName, methodWrapper.originalDescription));
+            this.renameMethodTree(mappings, new HashSet<>(), methodWrapper, ownerClassName, NameUtils.generateMethodName(ownerClassName, methodWrapper.originalDescription));
     }
 
     private void processFields(ClassWrapper classWrapper, Map<String, String> mappings)
@@ -227,7 +240,7 @@ public class NameObfuscation implements INameObfuscationProcessor
                 .forEach(fieldWrapper -> processField(fieldWrapper, classWrapper.originalName, mappings));
     }
 
-    private static void processField(FieldWrapper field, String ownerName, Map<String, String> mappings)
+    private void processField(FieldWrapper field, String ownerName, Map<String, String> mappings)
     {
         if (Modifier.isPrivate(field.fieldNode.access) || Modifier.isProtected(field.fieldNode.access))
         {
@@ -236,10 +249,10 @@ public class NameObfuscation implements INameObfuscationProcessor
             field.fieldNode.access |= Opcodes.ACC_PUBLIC;
         }
 
-        renameFieldTree(new HashSet<>(), field, ownerName, NameUtils.generateFieldName(ownerName), mappings);
+        this.renameFieldTree(new HashSet<>(), field, ownerName, NameUtils.generateFieldName(ownerName), mappings);
     }
 
-    private static void writeClasses(HashMap<String, String> mappings, List<ClassWrapper> classWrappers)
+    private void writeClasses(HashMap<String, String> mappings, List<ClassWrapper> classWrappers)
     {
         Remapper simpleRemapper = new MemberRemapper(mappings);
 
@@ -247,7 +260,7 @@ public class NameObfuscation implements INameObfuscationProcessor
             writeClass(classWrapper, simpleRemapper);
     }
     
-    private static void writeClass(ClassWrapper classWrapper, Remapper simpleRemapper)
+    private void writeClass(ClassWrapper classWrapper, Remapper simpleRemapper)
     {
         ClassNode classNode = classWrapper.classNode;
 
@@ -286,8 +299,8 @@ public class NameObfuscation implements INameObfuscationProcessor
                 classWrapper.fields.get(i).fieldNode = copy.fields.get(i);
 
         classWrapper.classNode = copy;
-        JarObfuscator.classes.remove(classWrapper.originalName + ".class");
-        JarObfuscator.classes.put(classWrapper.classNode.name + ".class", classWrapper.classNode);
+        this.obfuscator.getClasses().remove(classWrapper.originalName + ".class");
+        this.obfuscator.getClasses().put(classWrapper.classNode.name + ".class", classWrapper.classNode);
         //            JObfImpl.INSTANCE.getClassPath().put();
         //            this.getClasses().put(classWrapper.classNode.name, classWrapper);
 
@@ -295,12 +308,12 @@ public class NameObfuscation implements INameObfuscationProcessor
         classWrapper.classNode.accept(writer);
         classWrapper.originalClass = writer.toByteArray();
 
-        JarObfuscator.INSTANCE.getClassPath().put(classWrapper.classNode.name, classWrapper);
+        this.obfuscator.getClassPath().put(classWrapper.classNode.name, classWrapper);
     }
 
     private void saveMappingsFile(HashMap<String, String> mappings)
     {
-        try (FileOutputStream fos = new FileOutputStream(this.mappingsToSave.getObject()))
+        try (FileOutputStream fos = new FileOutputStream(V_MAPPINGS_TO_SAVE.get()))
         {
             for (Map.Entry<String, String> entry: mappings.entrySet())
                 fos.write((entry.getKey() + " -> " + entry.getValue() + "\n").getBytes());
@@ -381,7 +394,7 @@ public class NameObfuscation implements INameObfuscationProcessor
 
     private boolean canRenameMethodTree(Map<String, String> mappings, Set<ClassTree> visited, MethodWrapper methodWrapper, String owner)
     {
-        ClassTree tree = JarObfuscator.INSTANCE.getTree(owner);
+        ClassTree tree = this.obfuscator.getTree(owner);
 
         if (tree == null)
             return false;
@@ -414,10 +427,10 @@ public class NameObfuscation implements INameObfuscationProcessor
         return true;
     }
 
-    private static void renameMethodTree(Map<String, String> mappings, Set<ClassTree> visited, MethodWrapper MethodWrapper, String className,
+    private void renameMethodTree(Map<String, String> mappings, Set<ClassTree> visited, MethodWrapper MethodWrapper, String className,
                                   String newName)
     {
-        ClassTree tree = JarObfuscator.INSTANCE.getTree(className);
+        ClassTree tree = this.obfuscator.getTree(className);
 
         if (!(tree.classWrapper.libraryNode || visited.contains(tree)))
             return;
@@ -425,16 +438,16 @@ public class NameObfuscation implements INameObfuscationProcessor
         mappings.put(className + '.' + MethodWrapper.originalName + MethodWrapper.originalDescription, newName);
         visited.add(tree);
         for (String parentClass : tree.parentClasses)
-            renameMethodTree(mappings, visited, MethodWrapper, parentClass, newName);
+            this.renameMethodTree(mappings, visited, MethodWrapper, parentClass, newName);
 
         for (String subClass : tree.subClasses)
-            renameMethodTree(mappings, visited, MethodWrapper, subClass, newName);
+            this.renameMethodTree(mappings, visited, MethodWrapper, subClass, newName);
 
     }
 
     private boolean canRenameFieldTree(Map<String, String> mappings, Set<ClassTree> visited, FieldWrapper fieldWrapper, String owner)
     {
-        ClassTree tree = JarObfuscator.INSTANCE.getTree(owner);
+        ClassTree tree = this.obfuscator.getTree(owner);
 
         if (tree == null)
             return false;
@@ -465,9 +478,9 @@ public class NameObfuscation implements INameObfuscationProcessor
         return true;
     }
 
-    private static void renameFieldTree(HashSet<ClassTree> visited, FieldWrapper fieldWrapper, String owner, String newName, Map<String, String> mappings)
+    private void renameFieldTree(HashSet<ClassTree> visited, FieldWrapper fieldWrapper, String owner, String newName, Map<String, String> mappings)
     {
-        ClassTree tree = JarObfuscator.INSTANCE.getTree(owner);
+        ClassTree tree = this.obfuscator.getTree(owner);
 
         if (tree.classWrapper.libraryNode || visited.contains(tree))
             return;

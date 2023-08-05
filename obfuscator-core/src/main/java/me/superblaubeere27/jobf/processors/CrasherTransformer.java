@@ -18,6 +18,7 @@ import me.superblaubeere27.jobf.utils.NameUtils;
 import me.superblaubeere27.jobf.utils.values.BooleanValue;
 import me.superblaubeere27.jobf.utils.values.DeprecationLevel;
 import me.superblaubeere27.jobf.utils.values.EnabledValue;
+import me.superblaubeere27.jobf.utils.values.ValueManager;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
 
@@ -33,16 +34,19 @@ public class CrasherTransformer implements IClassTransformer
         StringBuilder stringBuilder = new StringBuilder();
 
         for (int j = 0; j < 50000; j++)
-        {
             stringBuilder.append("\n");
-        }
 
         EMPTY_STRINGS = stringBuilder.toString();
     }
 
-    private final EnabledValue enabled = new EnabledValue("Crasher", DeprecationLevel.GOOD, false);
-    private final BooleanValue invalidSignatures = new BooleanValue("Crasher", "Invalid Signatures", "Adds invalid signatures", DeprecationLevel.GOOD, true);
-    private final BooleanValue emptyAnnotation = new BooleanValue("Crasher", "Empty annotation spam", "Adds annotations which are repeated newline", DeprecationLevel.GOOD, true);
+    private static final EnabledValue V_ENABLED = new EnabledValue("Crasher", DeprecationLevel.GOOD, false);
+    private static final BooleanValue V_INVALID_SIGNATURES = new BooleanValue("Crasher", "Invalid Signatures", "Adds invalid signatures", DeprecationLevel.GOOD, true);
+    private static final BooleanValue V_EMPTY_ANNOTATION = new BooleanValue("Crasher", "Empty annotation spam", "Adds annotations which are repeated newline", DeprecationLevel.GOOD, true);
+
+    static {
+        ValueManager.registerClass(CrasherTransformer.class);
+    }
+
     private final JarObfuscator inst;
 
     public CrasherTransformer(JarObfuscator inst)
@@ -54,9 +58,9 @@ public class CrasherTransformer implements IClassTransformer
     public void process(ProcessorCallback callback, ClassNode node)
     {
         if (Modifier.isInterface(node.access)) return;
-        if (!this.enabled.getObject()) return;
+        if (!V_ENABLED.get()) return;
 
-        if (this.invalidSignatures.getObject())
+        if (V_INVALID_SIGNATURES.get())
         {
             /*
              * By ItzSomebody
@@ -67,7 +71,7 @@ public class CrasherTransformer implements IClassTransformer
             }
         }
 
-        if (this.emptyAnnotation.getObject())
+        if (V_EMPTY_ANNOTATION.get())
         {
             node.methods.forEach(method -> {
 

@@ -25,6 +25,7 @@ import me.superblaubeere27.jobf.utils.StringManipulationUtils;
 import me.superblaubeere27.jobf.utils.values.BooleanValue;
 import me.superblaubeere27.jobf.utils.values.DeprecationLevel;
 import me.superblaubeere27.jobf.utils.values.EnabledValue;
+import me.superblaubeere27.jobf.utils.values.ValueManager;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -56,11 +57,15 @@ public class StringEncryptionTransformer implements IClassTransformer
     private static final String MAGICNUMBER_END = "\u00fc";
     private static final String PROCESSOR_NAME = "StringEncryption";
     private static final Random random = new Random();
-    private final JarObfuscator inst;
-    private final EnabledValue enabled = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.GOOD, true);
-    private final BooleanValue hideStrings = new BooleanValue(PROCESSOR_NAME, "HideStrings", "Hide strings in SourceFile. Might break after editing the SourceFile", DeprecationLevel.OK, false);
-    private final BooleanValue aes = new BooleanValue(PROCESSOR_NAME, "AES", DeprecationLevel.OK, false);
+    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.GOOD, true);
+    private static final BooleanValue V_HIDE_STRINGS = new BooleanValue(PROCESSOR_NAME, "HideStrings", "Hide strings in SourceFile. Might break after editing the SourceFile", DeprecationLevel.OK, false);
+    private static final BooleanValue V_AES = new BooleanValue(PROCESSOR_NAME, "AES", DeprecationLevel.OK, false);
 
+    static {
+        ValueManager.registerClass(StringEncryptionTransformer.class);
+    }
+
+    private final JarObfuscator inst;
     public StringEncryptionTransformer(JarObfuscator inst)
     {
         this.inst = inst;
@@ -194,7 +199,7 @@ public class StringEncryptionTransformer implements IClassTransformer
     @Override
     public void process(ProcessorCallback callback, ClassNode node)
     {
-        if (!this.enabled.getObject()) return;
+        if (!V_ENABLED.get()) return;
 
 //        if (AnnotationUtils.isExcluded(node, this.getType())) return;
 
@@ -202,7 +207,7 @@ public class StringEncryptionTransformer implements IClassTransformer
 
         initAlgorithms(algorithmList);
 
-        boolean hideStrings = this.hideStrings.getObject();
+        boolean hideStrings = V_HIDE_STRINGS.get();
 
         if (Modifier.isInterface(node.access)) return;
 
@@ -360,7 +365,7 @@ public class StringEncryptionTransformer implements IClassTransformer
         algorithmList.add(new DESEncryptionAlgorithm());
         algorithmList.add(new BlowfishEncryptionAlgorithm());
 
-        if (this.aes.getObject()) algorithmList.add(new AESEncryptionAlgorithm());
+        if (V_AES.get()) algorithmList.add(new AESEncryptionAlgorithm());
     }
 
 }

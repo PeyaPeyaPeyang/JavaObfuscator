@@ -10,7 +10,7 @@
 
 package me.superblaubeere27.jobf.utils;
 
-import me.superblaubeere27.jobf.JObf;
+import me.superblaubeere27.jobf.JavaObfuscator;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -229,7 +229,7 @@ public class NodeUtils
 
     public static ClassNode toNode(final String className) throws IOException
     {
-        final ClassReader classReader = new ClassReader(JObf.class.getResourceAsStream("/" + className.replace('.', '/') + ".class"));
+        final ClassReader classReader = new ClassReader(JavaObfuscator.class.getResourceAsStream("/" + className.replace('.', '/') + ".class"));
         final ClassNode classNode = new ClassNode();
 
         classReader.accept(classNode, 0);

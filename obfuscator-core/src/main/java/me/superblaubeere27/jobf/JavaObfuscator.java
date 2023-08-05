@@ -11,12 +11,15 @@
 package me.superblaubeere27.jobf;
 
 import com.formdev.flatlaf.FlatDarculaLaf;
+import com.formdev.flatlaf.util.StringUtils;
 import com.google.common.io.ByteStreams;
 import javax.swing.JTextPane;
 import javax.swing.UIManager;
 import joptsimple.OptionException;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
+import lombok.Getter;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import me.superblaubeere27.jobf.processors.packager.Packager;
 import me.superblaubeere27.jobf.ui.GUI;
@@ -29,7 +32,6 @@ import me.superblaubeere27.jobf.utils.values.Configuration;
 
 import java.awt.GraphicsEnvironment;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -40,15 +42,17 @@ import java.util.Arrays;
 import java.util.List;
 
 @Slf4j(topic = "obfuscator")
-public class JObf
+public class JavaObfuscator
 {
-    public static final String SHORT_VERSION = (JObf.class.getPackage().getImplementationVersion() == null ? "DEV": "v" + JObf.class.getPackage().getImplementationVersion()) + " by superblaubeere27";
-    public static final String VERSION = "obfuscator " + (JObf.class.getPackage().getImplementationVersion() == null ? "DEV": "v" + JObf.class.getPackage().getImplementationVersion()) + " by superblaubeere27";
+    public static final String SHORT_VERSION = (JavaObfuscator.class.getPackage().getImplementationVersion() == null ? "DEV": "v" + JavaObfuscator.class.getPackage().getImplementationVersion()) + " by superblaubeere27 & Peyang";
+    public static final String VERSION = "Java Obfuscator " + SHORT_VERSION;
 
     public static boolean VERBOSE;
-    //#if buildType=="gui"
     private static GUI gui;
-    //#endif
+    @Getter
+    private static JarObfuscator currentSession;
+    @Getter
+    private static Exception lastException;
 
     public static JTextPane getGui()
     {
@@ -57,15 +61,13 @@ public class JObf
 
     public static void main(String[] args) throws Exception
     {
-        if (JObf.class.getPackage().getImplementationVersion() == null)
-        {
+        if (JavaObfuscator.class.getPackage().getImplementationVersion() == null)  // デバッガの場合
             VERBOSE = true;
-        }
-
 
         Class.forName(JarObfuscator.class.getCanonicalName());
 
-        String version = checkForUpdate();
+        String currentVersion = JavaObfuscator.class.getPackage().getImplementationVersion();
+        boolean outdated = checkOutdated(currentVersion);
 
         OptionParser parser = new OptionParser();
         parser.accepts("jarIn").withRequiredArg().required();
@@ -95,36 +97,27 @@ public class JObf
             }
 
             if (options.has("verbose"))
-            {
                 VERBOSE = true;
-            }
 
             String jarIn = (String) options.valueOf("jarIn");
             String jarOut = (String) options.valueOf("jarOut");
             File configPath = options.has("config") ? (File) options.valueOf("config"): null;
 
-            String scriptContent = "";
-
+            String scriptContent = null;
             if (options.has("scriptFile"))
-            {
                 scriptContent = new String(Files.readAllBytes(((File) options.valueOf("scriptFile")).toPath()), StandardCharsets.UTF_8);
-            }
 
-            boolean outdated = version != null;
             boolean embedded = false;
             int threads = Math.max(1, (Integer) options.valueOf("threads"));
 
             List<String> libraries = new ArrayList<>();
 
             if (options.has("cp"))
-            {
                 for (Object cp : options.valuesOf("cp"))
-                {
                     libraries.add(cp.toString());
-                }
-            }
 
-            runObfuscator(jarIn, jarOut, configPath, libraries, outdated, embedded, version, scriptContent, threads);
+            printHeader(embedded, outdated);
+            runObfuscator(jarIn, jarOut, configPath, libraries, embedded, scriptContent, threads);
         }
         catch (OptionException e)
         {
@@ -141,13 +134,9 @@ public class JObf
             try
             {
                 if (Utils.isWindows())
-                {
                     FlatDarculaLaf.setup();
-                }
                 else
-                {
                     UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-                }
             }
             catch (Exception e1)
             {
@@ -157,7 +146,7 @@ public class JObf
                 }
                 catch (Exception e2)
                 {
-                    e1.printStackTrace();
+                    log.error("Failed to set LookAndFeel", e2);
                 }
             }
 
@@ -165,26 +154,12 @@ public class JObf
 
             Packager.INSTANCE.isEnabled();
 
-            gui = new GUI(version);
+            gui = new GUI(currentVersion);
         }
     }
 
-    public static boolean runEmbedded(String jarIn, String jarOut, File configPath, List<String> libraries, String scriptContent) throws IOException, InterruptedException
+    private static void printHeader(boolean embedded, boolean outdated)
     {
-        return runObfuscator(jarIn, jarOut, configPath, libraries, false, true, null, scriptContent, Runtime.getRuntime().availableProcessors());
-    }
-
-    private static boolean runObfuscator(String jarIn, String jarOut, File configPath, List<String> libraries, boolean outdated, boolean embedded, String version, String scriptContent, int threads) throws IOException, InterruptedException
-    {
-        if (outdated)
-        {
-            log.info(ConsoleUtils.formatBox("Update available", true, Arrays.asList(
-                    "An update is available: v" + version,
-                    "(Current version: " + SHORT_VERSION + ")",
-                    "The latest version can be downloaded at",
-                    "https://github.com/superblaubeere27/obfuscator/releases/latest"
-            )));
-        }
 
         log.info("\n" +
                 "        _      __                     _             \n" +
@@ -196,14 +171,31 @@ public class JObf
                 "   " + SHORT_VERSION + (embedded ? " (EMBEDDED)": outdated ? " (OUTDATED)": " (LATEST)") +
                 "\n\n");
 
+        if (outdated)
+            log.warn(ConsoleUtils.formatBox("Outdated", true, Arrays.asList(
+                    "An update is available.",
+                    "(Current version: " + SHORT_VERSION + ")",
+                    "The latest version can be downloaded at",
+                    "https://github.com/PeyaPeyaPeyang/JavaObfuscator/releases/latest"
+            )));
+    }
 
+    public static boolean runObfuscator(String jarIn,
+                                        String jarOut,
+                                        File  configPath,
+                                        List<String> libraries,
+                                        boolean embedded,
+                                        String scriptContent,
+                                        int threads) throws IOException, InterruptedException
+    {
         log.info("\n" + ConsoleUtils.formatBox("Configuration", false, Arrays.asList(
                 "Input:      " + jarIn,
                 "Output:     " + jarOut,
-                "Config:     " + (configPath != null ? configPath.getPath(): "")
+                "Config:     " + (configPath != null ? configPath.getPath(): ""),
+                "Script?:     " + (scriptContent != null ? "Yes": "No")
         )));
 
-        Configuration config = new Configuration(jarIn, jarOut, scriptContent, libraries);
+        Configuration config = new Configuration(jarIn, jarOut, scriptContent,  threads, libraries);
 
         if (configPath != null)
         {
@@ -213,7 +205,7 @@ public class JObf
                 return false;
             }
 
-            config = ConfigManager.loadConfig(new String(ByteStreams.toByteArray(new FileInputStream(configPath)), StandardCharsets.UTF_8));
+            config = ConfigManager.loadConfig(new String(ByteStreams.toByteArray(Files.newInputStream(configPath.toPath())), StandardCharsets.UTF_8));
         }
         else
         {
@@ -228,18 +220,38 @@ public class JObf
                     !embedded ? "The program will resume in 2 sec": "Continue..."
             )) + "\n");
             if (!embedded)
-            {
                 Thread.sleep(2000);
-            }
         }
 
-        config.setInput(jarIn);
-        config.setOutput(jarOut);
+        return runObfuscator(jarIn, jarOut, config, libraries, scriptContent, threads);
+    }
+
+    public static boolean runObfuscator(String jarIn,
+                                         String jarOut,
+                                         Configuration config,
+                                         List<String> libraries,
+                                         String scriptContent,
+                                         int threads)
+    {
+        if (StringUtils.isEmpty(config.getInput()))
+            config.setInput(jarIn);
+        if (StringUtils.isEmpty(config.getOutput()))
+            config.setOutput(jarOut);
+        if (config.getNThreads() != -1)
+            config.setNThreads(threads);
 
         config.getLibraries().addAll(libraries);
 
-        if (scriptContent != null && !scriptContent.isEmpty()) config.setScript(scriptContent);
+        if (!(scriptContent == null || scriptContent.isEmpty()))
+            config.setScript(scriptContent);
 
+        return runObfuscator(config);
+    }
+
+    @SneakyThrows(InterruptedException.class)
+    public static boolean runObfuscator(Configuration config)
+    {
+        int threads = config.getNThreads();
         if (threads > Runtime.getRuntime().availableProcessors())
         {
             log.warn("\n" + ConsoleUtils.formatBox("WARNING", true, Arrays.asList(
@@ -254,50 +266,46 @@ public class JObf
             Thread.sleep(10000);
         }
 
-        JarObfuscator.INSTANCE.setThreadCount(threads);
-
+        boolean succeed;
         try
         {
-            JarObfuscator.INSTANCE.processJar(config);
+            lastException = null;
+            JarObfuscator obfuscator = JavaObfuscator.currentSession = new JarObfuscator(config);
+            obfuscator.processJar();
+            succeed = true;
         }
         catch (Exception e)
         {
             log.error(e.getMessage(), e);
-            return false;
+            lastException = e;
+            succeed = false;
         }
-        return true;
+
+        JavaObfuscator.currentSession = null;
+        return succeed;
     }
 
-    /**
-     * Checks if a new version is available
-     *
-     * @return If the current version is up to date it will return null. If the version is outdated it will return the name of the latest version
-     */
-    private static String checkForUpdate()
+    private static boolean checkOutdated(String version)
     {
-        try
+        // If the ImplementationVersion is null, the build wasn't built by maven.
+        if (version == null)
+            return false;
+
+        try(InputStream is = new URL("https://raw.githubusercontent.com/PeyaPeyaPeyang/javaObfuscator/master/version")
+                .openStream())
         {
-            String version = JObf.class.getPackage().getImplementationVersion();
-
-            // If the ImplementationVersion is null, the build wasn't built by maven.
-            if (version == null) return null;
-
-            InputStream inputStream = new URL("https://raw.githubusercontent.com/superblaubeere27/obfuscator/master/version").openStream();
-
-            String latestVersion = new String(ByteStreams.toByteArray(inputStream), StandardCharsets.UTF_8);
+            String latestVersion = new String(ByteStreams.toByteArray(is), StandardCharsets.UTF_8);
 
             VersionComparator comparator = new VersionComparator();
 
-            if (comparator.compare(version, latestVersion) < 0)
-            {
-                return latestVersion;
-            }
+            return comparator.compare(version, latestVersion) < 0;
         }
         catch (Exception e)
         {
             log.warn("Update check failed: " + e.getMessage());
         }
-        return null;
+
+        return false;
     }
 
 }

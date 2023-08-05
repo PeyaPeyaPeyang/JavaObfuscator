@@ -18,6 +18,7 @@ import me.superblaubeere27.jobf.utils.NameUtils;
 import me.superblaubeere27.jobf.utils.values.BooleanValue;
 import me.superblaubeere27.jobf.utils.values.DeprecationLevel;
 import me.superblaubeere27.jobf.utils.values.EnabledValue;
+import me.superblaubeere27.jobf.utils.values.ValueManager;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.ClassRemapper;
 import org.objectweb.asm.tree.ClassNode;
@@ -33,9 +34,20 @@ public class InnerClassRemover implements INameObfuscationProcessor, IClassTrans
 {
     private static final String PROCESSOR_NAME = "InnerClassRemover";
     private static final Pattern innerClasses = Pattern.compile(".*[A-Za-z0-9]+\\$[0-9]+");
-    private final EnabledValue enabled = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.GOOD, true);
-    private final BooleanValue remap = new BooleanValue(PROCESSOR_NAME, "Remap", DeprecationLevel.OK, false);
-    private final BooleanValue removeMetadata = new BooleanValue(PROCESSOR_NAME, "Remove Metadata", DeprecationLevel.GOOD, true);
+    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.GOOD, true);
+    private static final BooleanValue V_REMAP = new BooleanValue(PROCESSOR_NAME, "Remap", DeprecationLevel.OK, false);
+    private static final BooleanValue V_REMOVE_METADATA = new BooleanValue(PROCESSOR_NAME, "Remove Metadata", DeprecationLevel.GOOD, true);
+
+    private final JarObfuscator obfuscator;
+
+    static {
+        ValueManager.registerClass(InnerClassRemover.class);
+    }
+
+    public InnerClassRemover(JarObfuscator obfuscator)
+    {
+        this.obfuscator = obfuscator;
+    }
 
     private static boolean isInnerClass(String name)
     {
@@ -45,10 +57,10 @@ public class InnerClassRemover implements INameObfuscationProcessor, IClassTrans
     @Override
     public void transformPost(JarObfuscator inst, HashMap<String, ClassNode> nodes)
     {
-        if (!(this.enabled.getObject() && this.remap.getObject()))
+        if (!(V_ENABLED.get() && V_REMAP.get()))
             return;
 
-        final List<ClassNode> classNodes = new ArrayList<>(JarObfuscator.classes.values());
+        final List<ClassNode> classNodes = new ArrayList<>(this.obfuscator.getClasses().values());
 
         final Map<String, ClassNode> updatedClasses = new HashMap<>();
         final CustomRemapper remapper = new CustomRemapper();
@@ -58,7 +70,7 @@ public class InnerClassRemover implements INameObfuscationProcessor, IClassTrans
 
         for (final ClassNode classNode : classNodes)
         {
-            JarObfuscator.classes.remove(classNode.name + ".class");
+            this.obfuscator.getClasses().remove(classNode.name + ".class");
 
             ClassNode newNode = new ClassNode();
             ClassRemapper classRemapper = new ClassRemapper(newNode, remapper);
@@ -69,7 +81,7 @@ public class InnerClassRemover implements INameObfuscationProcessor, IClassTrans
             updatedClasses.put(newNode.name + ".class", newNode);
         }
 
-        JarObfuscator.classes.putAll(updatedClasses);
+        this.obfuscator.getClasses().putAll(updatedClasses);
     }
 
     private static void normalizeModifiers(ClassNode classNode)
@@ -112,7 +124,7 @@ public class InnerClassRemover implements INameObfuscationProcessor, IClassTrans
     @Override
     public void process(ProcessorCallback callback, ClassNode node)
     {
-        if (!this.enabled.getObject() || !this.removeMetadata.getObject()) return;
+        if (!this.V_ENABLED.get() || !this.V_REMOVE_METADATA.get()) return;
 
         node.outerClass = null;
         node.innerClasses.clear();

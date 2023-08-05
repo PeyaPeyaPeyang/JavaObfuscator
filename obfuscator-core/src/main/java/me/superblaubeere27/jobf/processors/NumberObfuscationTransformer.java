@@ -19,6 +19,7 @@ import me.superblaubeere27.jobf.utils.NodeUtils;
 import me.superblaubeere27.jobf.utils.values.BooleanValue;
 import me.superblaubeere27.jobf.utils.values.DeprecationLevel;
 import me.superblaubeere27.jobf.utils.values.EnabledValue;
+import me.superblaubeere27.jobf.utils.values.ValueManager;
 import org.apache.commons.lang3.RandomUtils;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -41,19 +42,22 @@ public class NumberObfuscationTransformer implements IClassTransformer
 {
     private static final String PROCESSOR_NAME = "NumberObfuscation";
     private static final Random random = new Random();
-    private static NumberObfuscationTransformer INSTANCE;
+    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.GOOD, true);
+    private static final BooleanValue V_EXTRACT_TO_ARRAY = new BooleanValue(PROCESSOR_NAME, "Extract to Array", "Calculates the integers once and store them in an array", DeprecationLevel.GOOD, true);
+    private static final BooleanValue V_OBFUSCATE_ZERO = new BooleanValue(PROCESSOR_NAME, "Obfuscate Zero", "Enables special obfuscation of the number 0", DeprecationLevel.GOOD, true);
+    private static final BooleanValue V_SHIFT = new BooleanValue(PROCESSOR_NAME, "Shift", "Uses \"<<\" to obfuscate numbers", DeprecationLevel.GOOD, false);
+    private static final BooleanValue V_AND = new BooleanValue(PROCESSOR_NAME, "And", "Uses \"&\" to obfuscate numbers", DeprecationLevel.GOOD, false);
+    private static final BooleanValue V_MULTIPLE_INSTRUCTIONS = new BooleanValue(PROCESSOR_NAME, "Multiple Instructions", "Repeats the obfuscation process", DeprecationLevel.GOOD, true);
+
+    static {
+        ValueManager.registerClass(this);
+    }
+
     private final JarObfuscator inst;
-    private final EnabledValue enabled = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.GOOD, true);
-    private final BooleanValue extractToArray = new BooleanValue(PROCESSOR_NAME, "Extract to Array", "Calculates the integers once and store them in an array", DeprecationLevel.GOOD, true);
-    private final BooleanValue obfuscateZero = new BooleanValue(PROCESSOR_NAME, "Obfuscate Zero", "Enables special obfuscation of the number 0", DeprecationLevel.GOOD, true);
-    private final BooleanValue shift = new BooleanValue(PROCESSOR_NAME, "Shift", "Uses \"<<\" to obfuscate numbers", DeprecationLevel.GOOD, false);
-    private final BooleanValue and = new BooleanValue(PROCESSOR_NAME, "And", "Uses \"&\" to obfuscate numbers", DeprecationLevel.GOOD, false);
-    private final BooleanValue multipleInstructions = new BooleanValue(PROCESSOR_NAME, "Multiple Instructions", "Repeats the obfuscation process", DeprecationLevel.GOOD, true);
 
     public NumberObfuscationTransformer(JarObfuscator inst)
     {
         this.inst = inst;
-        INSTANCE = this;
     }
 
     private static InsnList getInstructionsMultipleTimes(int value, int iterations)
@@ -61,7 +65,7 @@ public class NumberObfuscationTransformer implements IClassTransformer
         InsnList list = new InsnList();
         list.add(NodeUtils.generateIntPush(value));
 
-        for (int i = 0; i < (INSTANCE.multipleInstructions.getObject() ? iterations: 1); i++)
+        for (int i = 0; i < (V_MULTIPLE_INSTRUCTIONS.get() ? iterations: 1); i++)
             list = obfuscateInsnList(list);
 
         return list;
@@ -89,7 +93,7 @@ public class NumberObfuscationTransformer implements IClassTransformer
     {
         InsnList methodInstructions = new InsnList();
 
-        if (value == 0 && INSTANCE.obfuscateZero.getObject())
+        if (value == 0 && V_OBFUSCATE_ZERO.get())
         {
             int randomInt = random.nextInt(100);
             methodInstructions.add(obfuscateIntInsn(randomInt));
@@ -102,7 +106,7 @@ public class NumberObfuscationTransformer implements IClassTransformer
         }
         int[] shiftOutput = splitToLShift(value);
 
-        if (shiftOutput[1] > 0 && INSTANCE.shift.getObject())
+        if (shiftOutput[1] > 0 && V_SHIFT.get())
         {
             methodInstructions.add(obfuscateIntInsn(shiftOutput[0]));
             methodInstructions.add(obfuscateIntInsn(shiftOutput[1]));
@@ -178,7 +182,7 @@ public class NumberObfuscationTransformer implements IClassTransformer
             method = 0;
         else if (xorMode && (Math.abs(value) < Byte.MAX_VALUE || (!lenghtMode && !simpleMathMode)))
             method = 1;
-        else if (!INSTANCE.and.getObject() && Math.abs(value) > 0xFF)
+        else if (!V_AND.get() && Math.abs(value) > 0xFF)
             method = 3;
         else
             method = 2;
@@ -208,7 +212,7 @@ public class NumberObfuscationTransformer implements IClassTransformer
     @Override
     public void process(ProcessorCallback callback, ClassNode node)
     {
-        if (!this.enabled.getObject())
+        if (!this.V_ENABLED.get())
             return;
 
         int proceed = 0;
@@ -226,7 +230,7 @@ public class NumberObfuscationTransformer implements IClassTransformer
 
                     boolean isExcluded = Modifier.isInterface(node.access);
 
-                    if (!isExcluded && this.extractToArray.getObject())
+                    if (!isExcluded && this.V_EXTRACT_TO_ARRAY.get())
                     {
                         int containedSlot = -1;
                         int j = 0;

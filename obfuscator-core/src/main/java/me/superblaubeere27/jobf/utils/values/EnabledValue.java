@@ -26,6 +26,6 @@ public class EnabledValue extends BooleanValue
     @Override
     public String toString()
     {
-        return String.format("%s = %s", getOwner(), getObject());
+        return String.format("%s = %s", getOwner(), get());
     }
 }

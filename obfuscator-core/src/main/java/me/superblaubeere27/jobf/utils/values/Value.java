@@ -10,7 +10,9 @@
 
 package me.superblaubeere27.jobf.utils.values;
 
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 public abstract class Value<T>
@@ -18,7 +20,9 @@ public abstract class Value<T>
     private final String owner;
     private final String name;
     private final String description;
-    private T object;
+    @Getter(AccessLevel.NONE)
+    @Setter
+    private T value;
     private final DeprecationLevel deprecation;
 
     public Value(String owner, String name, DeprecationLevel deprecation, T object)
@@ -32,17 +36,16 @@ public abstract class Value<T>
         this.name = name;
         this.description = description;
         this.deprecation = deprecation;
-        this.object = object;
+        this.value = object;
     }
 
-    public void setObject(T object)
+    public T get()
     {
-        this.object = object;
+        return this.value;
     }
-
     @Override
     public String toString()
     {
-        return String.format("%s::%s = %s", this.owner, this.name, this.object);
+        return String.format("%s::%s = %s", this.owner, this.name, this.value);
     }
 }

@@ -19,6 +19,7 @@ import me.superblaubeere27.jobf.utils.NodeUtils;
 import me.superblaubeere27.jobf.utils.Utils;
 import me.superblaubeere27.jobf.utils.values.DeprecationLevel;
 import me.superblaubeere27.jobf.utils.values.EnabledValue;
+import me.superblaubeere27.jobf.utils.values.ValueManager;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;
@@ -75,7 +76,11 @@ public class InvokeDynamic implements IClassTransformer
 {
     private static final String PROCESSOR_NAME = "InvokeDynamic";
     private static final Random random = new Random();
-    private final EnabledValue enabled = new EnabledValue(PROCESSOR_NAME, "Hides method calls", DeprecationLevel.OK, false);
+    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, "Hides method calls", DeprecationLevel.OK, false);
+
+    static {
+        ValueManager.registerClass(InvokeDynamic.class);
+    }
 
     private static MethodNode bootstrap(FieldNode arrayField, FieldNode typeField, ClassNode node)
     {
@@ -410,7 +415,7 @@ public class InvokeDynamic implements IClassTransformer
     @Override
     public void process(ProcessorCallback callback, ClassNode classNode)
     {
-        if (!this.enabled.getObject()) return;
+        if (!this.V_ENABLED.get()) return;
 
         if (!NodeUtils.isClassValid(classNode))
         {

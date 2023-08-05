@@ -23,37 +23,34 @@ public class ValueManager
 
     private static void registerField(Field field, Object object)
     {
-        field.setAccessible(true);
 
         try
         {
+            field.setAccessible(true);
+
             Object obj = field.get(object);
 
             if (obj instanceof Value)
             {
-                Value value = (Value) obj;
+                Value<?> value = (Value<?>) obj;
                 values.add(value);
             }
         }
-        catch (IllegalAccessException e)
+        catch (IllegalAccessException ignored)
         {
-            e.printStackTrace();
         }
     }
 
     public static void registerClass(Object obj)
     {
-        Class<?> clazz = obj.getClass();
-
-        for (Field field : clazz.getFields())
-        {
-            registerField(field, obj);
-        }
-        for (Field field : clazz.getDeclaredFields())
-        {
-            registerField(field, obj);
-        }
-
+        registerClass(obj.getClass());
     }
 
+    public static void registerClass(Class<?> clazz)
+    {
+        for (Field field : clazz.getFields())
+            registerField(field, null);
+        for (Field field : clazz.getDeclaredFields())
+            registerField(field, null);
+    }
 }

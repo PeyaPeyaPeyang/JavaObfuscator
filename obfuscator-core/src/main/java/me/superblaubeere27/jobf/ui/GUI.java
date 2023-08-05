@@ -34,8 +34,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import me.superblaubeere27.jobf.JObf;
-import me.superblaubeere27.jobf.JarObfuscator;
+import me.superblaubeere27.jobf.JavaObfuscator;
 import me.superblaubeere27.jobf.utils.JObfFileFilter;
 import me.superblaubeere27.jobf.utils.JarFileFilter;
 import me.superblaubeere27.jobf.utils.Template;
@@ -116,7 +115,7 @@ public class GUI extends JFrame
         setContentPane(this.panel1);
         setSize(900, 600);
         setLocationRelativeTo(null);
-        setTitle(JObf.VERSION);
+        setTitle(JavaObfuscator.VERSION);
 
         this.inputBrowseButton.addActionListener(e -> {
             String file = Utils.chooseFile(null, GUI.this, new JarFileFilter());
@@ -289,7 +288,14 @@ public class GUI extends JFrame
 
     private void buildConfig()
     {
-        this.configPanel.setText(ConfigManager.generateConfig(new Configuration(this.inputTextField.getText(), this.outputTextField.getText(), this.scriptArea.getText(), this.libraryList), this.prettyPrintCheckBox.isSelected()));
+        this.configPanel.setText(ConfigManager.generateConfig(new Configuration(
+                this.inputTextField.getText(),
+                this.outputTextField.getText(),
+                this.scriptArea.getText(),
+                this.threadsSlider.getValue(),
+                this.libraryList),
+                this.prettyPrintCheckBox.isSelected())
+        );
     }
 
     private void initValues()
@@ -308,8 +314,8 @@ public class GUI extends JFrame
                 {
                     BooleanValue booleanValue = (BooleanValue) value;
 
-                    JCheckBox checkBox = new JCheckBox(value.getName(), booleanValue.getObject());
-                    checkBox.addActionListener(event -> booleanValue.setObject(checkBox.isSelected()));
+                    JCheckBox checkBox = new JCheckBox(value.getName(), booleanValue.get());
+                    checkBox.addActionListener(event -> booleanValue.setValue(checkBox.isSelected()));
                     panel.add(checkBox);
 
                     panel.add(new JLabel(booleanValue.getDescription() == null ? "": booleanValue.getDescription()));
@@ -328,26 +334,26 @@ public class GUI extends JFrame
                 {
                     FilePathValue stringValue = (FilePathValue) value;
 
-                    JTextField textBox = new JTextField(stringValue.getObject());
+                    JTextField textBox = new JTextField(stringValue.get());
 
                     textBox.getDocument().addDocumentListener(new DocumentListener()
                     {
                         @Override
                         public void insertUpdate(DocumentEvent e)
                         {
-                            stringValue.setObject(textBox.getText());
+                            stringValue.setValue(textBox.getText());
                         }
 
                         @Override
                         public void removeUpdate(DocumentEvent e)
                         {
-                            stringValue.setObject(textBox.getText());
+                            stringValue.setValue(textBox.getText());
                         }
 
                         @Override
                         public void changedUpdate(DocumentEvent e)
                         {
-                            stringValue.setObject(textBox.getText());
+                            stringValue.setValue(textBox.getText());
                         }
                     });
 
@@ -380,26 +386,26 @@ public class GUI extends JFrame
 
                     if (stringValue.getTextFieldLines() > 1)
                     {
-                        JTextArea textBox = new JTextArea(stringValue.getObject(), 3, 60);
+                        JTextArea textBox = new JTextArea(stringValue.get(), 3, 60);
 
                         textBox.getDocument().addDocumentListener(new DocumentListener()
                         {
                             @Override
                             public void insertUpdate(DocumentEvent e)
                             {
-                                stringValue.setObject(textBox.getText());
+                                stringValue.setValue(textBox.getText());
                             }
 
                             @Override
                             public void removeUpdate(DocumentEvent e)
                             {
-                                stringValue.setObject(textBox.getText());
+                                stringValue.setValue(textBox.getText());
                             }
 
                             @Override
                             public void changedUpdate(DocumentEvent e)
                             {
-                                stringValue.setObject(textBox.getText());
+                                stringValue.setValue(textBox.getText());
                             }
                         });
 
@@ -416,26 +422,26 @@ public class GUI extends JFrame
                     }
                     else
                     {
-                        JTextField textBox = new JTextField(stringValue.getObject());
+                        JTextField textBox = new JTextField(stringValue.get());
 
                         textBox.getDocument().addDocumentListener(new DocumentListener()
                         {
                             @Override
                             public void insertUpdate(DocumentEvent e)
                             {
-                                stringValue.setObject(textBox.getText());
+                                stringValue.setValue(textBox.getText());
                             }
 
                             @Override
                             public void removeUpdate(DocumentEvent e)
                             {
-                                stringValue.setObject(textBox.getText());
+                                stringValue.setValue(textBox.getText());
                             }
 
                             @Override
                             public void changedUpdate(DocumentEvent e)
                             {
-                                stringValue.setObject(textBox.getText());
+                                stringValue.setValue(textBox.getText());
                             }
                         });
 
@@ -483,40 +489,42 @@ public class GUI extends JFrame
             new Thread(() -> {
                 this.obfuscateButton.setEnabled(false);
 
-                try
-                {
-                    Configuration config = new Configuration(this.inputTextField.getText(), this.outputTextField.getText(), this.scriptArea.getText(), this.libraryList);
+                JavaObfuscator.VERBOSE = this.verbose.isSelected();
+                Configuration config = new Configuration(
+                        this.inputTextField.getText(),
+                        this.outputTextField.getText(),
+                        this.scriptArea.getText(),
+                        this.threadsSlider.getValue(),
+                        this.libraryList
+                );
 
-                    JObf.VERBOSE = this.verbose.isSelected();
+                boolean succeed = JavaObfuscator.runObfuscator(config);
+                if (!(succeed || JavaObfuscator.getLastException() != null))
+                    showExceptionDetail(JavaObfuscator.getLastException());
 
-                    JarObfuscator.INSTANCE.setThreadCount(this.threadsSlider.getValue());
-
-                    JarObfuscator.INSTANCE.processJar(config);
-                }
-                catch (Throwable e)
-                {
-                    e.printStackTrace();
-
-                    JPanel panel = new JPanel();
-
-                    panel.setBorder(new EmptyBorder(5, 5, 5, 5));
-                    panel.setLayout(new BorderLayout(0, 0));
-
-                    JTextArea comp = new JTextArea(Throwables.getStackTraceAsString(e));
-                    comp.setEditable(false);
-                    JScrollPane scroll = new JScrollPane(comp, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
-                    panel.add(scroll);
-
-                    JOptionPane.showMessageDialog(this, panel, "ERROR encountered at " + e.getStackTrace()[0].getClassName(), JOptionPane.ERROR_MESSAGE);
-                }
                 this.obfuscateButton.setEnabled(true);
             }, "Obfuscator thread").start();
         }
         catch (Exception e)
         {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this, e.toString(), "ERROR", JOptionPane.ERROR_MESSAGE);
+            showExceptionDetail(e);
         }
+    }
+
+    private void showExceptionDetail(Exception e)
+    {
+        JPanel panel = new JPanel();
+
+        panel.setBorder(new EmptyBorder(5, 5, 5, 5));
+        panel.setLayout(new BorderLayout(0, 0));
+
+        JTextArea comp = new JTextArea(Throwables.getStackTraceAsString(e));
+        comp.setEditable(false);
+        JScrollPane scroll = new JScrollPane(comp, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+        panel.add(scroll);
+
+        JOptionPane.showMessageDialog(this, panel, "ERROR encountered at " + e.getStackTrace()[0].getClassName(), JOptionPane.ERROR_MESSAGE);
+
     }
 
     /**

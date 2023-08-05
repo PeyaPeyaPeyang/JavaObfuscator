@@ -31,6 +31,10 @@ public class ShuffleMembersTransformer implements IClassTransformer
     private final JarObfuscator inst;
     private final EnabledValue enabled = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.GOOD, true);
 
+    static {
+
+    }
+
     public ShuffleMembersTransformer(JarObfuscator inst)
     {
         this.inst = inst;
@@ -39,7 +43,7 @@ public class ShuffleMembersTransformer implements IClassTransformer
     @Override
     public void process(ProcessorCallback callback, ClassNode node)
     {
-        if (!this.enabled.getObject()) return;
+        if (!this.enabled.get()) return;
 
         if ((node.access & Opcodes.ACC_ENUM) != 0)
         {

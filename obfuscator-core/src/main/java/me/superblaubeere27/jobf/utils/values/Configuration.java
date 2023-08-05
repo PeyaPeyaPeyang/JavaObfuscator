@@ -14,57 +14,49 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@Getter
+@Data
+@AllArgsConstructor
 public class Configuration
 {
     private String input;
     private String output;
     private String script;
+    private int nThreads;
     private final List<String> libraries;
 
-    public Configuration(String input, String output, String script, List<String> libraries)
-    {
-        this.input = input;
-        this.output = output;
-        this.script = script;
-        this.libraries = libraries;
-    }
 
     static Configuration fromJsonObject(JsonObject obj)
     {
         String input = "";
         String output = "";
         String script = null;
+        int nThreads = -1;
         List<String> libraries = new ArrayList<>();
 
         if (obj.has("input"))
-        {
             input = obj.get("input").getAsString();
-        }
         if (obj.has("output"))
-        {
             output = obj.get("output").getAsString();
-        }
         if (obj.has("script"))
-        {
             script = obj.get("script").getAsString();
-        }
+        if (obj.has("threads"))
+            nThreads = obj.get("threads").getAsInt();
         if (obj.has("libraries"))
         {
             JsonArray jsonArray = obj.getAsJsonArray("libraries");
 
             for (JsonElement jsonElement : jsonArray)
-            {
                 libraries.add(jsonElement.getAsString());
-            }
         }
 
-        return new Configuration(input, output, script, libraries);
+        return new Configuration(input, output, script, nThreads, libraries);
     }
 
     void addToJsonObject(JsonObject jsonObject)

@@ -45,12 +45,12 @@ public class ConfigManager
             // noinspection rawtypes
             for (final Value value : entry.getValue())
             {
-                if (value.getObject() instanceof Number)
-                    moduleJson.addProperty(value.getName(), (Number) value.getObject());
-                else if (value.getObject() instanceof Boolean)
-                    moduleJson.addProperty(value.getName(), (Boolean) value.getObject());
-                else if (value.getObject() instanceof String)
-                    moduleJson.addProperty(value.getName(), (String) value.getObject());
+                if (value.get() instanceof Number)
+                    moduleJson.addProperty(value.getName(), (Number) value.get());
+                else if (value.get() instanceof Boolean)
+                    moduleJson.addProperty(value.getName(), (Boolean) value.get());
+                else if (value.get() instanceof String)
+                    moduleJson.addProperty(value.getName(), (String) value.get());
             }
 
             jsonObject.add(entry.getKey(), moduleJson);
@@ -93,20 +93,20 @@ public class ConfigManager
                     if (!moduleJson.has(value.getName()))
                         continue;
 
-                    if (value.getObject() instanceof Float)
-                        value.setObject(moduleJson.get(value.getName()).getAsFloat());
-                    else if (value.getObject() instanceof Double)
-                        value.setObject(moduleJson.get(value.getName()).getAsDouble());
-                    else if (value.getObject() instanceof Integer)
-                        value.setObject(moduleJson.get(value.getName()).getAsInt());
-                    else if (value.getObject() instanceof Long)
-                        value.setObject(moduleJson.get(value.getName()).getAsLong());
-                    else if (value.getObject() instanceof Byte)
-                        value.setObject(moduleJson.get(value.getName()).getAsByte());
-                    else if (value.getObject() instanceof Boolean)
-                        value.setObject(moduleJson.get(value.getName()).getAsBoolean());
-                    else if (value.getObject() instanceof String)
-                        value.setObject(moduleJson.get(value.getName()).getAsString());
+                    if (value.get() instanceof Float)
+                        value.setValue(moduleJson.get(value.getName()).getAsFloat());
+                    else if (value.get() instanceof Double)
+                        value.setValue(moduleJson.get(value.getName()).getAsDouble());
+                    else if (value.get() instanceof Integer)
+                        value.setValue(moduleJson.get(value.getName()).getAsInt());
+                    else if (value.get() instanceof Long)
+                        value.setValue(moduleJson.get(value.getName()).getAsLong());
+                    else if (value.get() instanceof Byte)
+                        value.setValue(moduleJson.get(value.getName()).getAsByte());
+                    else if (value.get() instanceof Boolean)
+                        value.setValue(moduleJson.get(value.getName()).getAsBoolean());
+                    else if (value.get() instanceof String)
+                        value.setValue(moduleJson.get(value.getName()).getAsString());
                 }
                 catch (Throwable e)
                 {

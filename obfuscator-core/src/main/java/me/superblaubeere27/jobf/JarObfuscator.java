@@ -79,38 +79,76 @@ import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
+@Getter
 @Slf4j(topic = "obfuscator")
 public class JarObfuscator
 {
-    public static final JarObfuscator INSTANCE = new JarObfuscator();
-
-    public static List<IClassTransformer> processors;
-    @Getter
-    public static HashMap<String, ClassNode> classes = new HashMap<>();
-    public static HashMap<String, byte[]> files = new HashMap<>();
-    private static List<IPreClassTransformer> preProcessors;
+    private static final JObfSettings SETTINGS = new JObfSettings();
 
     private final List<INameObfuscationProcessor> nameObfuscationProcessors = new ArrayList<>();
-    private final JObfSettings settings = new JObfSettings();
+    private final Configuration config;
+    private final HashMap<String, byte[]> files;
+    private final Map<String, ClassWrapper> classPath;
+    private final HashMap<String, ClassNode> classes;
+    private final Map<String, ClassTree> hierarchy;
+    private final Set<ClassWrapper> libraryClassNodes;
+    private final List<IClassTransformer> processors;
 
     public JObfScript script;
+
     private boolean mainClassChanged;
-    @Getter
     private String mainClass;
-    @Getter
-    private Map<String, ClassWrapper> classPath = new HashMap<>();
-    private Map<String, ClassTree> hierarchy = new HashMap<>();
-    private Set<ClassWrapper> libraryClassNodes = new HashSet<>();
     private int computeMode;
-    private int threadCount = Math.max(1, Runtime.getRuntime().availableProcessors());
 
-    public JarObfuscator()
+    static {
+        ValueManager.registerClass(SETTINGS);
+    }
+
+    public JarObfuscator(Configuration config)
     {
-        processors = new ArrayList<>();
+        this.config = config;
 
-        ValueManager.registerClass(this.settings);
+        this.files = new HashMap<>();
+        this.classPath = new HashMap<>();
+        this.classes = new HashMap<>();
+        this.hierarchy = new HashMap<>();
+        this.libraryClassNodes = new HashSet<>();
 
+        this.mainClass = null;
+
+        this.processors = new ArrayList<>();
         addProcessors();
+    }
+
+    private static ZipInputStream getInJarStream(String inputJarPath) throws FileNotFoundException
+    {
+        try
+        {
+            return new ZipInputStream(new BufferedInputStream(new FileInputStream(inputJarPath)));
+        }
+        catch (FileNotFoundException e)
+        {
+            throw new FileNotFoundException("Could not open input file: " + e.getMessage());
+        }
+    }
+
+    private static ZipOutputStream getOutJarStream(String outputJarPath, boolean stored) throws FileNotFoundException
+    {
+        try
+        {
+            OutputStream out = outputJarPath == null ? new ByteArrayOutputStream(): new FileOutputStream(outputJarPath);
+            ZipOutputStream outJar = new ZipOutputStream(new BufferedOutputStream(out));
+            outJar.setMethod(stored ? ZipOutputStream.STORED: ZipOutputStream.DEFLATED);
+
+            if (stored)
+                outJar.setLevel(Deflater.NO_COMPRESSION);
+
+            return outJar;
+        }
+        catch (FileNotFoundException e)
+        {
+            throw new FileNotFoundException("Could not open output file: " + e.getMessage());
+        }
     }
 
     public ClassTree getTree(String ref)
@@ -122,7 +160,7 @@ public class JarObfuscator
             if (wrapper == null)
                 return null;
 
-            buildHierarchy(wrapper, null, false);
+            this.buildHierarchy(wrapper, null, false);
         }
 
         return this.hierarchy.get(ref);
@@ -172,7 +210,7 @@ public class JarObfuscator
                     }
                     else
                     {
-                        buildHierarchy(interfaceClass, classWrapper, acceptMissingClass);
+                        this.buildHierarchy(interfaceClass, classWrapper, acceptMissingClass);
 
                         // Inherit the missingSuperClass state
                         if (this.hierarchy.get(s).missingSuperClass)
@@ -258,7 +296,7 @@ public class JarObfuscator
         log.info("Read " + classList.size() + " class files to memory");
         log.info("Parsing class files...");
 
-        this.classPath.putAll(parseClassPath(classList, this.threadCount));
+        this.classPath.putAll(parseClassPath(classList, this.config.getNThreads()));
 
         this.libraryClassNodes.addAll(this.classPath.values());
     }
@@ -319,39 +357,30 @@ public class JarObfuscator
 
     public boolean isLoadedCode(ClassNode classNode)
     {
-        return classes.containsKey(classNode.name);
+        return this.classes.containsKey(classNode.name);
     }
 
     private void addProcessors()
     {
-        processors.add(new StaticInitializionTransformer(this));
+        this.processors.add(new StaticInitializionTransformer(this));
 
-        processors.add(new HWIDProtection(this));
-        processors.add(new Optimizer());
-        processors.add(new InlineTransformer(this));
-        processors.add(new InvokeDynamic());
+        this.processors.add(new HWIDProtection(this));
+        this.processors.add(new Optimizer());
+        this.processors.add(new InlineTransformer(this));
+        this.processors.add(new InvokeDynamic());
 
-        processors.add(new StringEncryptionTransformer(this));
-        processors.add(new NumberObfuscationTransformer(this));
-        processors.add(new FlowObfuscator(this));
-        processors.add(new HideMembers(this));
-        processors.add(new LineNumberRemover(this));
-        processors.add(new ShuffleMembersTransformer(this));
+        this.processors.add(new StringEncryptionTransformer(this));
+        this.processors.add(new NumberObfuscationTransformer(this));
+        this.processors.add(new FlowObfuscator(this));
+        this.processors.add(new HideMembers(this));
+        this.processors.add(new LineNumberRemover(this));
+        this.processors.add(new ShuffleMembersTransformer(this));
 
 
-        this.nameObfuscationProcessors.add(new NameObfuscation());
-        this.nameObfuscationProcessors.add(new InnerClassRemover());
-        processors.add(new CrasherTransformer(this));
-        processors.add(new ReferenceProxy(this));
-
-        preProcessors = new ArrayList<>();
-
-        for (IClassTransformer processor : processors)
-            ValueManager.registerClass(processor);
-        for (IPreClassTransformer processor : preProcessors)
-            ValueManager.registerClass(processor);
-        for (INameObfuscationProcessor processor : this.nameObfuscationProcessors)
-            ValueManager.registerClass(processor);
+        this.nameObfuscationProcessors.add(new NameObfuscation(this));
+        this.nameObfuscationProcessors.add(new InnerClassRemover(this));
+        this.processors.add(new CrasherTransformer(this));
+        this.processors.add(new ReferenceProxy(this));
     }
 
     public void setScript(JObfScript script)
@@ -359,21 +388,15 @@ public class JarObfuscator
         this.script = script;
     }
 
-    private void prepareForProcessingJar(Configuration config)
+    private void prepareForProcessingJar()
     {
-        classes = new HashMap<>();
-        this.libraryClassNodes = new HashSet<>();
-        this.classPath = new HashMap<>();
-        files = new HashMap<>();
-        this.hierarchy = new HashMap<>();
-        this.mainClass = null;
-
-        NameUtils.applySettings(this.settings);
+        NameUtils.applySettings(SETTINGS);
         NameUtils.setup();
 
         try
         {
-            this.script = StringUtils.isBlank(config.getScript()) ? null: new JObfScript(config.getScript());
+            this.script = StringUtils.isBlank(this.config.getScript()) ? null:
+                    new JObfScript(this.config.getScript());
         }
         catch (Exception e)
         {
@@ -381,51 +404,20 @@ public class JarObfuscator
         }
     }
 
-    private static ZipInputStream getInJarStream(String inputJarPath) throws FileNotFoundException
-    {
-        try
-        {
-            return new ZipInputStream(new BufferedInputStream(new FileInputStream(inputJarPath)));
-        }
-        catch (FileNotFoundException e)
-        {
-            throw new FileNotFoundException("Could not open input file: " + e.getMessage());
-        }
-    }
-
-    private static ZipOutputStream getOutJarStream(String outputJarPath, boolean stored) throws FileNotFoundException
-    {
-        try
-        {
-            OutputStream out = outputJarPath == null ? new ByteArrayOutputStream(): new FileOutputStream(outputJarPath);
-            ZipOutputStream outJar = new ZipOutputStream(new BufferedOutputStream(out));
-            outJar.setMethod(stored ? ZipOutputStream.STORED: ZipOutputStream.DEFLATED);
-
-            if (stored)
-                outJar.setLevel(Deflater.NO_COMPRESSION);
-
-            return outJar;
-        }
-        catch (FileNotFoundException e)
-        {
-            throw new FileNotFoundException("Could not open output file: " + e.getMessage());
-        }
-    }
-
-    public void processJar(Configuration config) throws IOException
+    public void processJar() throws Exception
     {
         ZipInputStream inJar = null;
         ZipOutputStream outJar = null;
+        this.prepareForProcessingJar();
 
-        this.prepareForProcessingJar(config);
         try
         {
-            boolean useStore = this.settings.getUseStore().getObject();
+            boolean useStore = SETTINGS.getUseStore().get();
 
-            inJar = getInJarStream(config.getInput());
-            outJar = getOutJarStream(config.getOutput(), useStore);
+            inJar = getInJarStream(this.config.getInput());
+            outJar = getOutJarStream(this.config.getOutput(), useStore);
 
-            this.processJar( config,useStore, inJar, outJar);
+            this.processJar(this.config, useStore, inJar, outJar);
         }
         catch (InterruptedException ignored)
         {
@@ -433,15 +425,10 @@ public class JarObfuscator
         catch (Exception e)
         {
             log.error("An error has occurred while processing the jar", e);
+            throw e;  // Re-throw exception
         }
         finally
         {
-            this.classPath.clear();
-            classes.clear();
-            this.libraryClassNodes.clear();
-            files.clear();
-            this.hierarchy.clear();
-
             NameUtils.cleanUp();
 
             System.gc();
@@ -507,7 +494,7 @@ public class JarObfuscator
                 if (entryName.equals("META-INF/MANIFEST.MF"))
                     this.mainClass = Utils.getMainClass(new String(entryData, StandardCharsets.UTF_8));
 
-                files.put(entryName, entryData);
+                this.files.put(entryName, entryData);
                 continue;
             }
 
@@ -519,13 +506,13 @@ public class JarObfuscator
                 //ca = new LineInjectorAdaptor(ASM4, cn);
 
                 cr.accept(cn, 0);
-                classes.put(entryName, cn);
+                this.classes.put(entryName, cn);
                 classDataMap.put(entryName, entryData);
             }
             catch (Exception e)
             {
                 log.warn("Failed to read class " + entryName, e);
-                files.put(entryName, entryData);
+                this.files.put(entryName, entryData);
             }
         }
 
@@ -545,27 +532,26 @@ public class JarObfuscator
         log.info("Reading input jar...");
         Map<String, byte[]> classDataMap = readJarClasses(inJar, outJar);
 
-        for (Map.Entry<String, ClassNode> stringClassNodeEntry : classes.entrySet())
+        for (Map.Entry<String, ClassNode> stringClassNodeEntry : this.classes.entrySet())
             this.classPath.put(stringClassNodeEntry.getKey().replace(".class", ""), new ClassWrapper(stringClassNodeEntry.getValue(), false, classDataMap.get(stringClassNodeEntry.getKey())));
 
-        for (ClassNode value : classes.values())
+        for (ClassNode value : this.classes.values())
             this.libraryClassNodes.add(new ClassWrapper(value, false, null));
 
 
         log.info("... Finished after " + Utils.formatTime(System.currentTimeMillis() - startTime));
 
         for (INameObfuscationProcessor nameObfuscationProcessor : this.nameObfuscationProcessors)
-            nameObfuscationProcessor.transformPost(this, classes);
-        for (IPreClassTransformer preProcessor : preProcessors)
-            preProcessor.process(classes.values());
+            nameObfuscationProcessor.transformPost(this, this.classes);
 
         if (Packager.INSTANCE.isEnabled())
             Packager.INSTANCE.init();
 
         startTime = System.currentTimeMillis();
 
-        log.info("Transforming with " + this.threadCount + " threads...");
-        Map<String, byte[]> toWrite = this.transformClasses(this.threadCount);
+        int threadCount = this.config.getNThreads();
+        log.info("Transforming with " + threadCount + " threads...");
+        Map<String, byte[]> toWrite = this.transformClasses(threadCount);
         log.info("... Finished after " + Utils.formatTime(System.currentTimeMillis() - startTime));
 
         startTime = System.currentTimeMillis();
@@ -578,7 +564,7 @@ public class JarObfuscator
         startTime = System.currentTimeMillis();
 
         log.info("Writing resources...");
-        for (Map.Entry<String, byte[]> fileEntry : files.entrySet())
+        for (Map.Entry<String, byte[]> fileEntry : this.files.entrySet())
         {
             String entryName = fileEntry.getKey();
             byte[] entryData = fileEntry.getValue();
@@ -616,7 +602,7 @@ public class JarObfuscator
     {
         ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
 
-        LinkedList<Map.Entry<String, ClassNode>> classQueue = new LinkedList<>(classes.entrySet());
+        LinkedList<Map.Entry<String, ClassNode>> classQueue = new LinkedList<>(this.classes.entrySet());
         Map<String, byte[]> toWrite = new HashMap<>();
 
         AtomicInteger processed = new AtomicInteger(0);
@@ -647,33 +633,36 @@ public class JarObfuscator
 
                     if (this.script == null || this.script.isObfuscatorEnabled(cn))
                     {
-                        log.info(String.format("[%s] (%s/%s), Processing %s",
+                        log.info(String.format(
+                                "[%s] (%s/%s), Processing %s",
                                 Thread.currentThread().getName(),
                                 processed.get(),
-                                classes.size(),
+                                this.classes.size(),
                                 entryName
                         ));
 
-                        for (IClassTransformer proc : processors)
+                        for (IClassTransformer proc : this.processors)
                             try
                             {
                                 proc.process(callback, cn);
                             }
                             catch (Exception e)
                             {
-                                log.error(String.format("[%s] (%s/%s), Error transforming %s",
+                                log.error(String.format(
+                                        "[%s] (%s/%s), Error transforming %s",
                                         Thread.currentThread().getName(),
                                         processed.get(),
-                                        classes.size(),
+                                        this.classes.size(),
                                         entryName
                                 ), e);
                             }
                     }
                     else
-                        log.info(String.format("[%s] (%s/%s), Skipping %s",
+                        log.info(String.format(
+                                "[%s] (%s/%s), Skipping %s",
                                 Thread.currentThread().getName(),
                                 processed.get(),
-                                classes.size(),
+                                this.classes.size(),
                                 entryName
                         ));
 
@@ -686,10 +675,11 @@ public class JarObfuscator
                     int mode = this.computeMode
                             | (callback.isForceComputeFrames() ? ModifiedClassWriter.COMPUTE_FRAMES: 0);
 
-                    log.debug(String.format("[%s] (%s/%s), Writing (computeMode = %s) %s",
+                    log.debug(String.format(
+                            "[%s] (%s/%s), Writing (computeMode = %s) %s",
                             Thread.currentThread().getName(),
                             processed.get(),
-                            classes.size(),
+                            this.classes.size(),
                             mode,
                             entryName
                     ));
@@ -705,10 +695,11 @@ public class JarObfuscator
                 }
                 catch (Throwable e)
                 {
-                    log.error(String.format("[%s] (%s/%s), Error writing %s",
+                    log.error(String.format(
+                            "[%s] (%s/%s), Error writing %s",
                             Thread.currentThread().getName(),
                             processed.get(),
-                            classes.size(),
+                            this.classes.size(),
                             entryName
                     ), e);
                     ModifiedClassWriter writer = new ModifiedClassWriter(ModifiedClassWriter.COMPUTE_MAXS
@@ -729,10 +720,11 @@ public class JarObfuscator
                 }
                 catch (Exception e)
                 {
-                    log.error(String.format("[%s] (%s/%s), Error processing package %s",
+                    log.error(String.format(
+                            "[%s] (%s/%s), Error processing package %s",
                             Thread.currentThread().getName(),
                             processed.get(),
-                            classes.size(),
+                            this.classes.size(),
                             entryName
                     ), e);
                 }
@@ -781,11 +773,6 @@ public class JarObfuscator
 
         outJar.putNextEntry(newEntry);
         outJar.write(value);
-    }
-
-    public void setThreadCount(int threadCount)
-    {
-        this.threadCount = threadCount;
     }
 
     public void setWorkDone()

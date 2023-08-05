@@ -12,7 +12,7 @@ import javax.swing.text.Document;
 import javax.swing.text.Element;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
-import me.superblaubeere27.jobf.JObf;
+import me.superblaubeere27.jobf.JavaObfuscator;
 
 import java.awt.Color;
 
@@ -178,7 +178,7 @@ public class Appender extends AppenderBase<ILoggingEvent>
         // Safe way to update JTextPane
         SwingUtilities.invokeLater(() -> {
             // Alias for JTextPane in the application frame
-            final JTextPane textArea = JObf.getGui();
+            final JTextPane textArea = JavaObfuscator.getGui();
             if (textArea == null)
             {
                 return;

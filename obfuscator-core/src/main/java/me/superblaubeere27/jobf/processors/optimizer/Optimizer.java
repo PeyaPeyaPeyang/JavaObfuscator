@@ -16,27 +16,35 @@ import me.superblaubeere27.jobf.ProcessorCallback;
 import me.superblaubeere27.jobf.utils.values.BooleanValue;
 import me.superblaubeere27.jobf.utils.values.DeprecationLevel;
 import me.superblaubeere27.jobf.utils.values.EnabledValue;
+import me.superblaubeere27.jobf.utils.values.ValueManager;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
 public class Optimizer implements IClassTransformer
 {
     private static final String PROCESSOR_NAME = "Optimizer";
-    private final EnabledValue enabledValue = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.OK, false);
-    private final BooleanValue replaceEquals = new BooleanValue(PROCESSOR_NAME, "Replace String.equals()", "NOT TESTED", DeprecationLevel.OK, false);
-    private final BooleanValue replaceEqualsIgnoreCase = new BooleanValue(PROCESSOR_NAME, "Replace String.equalsIgnoreCase()", "Might break some comparisons with strings that contains unicode chars", DeprecationLevel.OK, false);
-    private final BooleanValue optimizeStringCalls = new BooleanValue(PROCESSOR_NAME, "Optimize static string calls", null, DeprecationLevel.GOOD, false);
+
+    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.OK, false);
+
+    private static final BooleanValue V_REPLACE_EQUALS = new BooleanValue(PROCESSOR_NAME, "Replace String.equals()", "NOT TESTED", DeprecationLevel.OK, false);
+    private static final BooleanValue V_EQUALS_IGNORE_CASE = new BooleanValue(PROCESSOR_NAME, "Replace String.equalsIgnoreCase()", "Might break some comparisons with strings that contains unicode chars", DeprecationLevel.OK, false);
+    private static final BooleanValue V_OPTIMIZE_STATIC_STRING_CALLS = new BooleanValue(PROCESSOR_NAME, "Optimize static string calls", null, DeprecationLevel.GOOD, false);
+
+    static {
+        ValueManager.registerClass(Optimizer.class);
+    }
 
     @Override
     public void process(ProcessorCallback callback, ClassNode node)
     {
-        if (!this.enabledValue.getObject()) return;
+        if (!V_ENABLED.get()) return;
 
         for (MethodNode method : node.methods)
         {
-            if (this.replaceEquals.getObject() || this.replaceEqualsIgnoreCase.getObject())
-                ComparisionReplacer.replaceComparisons(method, this.replaceEquals.getObject(), this.replaceEqualsIgnoreCase.getObject());
-            if (this.optimizeStringCalls.getObject()) StaticStringCallOptimizer.optimize(method);
+            if (V_REPLACE_EQUALS.get() || V_EQUALS_IGNORE_CASE.get())
+                ComparisionReplacer.replaceComparisons(method, V_REPLACE_EQUALS.get(), V_EQUALS_IGNORE_CASE.get());
+            if (V_OPTIMIZE_STATIC_STRING_CALLS.get())
+                StaticStringCallOptimizer.optimize(method);
         }
     }
 

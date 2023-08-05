@@ -16,6 +16,7 @@ import me.superblaubeere27.jobf.JarObfuscator;
 import me.superblaubeere27.jobf.ProcessorCallback;
 import me.superblaubeere27.jobf.utils.values.DeprecationLevel;
 import me.superblaubeere27.jobf.utils.values.EnabledValue;
+import me.superblaubeere27.jobf.utils.values.ValueManager;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
@@ -27,8 +28,13 @@ public class HideMembers implements IClassTransformer
 {
     private static final String PROCESSOR_NAME = "HideMembers";
     private static final Random random = new Random();
+    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.GOOD, true);
+
+    static {
+        ValueManager.registerClass(HideMembers.class);
+    }
+
     private final JarObfuscator inst;
-    private final EnabledValue enabled = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.GOOD, true);
 
     public HideMembers(JarObfuscator inst)
     {
@@ -38,7 +44,7 @@ public class HideMembers implements IClassTransformer
     @Override
     public void process(ProcessorCallback callback, ClassNode node)
     {
-        if (!this.enabled.getObject()) return;
+        if (!V_ENABLED.get()) return;
 
         if ((node.access & Opcodes.ACC_INTERFACE) == 0)
         {

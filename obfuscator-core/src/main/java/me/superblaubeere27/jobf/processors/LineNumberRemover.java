@@ -19,6 +19,7 @@ import me.superblaubeere27.jobf.utils.values.BooleanValue;
 import me.superblaubeere27.jobf.utils.values.DeprecationLevel;
 import me.superblaubeere27.jobf.utils.values.EnabledValue;
 import me.superblaubeere27.jobf.utils.values.StringValue;
+import me.superblaubeere27.jobf.utils.values.ValueManager;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.LabelNode;
@@ -53,13 +54,18 @@ public class LineNumberRemover implements IClassTransformer
         TYPES.add("Ljava/lang/String;");
     }
 
+    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.GOOD, true);
+    private static final BooleanValue V_RENAME_VALUES = new BooleanValue(PROCESSOR_NAME, "Rename local variables", DeprecationLevel.GOOD, true);
+    private static final BooleanValue V_REMOVE_LINE_NUMBERS = new BooleanValue(PROCESSOR_NAME, "Remove Line Numbers", DeprecationLevel.GOOD, true);
+    private static final BooleanValue V_REMOVE_DEBUG_NAMES = new BooleanValue(PROCESSOR_NAME, "Remove Debug Names", DeprecationLevel.GOOD, true);
+    private static final BooleanValue V_ADD_LOCAL_VARIABLES = new BooleanValue(PROCESSOR_NAME, "Add Local Variables", "Adds random local variables with wrong types. Might break some decompilers", DeprecationLevel.GOOD, true);
+    private static final StringValue V_NEW_SOURCE_FILE_NAME = new StringValue(PROCESSOR_NAME, "New SourceFile Name", DeprecationLevel.GOOD, "");
+
+    static {
+        ValueManager.registerClass(LineNumberRemover.class);
+    }
+
     private final JarObfuscator inst;
-    private final EnabledValue enabled = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.GOOD, true);
-    private final BooleanValue renameValues = new BooleanValue(PROCESSOR_NAME, "Rename local variables", DeprecationLevel.GOOD, true);
-    private final BooleanValue removeLineNumbers = new BooleanValue(PROCESSOR_NAME, "Remove Line Numbers", DeprecationLevel.GOOD, true);
-    private final BooleanValue removeDebugNames = new BooleanValue(PROCESSOR_NAME, "Remove Debug Names", DeprecationLevel.GOOD, true);
-    private final BooleanValue addLocalVariables = new BooleanValue(PROCESSOR_NAME, "Add Local Variables", "Adds random local variables with wrong types. Might break some decompilers", DeprecationLevel.GOOD, true);
-    private final StringValue newSourceFileName = new StringValue(PROCESSOR_NAME, "New SourceFile Name", DeprecationLevel.GOOD, "");
 
     public LineNumberRemover(JarObfuscator inst)
     {
@@ -69,7 +75,7 @@ public class LineNumberRemover implements IClassTransformer
     @Override
     public void process(ProcessorCallback callback, ClassNode node)
     {
-        if (!this.enabled.getObject()) return;
+        if (!V_ENABLED.get()) return;
 
         for (MethodNode method : node.methods)
         {
@@ -79,7 +85,7 @@ public class LineNumberRemover implements IClassTransformer
 
             for (AbstractInsnNode abstractInsnNode : method.instructions.toArray())
             {
-                if (abstractInsnNode instanceof LineNumberNode && this.removeLineNumbers.getObject())
+                if (abstractInsnNode instanceof LineNumberNode && V_REMOVE_LINE_NUMBERS.get())
                 {
                     LineNumberNode insnNode = (LineNumberNode) abstractInsnNode;
                     method.instructions.remove(insnNode);
@@ -107,7 +113,7 @@ public class LineNumberRemover implements IClassTransformer
                 }
             }
 
-            if (firstLabel != null && this.addLocalVariables.getObject())
+            if (firstLabel != null && this.V_ADD_LOCAL_VARIABLES.get())
             {
                 if (method.localVariables == null) method.localVariables = new ArrayList<>();
 
@@ -117,14 +123,14 @@ public class LineNumberRemover implements IClassTransformer
                 }
             }
 
-            if (method.parameters != null && this.renameValues.getObject())
+            if (method.parameters != null && V_RENAME_VALUES.get())
             {
                 for (ParameterNode parameter : method.parameters)
                 {
                     parameter.name = NameUtils.generateLocalVariableName();
                 }
             }
-            if (method.localVariables != null && this.renameValues.getObject())
+            if (method.localVariables != null && V_RENAME_VALUES.get())
             {
                 for (LocalVariableNode parameter : method.localVariables)
                 {
@@ -132,9 +138,9 @@ public class LineNumberRemover implements IClassTransformer
                 }
             }
         }
-        if ((node.sourceFile == null || !node.sourceFile.contains(StringEncryptionTransformer.MAGICNUMBER_START)) && this.removeDebugNames.getObject())
+        if ((node.sourceFile == null || !node.sourceFile.contains(StringEncryptionTransformer.MAGICNUMBER_START)) && this.V_REMOVE_DEBUG_NAMES.get())
         {
-            node.sourceFile = this.newSourceFileName.getObject().isEmpty() ? null: this.newSourceFileName.getObject();
+            node.sourceFile = V_NEW_SOURCE_FILE_NAME.get().isEmpty() ? null: V_NEW_SOURCE_FILE_NAME.get();
         }
 
         this.inst.setWorkDone();

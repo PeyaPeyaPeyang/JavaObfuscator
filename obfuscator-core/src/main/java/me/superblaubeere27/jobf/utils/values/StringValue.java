@@ -32,6 +32,6 @@ public class StringValue extends Value<String>
     @Override
     public String toString()
     {
-        return String.format("%s::%s = \"%s\"", getOwner(), getName(), getObject());
+        return String.format("%s::%s = \"%s\"", getOwner(), getName(), get());
     }
 }

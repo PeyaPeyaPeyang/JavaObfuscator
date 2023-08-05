@@ -36,6 +36,6 @@ public class ModeValue extends Value<Integer>
     @Override
     public String toString()
     {
-        return String.format("%s::%s<%s> = %s", getOwner(), getName(), Strings.join(getPossibleValues(), ", "), getObject());
+        return String.format("%s::%s<%s> = %s", getOwner(), getName(), Strings.join(getPossibleValues(), ", "), get());
     }
 }

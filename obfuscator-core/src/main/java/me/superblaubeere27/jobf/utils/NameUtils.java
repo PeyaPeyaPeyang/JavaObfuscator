@@ -207,22 +207,22 @@ public class NameUtils
 
     public static void applySettings(JObfSettings settings)
     {
-        if (settings.getGeneratorChars().getObject().isEmpty())
+        if (settings.getGeneratorChars().get().isEmpty())
         {
-            settings.getGeneratorChars().setObject("Il");
+            settings.getGeneratorChars().setValue("Il");
             throw new IllegalStateException("The generator chars are empty. Changing them to 'Il'");
         }
 
-        chars = settings.getGeneratorChars().getObject();
+        chars = settings.getGeneratorChars().get();
 
-        usingCustomDictionary = settings.getUseCustomDictionary().getObject();
+        usingCustomDictionary = settings.getUseCustomDictionary().get();
 
         try
         {
             if (usingCustomDictionary)
             {
-                classNames = Files.readLines(new File(settings.getClassNameDictionary().getObject()), StandardCharsets.UTF_8);
-                names = Files.readLines(new File(settings.getNameDictionary().getObject()), StandardCharsets.UTF_8);
+                classNames = Files.readLines(new File(settings.getClassNameDictionary().get()), StandardCharsets.UTF_8);
+                names = Files.readLines(new File(settings.getNameDictionary().get()), StandardCharsets.UTF_8);
             }
         }
         catch (IOException e)

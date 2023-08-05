@@ -20,6 +20,7 @@ import me.superblaubeere27.jobf.utils.NodeUtils;
 import me.superblaubeere27.jobf.utils.Utils;
 import me.superblaubeere27.jobf.utils.values.DeprecationLevel;
 import me.superblaubeere27.jobf.utils.values.EnabledValue;
+import me.superblaubeere27.jobf.utils.values.ValueManager;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
@@ -43,11 +44,16 @@ import java.util.Random;
 public class InlineTransformer implements IClassTransformer
 {
     private static final Random random = new Random();
+
+    private static final EnabledValue V_ENABLED = new EnabledValue("Inlining", "Doesn't work, please don't use this", DeprecationLevel.BAD, false);
+
     private static final List<String> exceptions = new ArrayList<>();
 
-    private final EnabledValue enabled = new EnabledValue("Inlining", "Doesn't work, please don't use this", DeprecationLevel.BAD, false);
-
     private final JarObfuscator inst;
+
+    static {
+        ValueManager.registerClass(InlineTransformer.class);
+    }
 
     public InlineTransformer(JarObfuscator inst)
     {
@@ -57,7 +63,7 @@ public class InlineTransformer implements IClassTransformer
     @Override
     public void process(ProcessorCallback callback, ClassNode node)
     {
-        if (!this.enabled.getObject()) return;
+        if (!V_ENABLED.get()) return;
 
         int maxPasses = 3;
 

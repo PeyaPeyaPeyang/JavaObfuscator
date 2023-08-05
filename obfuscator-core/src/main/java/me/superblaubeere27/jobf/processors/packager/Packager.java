@@ -68,15 +68,15 @@ public class Packager
 
     public boolean isEnabled()
     {
-        return this.enabledValue.getObject();
+        return this.enabledValue.get();
     }
 
     public void init()
     {
         this.decryptionClassName = NameUtils.generateLocalVariableName();
-        this.mainClass = this.autoFindMainClass.getObject() ? JarObfuscator.INSTANCE.getMainClass(): this.mainClassValue.getObject();
+        this.mainClass = this.autoFindMainClass.get() ? JarObfuscator.INSTANCE.getMainClass(): this.mainClassValue.get();
 
-        if (this.autoFindMainClass.getObject() && this.mainClass == null)
+        if (this.autoFindMainClass.get() && this.mainClass == null)
             throw new RuntimeException("[Packager] Failed to resolve main class, please add it or specify it manually");
 
         this.key = new byte[RANDOM.nextInt(40) + 10];

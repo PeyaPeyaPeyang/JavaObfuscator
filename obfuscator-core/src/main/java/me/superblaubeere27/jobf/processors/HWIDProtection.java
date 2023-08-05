@@ -20,6 +20,7 @@ import me.superblaubeere27.jobf.utils.NodeUtils;
 import me.superblaubeere27.jobf.utils.values.DeprecationLevel;
 import me.superblaubeere27.jobf.utils.values.EnabledValue;
 import me.superblaubeere27.jobf.utils.values.StringValue;
+import me.superblaubeere27.jobf.utils.values.ValueManager;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -42,10 +43,16 @@ import java.util.Random;
 public class HWIDProtection implements IClassTransformer
 {
     private static final String PROCESSOR_NAME = "HWIDPRotection";
+
+    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.GOOD, false);
+    private static final StringValue V_HWID = new StringValue(PROCESSOR_NAME, "HWID", DeprecationLevel.GOOD, HWID.bytesToHex(HWID.generateHWID()));
+
     private static final Random random = new Random();
     private final JarObfuscator inst;
-    private final EnabledValue enabled = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.GOOD, false);
-    private final StringValue hwidValue = new StringValue(PROCESSOR_NAME, "HWID", DeprecationLevel.GOOD, HWID.bytesToHex(HWID.generateHWID()));
+
+    static {
+        ValueManager.registerClass(HWIDProtection.class);
+    }
 
     public HWIDProtection(JarObfuscator inst)
     {
@@ -171,9 +178,9 @@ public class HWIDProtection implements IClassTransformer
     @Override
     public void process(ProcessorCallback callback, ClassNode node)
     {
-        if (!this.enabled.getObject()) return;
+        if (!this.V_ENABLED.get()) return;
 
-        byte[] hwid = HWID.hexStringToByteArray(this.hwidValue.getObject());
+        byte[] hwid = HWID.hexStringToByteArray(this.V_HWID.get());
 
         if (Modifier.isInterface(node.access))
         {

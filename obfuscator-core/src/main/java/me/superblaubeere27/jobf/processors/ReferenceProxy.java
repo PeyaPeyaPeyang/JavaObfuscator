@@ -18,6 +18,7 @@ import me.superblaubeere27.jobf.utils.NameUtils;
 import me.superblaubeere27.jobf.utils.NodeUtils;
 import me.superblaubeere27.jobf.utils.values.DeprecationLevel;
 import me.superblaubeere27.jobf.utils.values.EnabledValue;
+import me.superblaubeere27.jobf.utils.values.ValueManager;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -35,9 +36,13 @@ public class ReferenceProxy implements IClassTransformer
 {
     private static final String PROCESSOR_NAME = "ReferenceProxy";
     private static final Random random = new Random();
-    private final JarObfuscator inst;
-    private final EnabledValue enabled = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.BAD, false);
+    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.BAD, false);
 
+    static {
+        ValueManager.registerClass(ReferenceProxy.class);
+    }
+
+    private final JarObfuscator inst;
     public ReferenceProxy(JarObfuscator inst)
     {
         this.inst = inst;
@@ -46,7 +51,8 @@ public class ReferenceProxy implements IClassTransformer
     @Override
     public void process(ProcessorCallback callback, ClassNode node)
     {
-        if (!this.enabled.getObject()) return;
+        if (!V_ENABLED.get())
+            return;
 
         try
         {
