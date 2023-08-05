@@ -18,6 +18,7 @@ import me.superblaubeere27.jobf.utils.Utils;
 import me.superblaubeere27.jobf.utils.values.BooleanValue;
 import me.superblaubeere27.jobf.utils.values.DeprecationLevel;
 import me.superblaubeere27.jobf.utils.values.EnabledValue;
+import me.superblaubeere27.jobf.utils.values.FilePathValue;
 import me.superblaubeere27.jobf.utils.values.StringValue;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
@@ -27,12 +28,17 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.lang.reflect.Modifier;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -50,6 +56,7 @@ public class NameObfuscation implements INameObfuscationProcessor
     private final BooleanValue shouldPackage = new BooleanValue(PROCESSOR_NAME, "Package", DeprecationLevel.OK, false);
     private final StringValue newPackage = new StringValue(PROCESSOR_NAME, "New Packages", null, DeprecationLevel.GOOD, "", 5);
     private final BooleanValue acceptMissingLibraries = new BooleanValue(PROCESSOR_NAME, "Accept Missing Libraries", DeprecationLevel.GOOD, false);
+    private final FilePathValue mappingsToSave = new FilePathValue(PROCESSOR_NAME, "Mappings to save", null, DeprecationLevel.GOOD, null);
     private final List<Pattern> excludedClassesPatterns = new ArrayList<>();
     private final List<Pattern> excludedMethodsPatterns = new ArrayList<>();
     private final List<Pattern> excludedFieldsPatterns = new ArrayList<>();
@@ -208,18 +215,8 @@ public class NameObfuscation implements INameObfuscationProcessor
                 classCounter.incrementAndGet();
             });
 
-//        try {
-//            FileOutputStream outStream = new FileOutputStream("mappings.txt");
-//            PrintStream printStream = new PrintStream(outStream);
-//
-//            for (Map.Entry<String, String> stringStringEntry : mappings.entrySet()) {
-//                printStream.println(stringStringEntry.getKey() + " -> " + stringStringEntry.getValue());
-//            }
-//
-//            outStream.close();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
+            if (this.mappingsToSave.getObject() != null)
+                this.saveMapping(mappings);
 
 
             log.info(String.format("... Finished generating mappings (%s)", Utils.formatTime(System.currentTimeMillis() - current)));
@@ -286,6 +283,19 @@ public class NameObfuscation implements INameObfuscationProcessor
             this.excludedFieldsPatterns.clear();
         }
 
+    }
+
+    private void saveMapping(HashMap<String, String> mappings)
+    {
+        try (FileOutputStream fos = new FileOutputStream(this.mappingsToSave.getObject()))
+        {
+            for (Map.Entry<String, String> entry: mappings.entrySet())
+                fos.write((entry.getKey() + " -> " + entry.getValue() + "\n").getBytes());
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
     }
 
     private Pattern compileExcludePattern(String s)
