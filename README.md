@@ -29,14 +29,18 @@ Without
 
 ```Java
 
-public class HelloWorld {
-    public HelloWorld() {
+public class HelloWorld
+{
+    public HelloWorld()
+    {
         super();
     }
-    
-    public static void main(final String[] args) {
+
+    public static void main(final String[] args)
+    {
         System.out.println("Hello World");
-        for (int i = 0; i < 10; ++i) {
+        for (int i = 0; i < 10; ++i)
+        {
             System.out.println(i);
         }
     }
@@ -47,21 +51,25 @@ Obfuscated (short version for full code visit https://pastebin.com/RFHtgPtX)
 
 ```Java
 
-public class HelloWorld {
-    
-    public static void main(final String[] array) {
+public class HelloWorld
+{
+
+    public static void main(final String[] array)
+    {
         // invokedynamic(1:(Ljava/io/PrintStream;Ljava/lang/String;)V, invokedynamic(0:()Ljava/io/PrintStream;), HelloWorld.llII[HelloWorld.lllI[0]])
         float lllllllIlIllIII = HelloWorld.lllI[0];
-        while (llIll((int)lllllllIlIllIII, HelloWorld.lllI[1])) {
+        while (llIll((int) lllllllIlIllIII, HelloWorld.lllI[1]))
+        {
             // invokedynamic(2:(Ljava/io/PrintStream;I)V, invokedynamic(0:()Ljava/io/PrintStream;), lllllllIlIllIII)
             ++lllllllIlIllIII;
             "".length();
-            if (" ".length() == (" ".length() << ("   ".length() << " ".length()) & ~(" ".length() << ("   ".length() << " ".length())))) {
+            if (" ".length() == (" ".length() << ("   ".length() << " ".length()) & ~(" ".length() << ("   ".length() << " ".length()))))
+            {
                 throw null;
             }
         }
     }
-    
+
 }
 
 ```
@@ -206,6 +214,7 @@ function isRemappingEnabledForClass(node) {
     var flag2 = !node.name.startsWith("com/client/mixin");
     return flag1 && flag2;
 }
+
 function isObfuscatorEnabledForClass(node) {
     var flag1 = !node.name.startsWith("org/json");
     var flag2 = !node.name.startsWith("com/client/mixin");

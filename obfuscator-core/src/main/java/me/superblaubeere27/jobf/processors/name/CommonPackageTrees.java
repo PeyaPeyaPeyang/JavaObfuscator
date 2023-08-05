@@ -13,14 +13,12 @@ import java.util.Random;
  */
 public class CommonPackageTrees
 {
-    public static List<Tree> root;
-
     private static final Tree com;
     private static final Tree org;
     private static final Tree javax;
     private static final Tree net;
-
     private static final Random random = new Random();
+    public static List<Tree> root;
 
     static
     {

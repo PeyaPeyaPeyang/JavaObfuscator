@@ -16,7 +16,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,12 +24,11 @@ import java.util.List;
 @AllArgsConstructor
 public class Configuration
 {
+    private final List<String> libraries;
     private String input;
     private String output;
     private String script;
     private int nThreads;
-    private final List<String> libraries;
-
 
     static Configuration fromJsonObject(JsonObject obj)
     {

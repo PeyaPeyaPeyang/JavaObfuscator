@@ -58,11 +58,12 @@ public class FlowObfuscator implements IClassTransformer
     private static final BooleanValue V_MANGLE_RETURN = new BooleanValue(PROCESSOR_NAME, "Mangle Return", "!! Needs COMPUTE_FRAMES (See documentation) !!", DeprecationLevel.BAD, false);
     private static final BooleanValue V_MANGLE_LOCALS = new BooleanValue(PROCESSOR_NAME, "Mangle Local Variables", "!! Needs COMPUTE_FRAMES (See documentation) !!", DeprecationLevel.BAD, false);
 
-    private final JarObfuscator inst;
-
-    static {
+    static
+    {
         ValueManager.registerClass(FlowObfuscator.class);
     }
+
+    private final JarObfuscator inst;
 
     public FlowObfuscator(JarObfuscator inst)
     {

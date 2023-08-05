@@ -20,10 +20,10 @@ public abstract class Value<T>
     private final String owner;
     private final String name;
     private final String description;
+    private final DeprecationLevel deprecation;
     @Getter(AccessLevel.NONE)
     @Setter
     private T value;
-    private final DeprecationLevel deprecation;
 
     public Value(String owner, String name, DeprecationLevel deprecation, T object)
     {
@@ -43,6 +43,7 @@ public abstract class Value<T>
     {
         return this.value;
     }
+
     @Override
     public String toString()
     {

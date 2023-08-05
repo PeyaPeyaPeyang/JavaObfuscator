@@ -182,7 +182,7 @@ public class JavaObfuscator
 
     public static boolean runObfuscator(String jarIn,
                                         String jarOut,
-                                        File  configPath,
+                                        File configPath,
                                         List<String> libraries,
                                         boolean embedded,
                                         String scriptContent,
@@ -195,7 +195,7 @@ public class JavaObfuscator
                 "Script?:     " + (scriptContent != null ? "Yes": "No")
         )));
 
-        Configuration config = new Configuration(jarIn, jarOut, scriptContent,  threads, libraries);
+        Configuration config = new Configuration(jarIn, jarOut, scriptContent, threads, libraries);
 
         if (configPath != null)
         {
@@ -227,11 +227,11 @@ public class JavaObfuscator
     }
 
     public static boolean runObfuscator(String jarIn,
-                                         String jarOut,
-                                         Configuration config,
-                                         List<String> libraries,
-                                         String scriptContent,
-                                         int threads)
+                                        String jarOut,
+                                        Configuration config,
+                                        List<String> libraries,
+                                        String scriptContent,
+                                        int threads)
     {
         if (StringUtils.isEmpty(config.getInput()))
             config.setInput(jarIn);
@@ -291,7 +291,7 @@ public class JavaObfuscator
         if (version == null)
             return false;
 
-        try(InputStream is = new URL("https://raw.githubusercontent.com/PeyaPeyaPeyang/javaObfuscator/master/version")
+        try (InputStream is = new URL("https://raw.githubusercontent.com/PeyaPeyaPeyang/javaObfuscator/master/version")
                 .openStream())
         {
             String latestVersion = new String(ByteStreams.toByteArray(is), StandardCharsets.UTF_8);

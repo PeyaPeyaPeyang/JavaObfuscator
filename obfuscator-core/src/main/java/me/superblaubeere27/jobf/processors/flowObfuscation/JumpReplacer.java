@@ -179,10 +179,10 @@ public class JumpReplacer
 
     static class ReplacedLabelPair
     {
-        private int firstNumber;
         private final LabelNode first;
         private final LabelNode second;
         private final LabelNode replacement;
+        private int firstNumber;
 
         ReplacedLabelPair(LabelNode first, LabelNode second)
         {

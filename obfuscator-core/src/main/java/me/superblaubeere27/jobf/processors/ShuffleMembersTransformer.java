@@ -28,12 +28,14 @@ public class ShuffleMembersTransformer implements IClassTransformer
 {
     private static final String PROCESSOR_NAME = "ShuffleMembers";
     private static final Random random = new Random();
-    private final JarObfuscator inst;
-    private final EnabledValue enabled = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.GOOD, true);
 
-    static {
+    static
+    {
 
     }
+
+    private final JarObfuscator inst;
+    private final EnabledValue enabled = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.GOOD, true);
 
     public ShuffleMembersTransformer(JarObfuscator inst)
     {

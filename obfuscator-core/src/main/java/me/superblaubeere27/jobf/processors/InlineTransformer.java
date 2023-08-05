@@ -49,11 +49,12 @@ public class InlineTransformer implements IClassTransformer
 
     private static final List<String> exceptions = new ArrayList<>();
 
-    private final JarObfuscator inst;
-
-    static {
+    static
+    {
         ValueManager.registerClass(InlineTransformer.class);
     }
+
+    private final JarObfuscator inst;
 
     public InlineTransformer(JarObfuscator inst)
     {

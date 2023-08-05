@@ -30,7 +30,8 @@ public class HideMembers implements IClassTransformer
     private static final Random random = new Random();
     private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.GOOD, true);
 
-    static {
+    static
+    {
         ValueManager.registerClass(HideMembers.class);
     }
 

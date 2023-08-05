@@ -78,7 +78,8 @@ public class InvokeDynamic implements IClassTransformer
     private static final Random random = new Random();
     private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, "Hides method calls", DeprecationLevel.OK, false);
 
-    static {
+    static
+    {
         ValueManager.registerClass(InvokeDynamic.class);
     }
 

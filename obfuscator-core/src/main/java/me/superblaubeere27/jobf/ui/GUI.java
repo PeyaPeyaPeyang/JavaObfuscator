@@ -288,13 +288,16 @@ public class GUI extends JFrame
 
     private void buildConfig()
     {
-        this.configPanel.setText(ConfigManager.generateConfig(new Configuration(
-                this.inputTextField.getText(),
-                this.outputTextField.getText(),
-                this.scriptArea.getText(),
-                this.threadsSlider.getValue(),
-                this.libraryList),
-                this.prettyPrintCheckBox.isSelected())
+        this.configPanel.setText(ConfigManager.generateConfig(
+                        new Configuration(
+                                this.inputTextField.getText(),
+                                this.outputTextField.getText(),
+                                this.scriptArea.getText(),
+                                this.threadsSlider.getValue(),
+                                this.libraryList
+                        ),
+                        this.prettyPrintCheckBox.isSelected()
+                )
         );
     }
 

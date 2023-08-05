@@ -61,11 +61,13 @@ public class StringEncryptionTransformer implements IClassTransformer
     private static final BooleanValue V_HIDE_STRINGS = new BooleanValue(PROCESSOR_NAME, "HideStrings", "Hide strings in SourceFile. Might break after editing the SourceFile", DeprecationLevel.OK, false);
     private static final BooleanValue V_AES = new BooleanValue(PROCESSOR_NAME, "AES", DeprecationLevel.OK, false);
 
-    static {
+    static
+    {
         ValueManager.registerClass(StringEncryptionTransformer.class);
     }
 
     private final JarObfuscator inst;
+
     public StringEncryptionTransformer(JarObfuscator inst)
     {
         this.inst = inst;

@@ -34,9 +34,9 @@ public class NameUtils
     private static final HashMap<String, Integer> packageMap = new HashMap<>();
     private static final Map<String, HashMap<String, Integer>> USED_METHODNAMES = new HashMap<>();
     private static final Map<String, Integer> USED_FIELDNAMES = new HashMap<>();
+    private static final Random random = new Random();
     //    private static boolean iL = true;
     private static int localVars = Short.MAX_VALUE;
-    private static final Random random = new Random();
     private static int METHODS;
     private static int FIELDS;
     private static boolean usingCustomDictionary;

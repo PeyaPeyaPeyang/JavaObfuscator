@@ -58,7 +58,8 @@ public class NameObfuscation implements INameObfuscationProcessor
     private static final BooleanValue V_ACCEPT_MISSING_LIBRARIES = new BooleanValue(PROCESSOR_NAME, "Accept Missing Libraries", DeprecationLevel.GOOD, false);
     private static final FilePathValue V_MAPPINGS_TO_SAVE = new FilePathValue(PROCESSOR_NAME, "Mappings to save", null, DeprecationLevel.GOOD, null);
 
-    static {
+    static
+    {
         ValueManager.registerClass(NameObfuscation.class);
     }
 
@@ -72,6 +73,11 @@ public class NameObfuscation implements INameObfuscationProcessor
     public NameObfuscation(JarObfuscator obfuscator)
     {
         this.obfuscator = obfuscator;
+    }
+
+    private static boolean hasNativeMethodInClass(ClassNode classNode)
+    {
+        return classNode.methods.stream().anyMatch(methodNode -> Modifier.isNative(methodNode.access));
     }
 
     public void setupPackages()
@@ -197,17 +203,11 @@ public class NameObfuscation implements INameObfuscationProcessor
             mappings.put(clazz.originalName, getPackageName() + NameUtils.generateClassName());
     }
 
-    private static boolean hasNativeMethodInClass(ClassNode classNode)
-    {
-        return classNode.methods.stream().anyMatch(methodNode -> Modifier.isNative(methodNode.access));
-    }
-
-
     private void processMethods(ClassWrapper classWrapper, Map<String, String> mappings)
     {
         Predicate<MethodWrapper> isExclude = method ->
                 !isMethodExcluded(classWrapper.originalName, method)
-                || !canRenameMethodTree(mappings, new HashSet<>(), method, classWrapper.originalName);
+                        || !canRenameMethodTree(mappings, new HashSet<>(), method, classWrapper.originalName);
 
         classWrapper.methods.stream()
                 .filter(isExclude.negate())
@@ -233,7 +233,7 @@ public class NameObfuscation implements INameObfuscationProcessor
     {
         Predicate<FieldWrapper> isExclude = field ->
                 !isFieldExcluded(classWrapper.originalName, field)
-                || !canRenameFieldTree(mappings, new HashSet<>(), field, classWrapper.originalName);
+                        || !canRenameFieldTree(mappings, new HashSet<>(), field, classWrapper.originalName);
 
         classWrapper.fields.stream()
                 .filter(isExclude.negate())
@@ -259,7 +259,7 @@ public class NameObfuscation implements INameObfuscationProcessor
         for (ClassWrapper classWrapper : classWrappers)
             writeClass(classWrapper, simpleRemapper);
     }
-    
+
     private void writeClass(ClassWrapper classWrapper, Remapper simpleRemapper)
     {
         ClassNode classNode = classWrapper.classNode;
@@ -315,7 +315,7 @@ public class NameObfuscation implements INameObfuscationProcessor
     {
         try (FileOutputStream fos = new FileOutputStream(V_MAPPINGS_TO_SAVE.get()))
         {
-            for (Map.Entry<String, String> entry: mappings.entrySet())
+            for (Map.Entry<String, String> entry : mappings.entrySet())
                 fos.write((entry.getKey() + " -> " + entry.getValue() + "\n").getBytes());
         }
         catch (IOException e)

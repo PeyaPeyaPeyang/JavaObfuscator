@@ -49,7 +49,8 @@ public class NumberObfuscationTransformer implements IClassTransformer
     private static final BooleanValue V_AND = new BooleanValue(PROCESSOR_NAME, "And", "Uses \"&\" to obfuscate numbers", DeprecationLevel.GOOD, false);
     private static final BooleanValue V_MULTIPLE_INSTRUCTIONS = new BooleanValue(PROCESSOR_NAME, "Multiple Instructions", "Repeats the obfuscation process", DeprecationLevel.GOOD, true);
 
-    static {
+    static
+    {
         ValueManager.registerClass(this);
     }
 

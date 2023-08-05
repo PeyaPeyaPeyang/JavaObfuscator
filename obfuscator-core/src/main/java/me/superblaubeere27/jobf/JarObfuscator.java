@@ -85,6 +85,11 @@ public class JarObfuscator
 {
     private static final JObfSettings SETTINGS = new JObfSettings();
 
+    static
+    {
+        ValueManager.registerClass(SETTINGS);
+    }
+
     private final List<INameObfuscationProcessor> nameObfuscationProcessors = new ArrayList<>();
     private final Configuration config;
     private final HashMap<String, byte[]> files;
@@ -93,16 +98,10 @@ public class JarObfuscator
     private final Map<String, ClassTree> hierarchy;
     private final Set<ClassWrapper> libraryClassNodes;
     private final List<IClassTransformer> processors;
-
     public JObfScript script;
-
     private boolean mainClassChanged;
     private String mainClass;
     private int computeMode;
-
-    static {
-        ValueManager.registerClass(SETTINGS);
-    }
 
     public JarObfuscator(Configuration config)
     {

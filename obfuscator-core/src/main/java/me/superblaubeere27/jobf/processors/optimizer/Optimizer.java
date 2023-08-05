@@ -30,7 +30,8 @@ public class Optimizer implements IClassTransformer
     private static final BooleanValue V_EQUALS_IGNORE_CASE = new BooleanValue(PROCESSOR_NAME, "Replace String.equalsIgnoreCase()", "Might break some comparisons with strings that contains unicode chars", DeprecationLevel.OK, false);
     private static final BooleanValue V_OPTIMIZE_STATIC_STRING_CALLS = new BooleanValue(PROCESSOR_NAME, "Optimize static string calls", null, DeprecationLevel.GOOD, false);
 
-    static {
+    static
+    {
         ValueManager.registerClass(Optimizer.class);
     }
 

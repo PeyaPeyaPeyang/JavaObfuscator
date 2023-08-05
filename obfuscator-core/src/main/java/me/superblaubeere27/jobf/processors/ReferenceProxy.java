@@ -38,11 +38,13 @@ public class ReferenceProxy implements IClassTransformer
     private static final Random random = new Random();
     private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.BAD, false);
 
-    static {
+    static
+    {
         ValueManager.registerClass(ReferenceProxy.class);
     }
 
     private final JarObfuscator inst;
+
     public ReferenceProxy(JarObfuscator inst)
     {
         this.inst = inst;

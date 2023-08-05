@@ -48,11 +48,13 @@ public class HWIDProtection implements IClassTransformer
     private static final StringValue V_HWID = new StringValue(PROCESSOR_NAME, "HWID", DeprecationLevel.GOOD, HWID.bytesToHex(HWID.generateHWID()));
 
     private static final Random random = new Random();
-    private final JarObfuscator inst;
 
-    static {
+    static
+    {
         ValueManager.registerClass(HWIDProtection.class);
     }
+
+    private final JarObfuscator inst;
 
     public HWIDProtection(JarObfuscator inst)
     {

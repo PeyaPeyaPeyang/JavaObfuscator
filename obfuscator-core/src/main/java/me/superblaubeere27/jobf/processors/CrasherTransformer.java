@@ -28,6 +28,9 @@ import java.util.ArrayList;
 public class CrasherTransformer implements IClassTransformer
 {
     private static final String EMPTY_STRINGS;
+    private static final EnabledValue V_ENABLED = new EnabledValue("Crasher", DeprecationLevel.GOOD, false);
+    private static final BooleanValue V_INVALID_SIGNATURES = new BooleanValue("Crasher", "Invalid Signatures", "Adds invalid signatures", DeprecationLevel.GOOD, true);
+    private static final BooleanValue V_EMPTY_ANNOTATION = new BooleanValue("Crasher", "Empty annotation spam", "Adds annotations which are repeated newline", DeprecationLevel.GOOD, true);
 
     static
     {
@@ -39,11 +42,8 @@ public class CrasherTransformer implements IClassTransformer
         EMPTY_STRINGS = stringBuilder.toString();
     }
 
-    private static final EnabledValue V_ENABLED = new EnabledValue("Crasher", DeprecationLevel.GOOD, false);
-    private static final BooleanValue V_INVALID_SIGNATURES = new BooleanValue("Crasher", "Invalid Signatures", "Adds invalid signatures", DeprecationLevel.GOOD, true);
-    private static final BooleanValue V_EMPTY_ANNOTATION = new BooleanValue("Crasher", "Empty annotation spam", "Adds annotations which are repeated newline", DeprecationLevel.GOOD, true);
-
-    static {
+    static
+    {
         ValueManager.registerClass(CrasherTransformer.class);
     }
 

@@ -38,11 +38,12 @@ public class InnerClassRemover implements INameObfuscationProcessor, IClassTrans
     private static final BooleanValue V_REMAP = new BooleanValue(PROCESSOR_NAME, "Remap", DeprecationLevel.OK, false);
     private static final BooleanValue V_REMOVE_METADATA = new BooleanValue(PROCESSOR_NAME, "Remove Metadata", DeprecationLevel.GOOD, true);
 
-    private final JarObfuscator obfuscator;
-
-    static {
+    static
+    {
         ValueManager.registerClass(InnerClassRemover.class);
     }
+
+    private final JarObfuscator obfuscator;
 
     public InnerClassRemover(JarObfuscator obfuscator)
     {
@@ -52,36 +53,6 @@ public class InnerClassRemover implements INameObfuscationProcessor, IClassTrans
     private static boolean isInnerClass(String name)
     {
         return innerClasses.matcher(name).matches();
-    }
-
-    @Override
-    public void transformPost(JarObfuscator inst, HashMap<String, ClassNode> nodes)
-    {
-        if (!(V_ENABLED.get() && V_REMAP.get()))
-            return;
-
-        final List<ClassNode> classNodes = new ArrayList<>(this.obfuscator.getClasses().values());
-
-        final Map<String, ClassNode> updatedClasses = new HashMap<>();
-        final CustomRemapper remapper = new CustomRemapper();
-
-        for (ClassNode classNode : classNodes)
-            generateAndRegisterRandomName(classNode, remapper);
-
-        for (final ClassNode classNode : classNodes)
-        {
-            this.obfuscator.getClasses().remove(classNode.name + ".class");
-
-            ClassNode newNode = new ClassNode();
-            ClassRemapper classRemapper = new ClassRemapper(newNode, remapper);
-            classNode.accept(classRemapper);
-
-            normalizeModifiers(newNode);
-
-            updatedClasses.put(newNode.name + ".class", newNode);
-        }
-
-        this.obfuscator.getClasses().putAll(updatedClasses);
     }
 
     private static void normalizeModifiers(ClassNode classNode)
@@ -119,6 +90,36 @@ public class InnerClassRemover implements INameObfuscationProcessor, IClassTrans
         while (!remapper.map(classNode.name, mappedName));  // 他スレッドの割り込みを待つ。
 
         return true;
+    }
+
+    @Override
+    public void transformPost(JarObfuscator inst, HashMap<String, ClassNode> nodes)
+    {
+        if (!(V_ENABLED.get() && V_REMAP.get()))
+            return;
+
+        final List<ClassNode> classNodes = new ArrayList<>(this.obfuscator.getClasses().values());
+
+        final Map<String, ClassNode> updatedClasses = new HashMap<>();
+        final CustomRemapper remapper = new CustomRemapper();
+
+        for (ClassNode classNode : classNodes)
+            generateAndRegisterRandomName(classNode, remapper);
+
+        for (final ClassNode classNode : classNodes)
+        {
+            this.obfuscator.getClasses().remove(classNode.name + ".class");
+
+            ClassNode newNode = new ClassNode();
+            ClassRemapper classRemapper = new ClassRemapper(newNode, remapper);
+            classNode.accept(classRemapper);
+
+            normalizeModifiers(newNode);
+
+            updatedClasses.put(newNode.name + ".class", newNode);
+        }
+
+        this.obfuscator.getClasses().putAll(updatedClasses);
     }
 
     @Override

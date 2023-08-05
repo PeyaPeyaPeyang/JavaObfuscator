@@ -257,7 +257,7 @@ public class Utils
             }
 
         Frame awtFrame = JOptionPane.getFrameForComponent(parent);
-        FileDialog dialog = new FileDialog(awtFrame, "Choose a file", toSave ? FileDialog.SAVE : FileDialog.LOAD);
+        FileDialog dialog = new FileDialog(awtFrame, "Choose a file", toSave ? FileDialog.SAVE: FileDialog.LOAD);
         if (filter != null)
             dialog.setFilenameFilter((dir, name) -> filter.accept(new File(dir, name)));
         if (currFolder != null)
@@ -266,7 +266,7 @@ public class Utils
         dialog.setVisible(true);
         String file = dialog.getFile();
 
-        return file == null ? null : new File(dialog.getDirectory(), file).getAbsolutePath();
+        return file == null ? null: new File(dialog.getDirectory(), file).getAbsolutePath();
     }
 
     public static long copy(final InputStream from, final OutputStream to) throws IOException

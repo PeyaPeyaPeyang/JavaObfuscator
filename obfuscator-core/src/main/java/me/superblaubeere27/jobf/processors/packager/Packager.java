@@ -43,12 +43,12 @@ public class Packager
     private static final Random RANDOM = new Random();
     private static final String PROCESSOR_NAME = "Packager";
     public static Packager INSTANCE = new Packager();
-    private byte[] key;
-    @Getter
-    private String decryptionClassName;
     private final EnabledValue enabledValue = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.OK, false);
     private final BooleanValue autoFindMainClass = new BooleanValue(PROCESSOR_NAME, "Use MainClass from the JAR manifest", DeprecationLevel.GOOD, true);
     private final StringValue mainClassValue = new StringValue(PROCESSOR_NAME, "Main class", DeprecationLevel.GOOD, "org.example.Main");
+    private byte[] key;
+    @Getter
+    private String decryptionClassName;
     private String mainClass;
 
     private Packager()
