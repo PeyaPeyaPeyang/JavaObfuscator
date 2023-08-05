@@ -13,6 +13,7 @@ package me.superblaubeere27.jobf.processors.packager;
 import lombok.Getter;
 import me.superblaubeere27.jobf.IClassTransformer;
 import me.superblaubeere27.jobf.JarObfuscator;
+import me.superblaubeere27.jobf.JavaObfuscator;
 import me.superblaubeere27.jobf.ProcessorCallback;
 import me.superblaubeere27.jobf.processors.name.ClassWrapper;
 import me.superblaubeere27.jobf.utils.NameUtils;
@@ -42,19 +43,22 @@ public class Packager
 {
     private static final Random RANDOM = new Random();
     private static final String PROCESSOR_NAME = "Packager";
+
+    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.OK, false);
+    private static final BooleanValue V_AUTO_FIND_MAIN_CLASS = new BooleanValue(PROCESSOR_NAME, "Use MainClass from the JAR manifest", DeprecationLevel.GOOD, true);
+    private static final StringValue V_MAIN_CLASS = new StringValue(PROCESSOR_NAME, "Main class", DeprecationLevel.GOOD, "org.example.Main");
+
+    static {
+
+        ValueManager.registerClass(Packager.class);
+    }
+
     public static Packager INSTANCE = new Packager();
-    private final EnabledValue enabledValue = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.OK, false);
-    private final BooleanValue autoFindMainClass = new BooleanValue(PROCESSOR_NAME, "Use MainClass from the JAR manifest", DeprecationLevel.GOOD, true);
-    private final StringValue mainClassValue = new StringValue(PROCESSOR_NAME, "Main class", DeprecationLevel.GOOD, "org.example.Main");
     private byte[] key;
     @Getter
     private String decryptionClassName;
     private String mainClass;
 
-    private Packager()
-    {
-        ValueManager.registerClass(this);
-    }
 
     private static byte[] xor(byte[] data, byte[] key)
     {
@@ -68,15 +72,15 @@ public class Packager
 
     public boolean isEnabled()
     {
-        return this.enabledValue.get();
+        return V_ENABLED.get();
     }
 
     public void init()
     {
         this.decryptionClassName = NameUtils.generateLocalVariableName();
-        this.mainClass = this.autoFindMainClass.get() ? JarObfuscator.INSTANCE.getMainClass(): this.mainClassValue.get();
+        this.mainClass = V_AUTO_FIND_MAIN_CLASS.get() ? JavaObfuscator.getCurrentSession().getMainClass(): V_MAIN_CLASS.get();
 
-        if (this.autoFindMainClass.get() && this.mainClass == null)
+        if (V_AUTO_FIND_MAIN_CLASS.get() && this.mainClass == null)
             throw new RuntimeException("[Packager] Failed to resolve main class, please add it or specify it manually");
 
         this.key = new byte[RANDOM.nextInt(40) + 10];
@@ -575,12 +579,10 @@ public class Packager
 
         cw.accept(classWriter1);
 
-        JarObfuscator.INSTANCE.getClassPath().put(cw.name, new ClassWrapper(cw, false, classWriter1.toByteArray()));
+        JavaObfuscator.getCurrentSession().getClassPath().put(cw.name, new ClassWrapper(cw, false, classWriter1.toByteArray()));
 
-        for (IClassTransformer processor : JarObfuscator.processors)
-        {
+        for (IClassTransformer processor : JavaObfuscator.getCurrentSession().getProcessors())
             processor.process(callback, cw);
-        }
 
         ModifiedClassWriter writer = new ModifiedClassWriter((callback.isForceComputeFrames() ? ModifiedClassWriter.COMPUTE_FRAMES: 0) | ModifiedClassWriter.COMPUTE_MAXS);
 

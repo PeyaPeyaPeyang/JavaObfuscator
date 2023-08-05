@@ -36,21 +36,24 @@ public class ValueManager
                 values.add(value);
             }
         }
-        catch (IllegalAccessException ignored)
+        catch (IllegalAccessException | NullPointerException ignored)
         {
         }
     }
 
     public static void registerClass(Object obj)
     {
-        registerClass(obj.getClass());
+        registerClass(obj.getClass(), obj);
     }
 
     public static void registerClass(Class<?> clazz)
     {
-        for (Field field : clazz.getFields())
-            registerField(field, null);
+        registerClass(clazz, null);
+    }
+
+    private static void registerClass(Class<?> clazz, Object obj)
+    {
         for (Field field : clazz.getDeclaredFields())
-            registerField(field, null);
+            registerField(field, obj);
     }
 }

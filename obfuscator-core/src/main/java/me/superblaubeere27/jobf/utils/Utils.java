@@ -17,6 +17,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileFilter;
 import me.superblaubeere27.jobf.JarObfuscator;
+import me.superblaubeere27.jobf.JavaObfuscator;
 import me.superblaubeere27.jobf.processors.name.ClassWrapper;
 import me.superblaubeere27.jobf.utils.values.DeprecationLevel;
 import org.objectweb.asm.Opcodes;
@@ -78,11 +79,11 @@ public class Utils
 
     public static ClassNode lookupClass(String name)
     {
-        ClassWrapper a = JarObfuscator.INSTANCE.getClassPath().get(name);
+        ClassWrapper a = JavaObfuscator.getCurrentSession().getClassPath().get(name);
 
         if (a != null) return a.classNode;
 
-        return JarObfuscator.getClasses().get(name);
+        return JavaObfuscator.getCurrentSession().getClasses().get(name);
     }
 
     public static boolean isWindows()

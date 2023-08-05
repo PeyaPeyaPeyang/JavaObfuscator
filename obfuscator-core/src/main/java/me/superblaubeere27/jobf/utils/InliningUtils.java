@@ -11,6 +11,7 @@
 package me.superblaubeere27.jobf.utils;
 
 import me.superblaubeere27.jobf.JarObfuscator;
+import me.superblaubeere27.jobf.JavaObfuscator;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -341,7 +342,7 @@ public class InliningUtils
         {
             return true;
         }
-        if (JarObfuscator.INSTANCE.isLoadedCode(node))
+        if (JavaObfuscator.getCurrentSession().isLoadedCode(node))
         {
             return false;
         }
@@ -365,7 +366,7 @@ public class InliningUtils
         {
             return true;
         }
-        if (JarObfuscator.INSTANCE.isLoadedCode(node))
+        if (JavaObfuscator.getCurrentSession().isLoadedCode(node))
         {
             return true;
         }
@@ -391,7 +392,7 @@ public class InliningUtils
         {
             return false;
         }
-        if (JarObfuscator.INSTANCE.isLoadedCode(node))
+        if (JavaObfuscator.getCurrentSession().isLoadedCode(node))
         {
             return true;
         }

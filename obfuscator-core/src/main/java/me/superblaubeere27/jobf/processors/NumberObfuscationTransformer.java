@@ -51,7 +51,7 @@ public class NumberObfuscationTransformer implements IClassTransformer
 
     static
     {
-        ValueManager.registerClass(this);
+        ValueManager.registerClass(NumberObfuscationTransformer.class);
     }
 
     private final JarObfuscator inst;

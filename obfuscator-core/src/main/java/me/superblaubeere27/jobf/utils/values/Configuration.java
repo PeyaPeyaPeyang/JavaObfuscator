@@ -54,7 +54,7 @@ public class Configuration
                 libraries.add(jsonElement.getAsString());
         }
 
-        return new Configuration(input, output, script, nThreads, libraries);
+        return new Configuration(libraries, input, output, script, nThreads);
     }
 
     void addToJsonObject(JsonObject jsonObject)
