@@ -11,7 +11,7 @@
 package me.superblaubeere27.jobf.processors.name;
 
 import lombok.extern.slf4j.Slf4j;
-import me.superblaubeere27.jobf.JObfImpl;
+import me.superblaubeere27.jobf.JarObfuscator;
 import me.superblaubeere27.jobf.utils.ClassTree;
 import me.superblaubeere27.jobf.utils.NameUtils;
 import me.superblaubeere27.jobf.utils.Utils;
@@ -40,7 +40,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
@@ -110,14 +109,14 @@ public class NameObfuscation implements INameObfuscationProcessor
             ClassWrapper cw = new ClassWrapper(value, false, new byte[0]);
             classWrappers.add(cw);
 
-            JObfImpl.INSTANCE.buildHierarchy(cw, null, ifAcceptMissingLib);
+            JarObfuscator.INSTANCE.buildHierarchy(cw, null, ifAcceptMissingLib);
         }
 
         return classWrappers;
     }
 
     @Override
-    public void transformPost(JObfImpl inst, HashMap<String, ClassNode> nodes)
+    public void transformPost(JarObfuscator inst, HashMap<String, ClassNode> nodes)
     {
         if (!this.enabled.getObject())
             return;
@@ -176,7 +175,7 @@ public class NameObfuscation implements INameObfuscationProcessor
         processFields(clazz, mappings);
         processMethods(clazz, mappings);
 
-        if (hasNativeMethodInClass(clazz.classNode))
+        if (hasNativeMethodInClass(clazz.classNode) || true)
         {
             log.info("Renaming class " + clazz.originalName + " is automatically excluded because it has native methods.");
             mappings.put(clazz.originalName, clazz.originalName);
@@ -287,8 +286,8 @@ public class NameObfuscation implements INameObfuscationProcessor
                 classWrapper.fields.get(i).fieldNode = copy.fields.get(i);
 
         classWrapper.classNode = copy;
-        JObfImpl.classes.remove(classWrapper.originalName + ".class");
-        JObfImpl.classes.put(classWrapper.classNode.name + ".class", classWrapper.classNode);
+        JarObfuscator.classes.remove(classWrapper.originalName + ".class");
+        JarObfuscator.classes.put(classWrapper.classNode.name + ".class", classWrapper.classNode);
         //            JObfImpl.INSTANCE.getClassPath().put();
         //            this.getClasses().put(classWrapper.classNode.name, classWrapper);
 
@@ -296,7 +295,7 @@ public class NameObfuscation implements INameObfuscationProcessor
         classWrapper.classNode.accept(writer);
         classWrapper.originalClass = writer.toByteArray();
 
-        JObfImpl.INSTANCE.getClassPath().put(classWrapper.classNode.name, classWrapper);
+        JarObfuscator.INSTANCE.getClassPath().put(classWrapper.classNode.name, classWrapper);
     }
 
     private void saveMappingsFile(HashMap<String, String> mappings)
@@ -382,7 +381,7 @@ public class NameObfuscation implements INameObfuscationProcessor
 
     private boolean canRenameMethodTree(Map<String, String> mappings, Set<ClassTree> visited, MethodWrapper methodWrapper, String owner)
     {
-        ClassTree tree = JObfImpl.INSTANCE.getTree(owner);
+        ClassTree tree = JarObfuscator.INSTANCE.getTree(owner);
 
         if (tree == null)
             return false;
@@ -418,7 +417,7 @@ public class NameObfuscation implements INameObfuscationProcessor
     private static void renameMethodTree(Map<String, String> mappings, Set<ClassTree> visited, MethodWrapper MethodWrapper, String className,
                                   String newName)
     {
-        ClassTree tree = JObfImpl.INSTANCE.getTree(className);
+        ClassTree tree = JarObfuscator.INSTANCE.getTree(className);
 
         if (!(tree.classWrapper.libraryNode || visited.contains(tree)))
             return;
@@ -435,7 +434,7 @@ public class NameObfuscation implements INameObfuscationProcessor
 
     private boolean canRenameFieldTree(Map<String, String> mappings, Set<ClassTree> visited, FieldWrapper fieldWrapper, String owner)
     {
-        ClassTree tree = JObfImpl.INSTANCE.getTree(owner);
+        ClassTree tree = JarObfuscator.INSTANCE.getTree(owner);
 
         if (tree == null)
             return false;
@@ -468,7 +467,7 @@ public class NameObfuscation implements INameObfuscationProcessor
 
     private static void renameFieldTree(HashSet<ClassTree> visited, FieldWrapper fieldWrapper, String owner, String newName, Map<String, String> mappings)
     {
-        ClassTree tree = JObfImpl.INSTANCE.getTree(owner);
+        ClassTree tree = JarObfuscator.INSTANCE.getTree(owner);
 
         if (tree.classWrapper.libraryNode || visited.contains(tree))
             return;

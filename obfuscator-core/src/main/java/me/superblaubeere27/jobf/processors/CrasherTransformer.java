@@ -12,7 +12,7 @@ package me.superblaubeere27.jobf.processors;
 
 import me.superblaubeere27.annotations.ObfuscationTransformer;
 import me.superblaubeere27.jobf.IClassTransformer;
-import me.superblaubeere27.jobf.JObfImpl;
+import me.superblaubeere27.jobf.JarObfuscator;
 import me.superblaubeere27.jobf.ProcessorCallback;
 import me.superblaubeere27.jobf.utils.NameUtils;
 import me.superblaubeere27.jobf.utils.values.BooleanValue;
@@ -43,9 +43,9 @@ public class CrasherTransformer implements IClassTransformer
     private final EnabledValue enabled = new EnabledValue("Crasher", DeprecationLevel.GOOD, false);
     private final BooleanValue invalidSignatures = new BooleanValue("Crasher", "Invalid Signatures", "Adds invalid signatures", DeprecationLevel.GOOD, true);
     private final BooleanValue emptyAnnotation = new BooleanValue("Crasher", "Empty annotation spam", "Adds annotations which are repeated newline", DeprecationLevel.GOOD, true);
-    private final JObfImpl inst;
+    private final JarObfuscator inst;
 
-    public CrasherTransformer(JObfImpl inst)
+    public CrasherTransformer(JarObfuscator inst)
     {
         this.inst = inst;
     }

@@ -13,7 +13,7 @@ package me.superblaubeere27.jobf.processors;
 import me.superblaubeere27.annotations.ObfuscationTransformer;
 import me.superblaubeere27.hwid.HWID;
 import me.superblaubeere27.jobf.IClassTransformer;
-import me.superblaubeere27.jobf.JObfImpl;
+import me.superblaubeere27.jobf.JarObfuscator;
 import me.superblaubeere27.jobf.ProcessorCallback;
 import me.superblaubeere27.jobf.utils.NameUtils;
 import me.superblaubeere27.jobf.utils.NodeUtils;
@@ -43,11 +43,11 @@ public class HWIDProtection implements IClassTransformer
 {
     private static final String PROCESSOR_NAME = "HWIDPRotection";
     private static final Random random = new Random();
-    private final JObfImpl inst;
+    private final JarObfuscator inst;
     private final EnabledValue enabled = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.GOOD, false);
     private final StringValue hwidValue = new StringValue(PROCESSOR_NAME, "HWID", DeprecationLevel.GOOD, HWID.bytesToHex(HWID.generateHWID()));
 
-    public HWIDProtection(JObfImpl inst)
+    public HWIDProtection(JarObfuscator inst)
     {
         this.inst = inst;
     }

@@ -12,7 +12,7 @@ package me.superblaubeere27.jobf.processors;
 
 import me.superblaubeere27.annotations.ObfuscationTransformer;
 import me.superblaubeere27.jobf.IClassTransformer;
-import me.superblaubeere27.jobf.JObfImpl;
+import me.superblaubeere27.jobf.JarObfuscator;
 import me.superblaubeere27.jobf.ProcessorCallback;
 import me.superblaubeere27.jobf.utils.NameUtils;
 import me.superblaubeere27.jobf.utils.values.BooleanValue;
@@ -53,7 +53,7 @@ public class LineNumberRemover implements IClassTransformer
         TYPES.add("Ljava/lang/String;");
     }
 
-    private final JObfImpl inst;
+    private final JarObfuscator inst;
     private final EnabledValue enabled = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.GOOD, true);
     private final BooleanValue renameValues = new BooleanValue(PROCESSOR_NAME, "Rename local variables", DeprecationLevel.GOOD, true);
     private final BooleanValue removeLineNumbers = new BooleanValue(PROCESSOR_NAME, "Remove Line Numbers", DeprecationLevel.GOOD, true);
@@ -61,7 +61,7 @@ public class LineNumberRemover implements IClassTransformer
     private final BooleanValue addLocalVariables = new BooleanValue(PROCESSOR_NAME, "Add Local Variables", "Adds random local variables with wrong types. Might break some decompilers", DeprecationLevel.GOOD, true);
     private final StringValue newSourceFileName = new StringValue(PROCESSOR_NAME, "New SourceFile Name", DeprecationLevel.GOOD, "");
 
-    public LineNumberRemover(JObfImpl inst)
+    public LineNumberRemover(JarObfuscator inst)
     {
         this.inst = inst;
     }

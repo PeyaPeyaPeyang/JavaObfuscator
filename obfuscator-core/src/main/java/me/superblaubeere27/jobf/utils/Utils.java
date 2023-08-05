@@ -16,7 +16,7 @@ import com.google.gson.JsonObject;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileFilter;
-import me.superblaubeere27.jobf.JObfImpl;
+import me.superblaubeere27.jobf.JarObfuscator;
 import me.superblaubeere27.jobf.processors.name.ClassWrapper;
 import me.superblaubeere27.jobf.utils.values.DeprecationLevel;
 import org.objectweb.asm.Opcodes;
@@ -37,7 +37,6 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.FileDialog;
 import java.awt.Frame;
-import java.awt.Panel;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -79,11 +78,11 @@ public class Utils
 
     public static ClassNode lookupClass(String name)
     {
-        ClassWrapper a = JObfImpl.INSTANCE.getClassPath().get(name);
+        ClassWrapper a = JarObfuscator.INSTANCE.getClassPath().get(name);
 
         if (a != null) return a.classNode;
 
-        return JObfImpl.getClasses().get(name);
+        return JarObfuscator.getClasses().get(name);
     }
 
     public static boolean isWindows()
@@ -367,16 +366,10 @@ public class Utils
         StringBuilder sb = new StringBuilder();
 
         for (String s1 : s.split("\n"))
-        {
             if (s1.startsWith("Main-Class"))
-            {
                 sb.append("Main-Class: ").append(main).append("\n");
-            }
             else
-            {
                 sb.append(s1).append("\n");
-            }
-        }
 
         return sb.toString();
     }
@@ -386,12 +379,8 @@ public class Utils
         String mainClass = null;
 
         for (String s1 : s.split("\n"))
-        {
             if (s1.startsWith("Main-Class: "))
-            {
                 mainClass = s1.substring("Main-Class: ".length()).trim().replace("\r", "");
-            }
-        }
 
         return mainClass;
     }
@@ -425,15 +414,14 @@ public class Utils
 
     public static boolean checkZip(String file)
     {
-        try
+        try (ZipFile ignored = new ZipFile(file))
         {
-            new ZipFile(file).entries();
+            return true;
         }
-        catch (Throwable e)
+        catch (IOException e)
         {
             return false;
         }
-        return true;
     }
 
     public static String formatTime(long l)
@@ -466,16 +454,7 @@ public class Utils
 
     public static Type getType(VarInsnNode abstractInsnNode)
     {
-        int offset;
-
-        if (abstractInsnNode.getOpcode() >= ISTORE && abstractInsnNode.getOpcode() <= ASTORE)
-            offset = abstractInsnNode.getOpcode() - ISTORE;
-        else if (abstractInsnNode.getOpcode() >= ILOAD && abstractInsnNode.getOpcode() <= ALOAD)
-            offset = abstractInsnNode.getOpcode() - ILOAD;
-        else if (abstractInsnNode.getOpcode() == RET)
-            throw new UnsupportedOperationException("RET is not supported");
-        else
-            throw new UnsupportedOperationException();
+        int offset = getOffset(abstractInsnNode);
 
         switch (offset)
         {
@@ -492,5 +471,20 @@ public class Utils
         }
 
         throw new UnsupportedOperationException();
+    }
+
+    private static int getOffset(VarInsnNode abstractInsnNode)
+    {
+        int offset;
+
+        if (abstractInsnNode.getOpcode() >= ISTORE && abstractInsnNode.getOpcode() <= ASTORE)
+            offset = abstractInsnNode.getOpcode() - ISTORE;
+        else if (abstractInsnNode.getOpcode() >= ILOAD && abstractInsnNode.getOpcode() <= ALOAD)
+            offset = abstractInsnNode.getOpcode() - ILOAD;
+        else if (abstractInsnNode.getOpcode() == RET)
+            throw new UnsupportedOperationException("RET is not supported");
+        else
+            throw new UnsupportedOperationException();
+        return offset;
     }
 }

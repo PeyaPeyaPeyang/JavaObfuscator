@@ -12,7 +12,7 @@ package me.superblaubeere27.jobf.processors.flowObfuscation;
 
 import me.superblaubeere27.annotations.ObfuscationTransformer;
 import me.superblaubeere27.jobf.IClassTransformer;
-import me.superblaubeere27.jobf.JObfImpl;
+import me.superblaubeere27.jobf.JarObfuscator;
 import me.superblaubeere27.jobf.ProcessorCallback;
 import me.superblaubeere27.jobf.processors.NumberObfuscationTransformer;
 import me.superblaubeere27.jobf.utils.NameUtils;
@@ -47,7 +47,7 @@ public class FlowObfuscator implements IClassTransformer
 {
     private static final String PROCESSOR_NAME = "FlowObfuscator";
     private static final Random random = new Random();
-    private final JObfImpl inst;
+    private final JarObfuscator inst;
     private final EnabledValue enabled = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.GOOD, true);
     private final BooleanValue mangleComparisions = new BooleanValue(PROCESSOR_NAME, "Mangle Comparisons", "Replaces long, float and double comparisons with method calls", DeprecationLevel.GOOD, true);
     private final BooleanValue replaceGoto = new BooleanValue(PROCESSOR_NAME, "Replace GOTO", "Replaces unconditional jumps with conditionals", DeprecationLevel.GOOD, true);
@@ -58,7 +58,7 @@ public class FlowObfuscator implements IClassTransformer
     private final BooleanValue mangleReturn = new BooleanValue(PROCESSOR_NAME, "Mangle Return", "!! Needs COMPUTE_FRAMES (See documentation) !!", DeprecationLevel.BAD, false);
     private final BooleanValue mangleLocals = new BooleanValue(PROCESSOR_NAME, "Mangle Local Variables", "!! Needs COMPUTE_FRAMES (See documentation) !!", DeprecationLevel.BAD, false);
 
-    public FlowObfuscator(JObfImpl inst)
+    public FlowObfuscator(JarObfuscator inst)
     {
         this.inst = inst;
     }

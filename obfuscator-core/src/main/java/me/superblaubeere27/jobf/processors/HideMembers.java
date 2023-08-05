@@ -12,7 +12,7 @@ package me.superblaubeere27.jobf.processors;
 
 import me.superblaubeere27.annotations.ObfuscationTransformer;
 import me.superblaubeere27.jobf.IClassTransformer;
-import me.superblaubeere27.jobf.JObfImpl;
+import me.superblaubeere27.jobf.JarObfuscator;
 import me.superblaubeere27.jobf.ProcessorCallback;
 import me.superblaubeere27.jobf.utils.values.DeprecationLevel;
 import me.superblaubeere27.jobf.utils.values.EnabledValue;
@@ -27,10 +27,10 @@ public class HideMembers implements IClassTransformer
 {
     private static final String PROCESSOR_NAME = "HideMembers";
     private static final Random random = new Random();
-    private final JObfImpl inst;
+    private final JarObfuscator inst;
     private final EnabledValue enabled = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.GOOD, true);
 
-    public HideMembers(JObfImpl inst)
+    public HideMembers(JarObfuscator inst)
     {
         this.inst = inst;
     }

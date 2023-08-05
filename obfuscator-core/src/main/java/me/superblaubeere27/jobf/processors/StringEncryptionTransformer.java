@@ -12,7 +12,7 @@ package me.superblaubeere27.jobf.processors;
 
 import me.superblaubeere27.annotations.ObfuscationTransformer;
 import me.superblaubeere27.jobf.IClassTransformer;
-import me.superblaubeere27.jobf.JObfImpl;
+import me.superblaubeere27.jobf.JarObfuscator;
 import me.superblaubeere27.jobf.ProcessorCallback;
 import me.superblaubeere27.jobf.processors.encryption.string.AESEncryptionAlgorithm;
 import me.superblaubeere27.jobf.processors.encryption.string.BlowfishEncryptionAlgorithm;
@@ -56,12 +56,12 @@ public class StringEncryptionTransformer implements IClassTransformer
     private static final String MAGICNUMBER_END = "\u00fc";
     private static final String PROCESSOR_NAME = "StringEncryption";
     private static final Random random = new Random();
-    private final JObfImpl inst;
+    private final JarObfuscator inst;
     private final EnabledValue enabled = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.GOOD, true);
     private final BooleanValue hideStrings = new BooleanValue(PROCESSOR_NAME, "HideStrings", "Hide strings in SourceFile. Might break after editing the SourceFile", DeprecationLevel.OK, false);
     private final BooleanValue aes = new BooleanValue(PROCESSOR_NAME, "AES", DeprecationLevel.OK, false);
 
-    public StringEncryptionTransformer(JObfImpl inst)
+    public StringEncryptionTransformer(JarObfuscator inst)
     {
         this.inst = inst;
     }

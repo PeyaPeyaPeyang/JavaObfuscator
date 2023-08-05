@@ -12,7 +12,7 @@ package me.superblaubeere27.jobf.processors;
 
 import me.superblaubeere27.annotations.ObfuscationTransformer;
 import me.superblaubeere27.jobf.IClassTransformer;
-import me.superblaubeere27.jobf.JObfImpl;
+import me.superblaubeere27.jobf.JarObfuscator;
 import me.superblaubeere27.jobf.ProcessorCallback;
 import me.superblaubeere27.jobf.utils.NameUtils;
 import me.superblaubeere27.jobf.utils.NodeUtils;
@@ -41,7 +41,7 @@ public class NumberObfuscationTransformer implements IClassTransformer
     private static final String PROCESSOR_NAME = "NumberObfuscation";
     private static final Random random = new Random();
     private static NumberObfuscationTransformer INSTANCE;
-    private final JObfImpl inst;
+    private final JarObfuscator inst;
     private final EnabledValue enabled = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.GOOD, true);
     private final BooleanValue extractToArray = new BooleanValue(PROCESSOR_NAME, "Extract to Array", "Calculates the integers once and store them in an array", DeprecationLevel.GOOD, true);
     private final BooleanValue obfuscateZero = new BooleanValue(PROCESSOR_NAME, "Obfuscate Zero", "Enables special obfuscation of the number 0", DeprecationLevel.GOOD, true);
@@ -49,7 +49,7 @@ public class NumberObfuscationTransformer implements IClassTransformer
     private final BooleanValue and = new BooleanValue(PROCESSOR_NAME, "And", "Uses \"&\" to obfuscate numbers", DeprecationLevel.GOOD, false);
     private final BooleanValue multipleInstructions = new BooleanValue(PROCESSOR_NAME, "Multiple Instructions", "Repeats the obfuscation process", DeprecationLevel.GOOD, true);
 
-    public NumberObfuscationTransformer(JObfImpl inst)
+    public NumberObfuscationTransformer(JarObfuscator inst)
     {
         this.inst = inst;
         INSTANCE = this;

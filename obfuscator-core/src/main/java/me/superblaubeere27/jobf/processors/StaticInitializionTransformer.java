@@ -12,7 +12,7 @@ package me.superblaubeere27.jobf.processors;
 
 import me.superblaubeere27.annotations.ObfuscationTransformer;
 import me.superblaubeere27.jobf.IClassTransformer;
-import me.superblaubeere27.jobf.JObfImpl;
+import me.superblaubeere27.jobf.JarObfuscator;
 import me.superblaubeere27.jobf.ProcessorCallback;
 import me.superblaubeere27.jobf.utils.NodeUtils;
 import org.objectweb.asm.Opcodes;
@@ -31,9 +31,9 @@ import java.util.Random;
 public class StaticInitializionTransformer implements IClassTransformer
 {
     private static final Random random = new Random();
-    private final JObfImpl inst;
+    private final JarObfuscator inst;
 
-    public StaticInitializionTransformer(JObfImpl inst)
+    public StaticInitializionTransformer(JarObfuscator inst)
     {
         this.inst = inst;
     }

@@ -35,7 +35,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import me.superblaubeere27.jobf.JObf;
-import me.superblaubeere27.jobf.JObfImpl;
+import me.superblaubeere27.jobf.JarObfuscator;
 import me.superblaubeere27.jobf.utils.JObfFileFilter;
 import me.superblaubeere27.jobf.utils.JarFileFilter;
 import me.superblaubeere27.jobf.utils.Template;
@@ -489,9 +489,9 @@ public class GUI extends JFrame
 
                     JObf.VERBOSE = this.verbose.isSelected();
 
-                    JObfImpl.INSTANCE.setThreadCount(this.threadsSlider.getValue());
+                    JarObfuscator.INSTANCE.setThreadCount(this.threadsSlider.getValue());
 
-                    JObfImpl.INSTANCE.processJar(config);
+                    JarObfuscator.INSTANCE.processJar(config);
                 }
                 catch (Throwable e)
                 {

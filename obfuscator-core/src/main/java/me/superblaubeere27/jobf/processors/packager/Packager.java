@@ -12,7 +12,7 @@ package me.superblaubeere27.jobf.processors.packager;
 
 import lombok.Getter;
 import me.superblaubeere27.jobf.IClassTransformer;
-import me.superblaubeere27.jobf.JObfImpl;
+import me.superblaubeere27.jobf.JarObfuscator;
 import me.superblaubeere27.jobf.ProcessorCallback;
 import me.superblaubeere27.jobf.processors.name.ClassWrapper;
 import me.superblaubeere27.jobf.utils.NameUtils;
@@ -61,9 +61,8 @@ public class Packager
         byte[] result = new byte[data.length];
 
         for (int i = 0; i < data.length; i++)
-        {
             result[i] = (byte) (data[i] ^ key[i % key.length]);
-        }
+
         return result;
     }
 
@@ -75,38 +74,14 @@ public class Packager
     public void init()
     {
         this.decryptionClassName = NameUtils.generateLocalVariableName();
-        this.mainClass = this.autoFindMainClass.getObject() ? JObfImpl.INSTANCE.getMainClass(): this.mainClassValue.getObject();
+        this.mainClass = this.autoFindMainClass.getObject() ? JarObfuscator.INSTANCE.getMainClass(): this.mainClassValue.getObject();
 
         if (this.autoFindMainClass.getObject() && this.mainClass == null)
-        {
             throw new RuntimeException("[Packager] Failed to resolve main class, please add it or specify it manually");
-        }
-//        DatatypeConverter.parseHexBinary();
-//        System.out.println(Arrays.toString(DatatypeConverter.parseHexBinary("A57BD48F77747419338AD9933A29A2D5")));
-//        System.out.println(Arrays.toString(HWID.hexStringToByteArray("A57BD48F77747419338AD9933A29A2D5")));
+
         this.key = new byte[RANDOM.nextInt(40) + 10];
-//        key = new byte[1];
         for (int i = 0; i < this.key.length; i++)
-        {
             this.key[i] = (byte) (RANDOM.nextInt(126) + 1);
-//            key[i] = 127;
-        }
-
-//        RANDOM.nextBytes(key);
-    }
-
-    public void initHWID(byte[] hwid)
-    {
-//        decryptionClassName = NameUtils.generateLocalVariableName();
-//        hwidBound = true;
-//        this.key = hwid;
-//
-//        for (int i = 0; i < key.length; i++) {
-//            key[i] = (byte) Math.abs(key[i]);
-//        }
-//
-//        System.out.println(Arrays.toString(key));
-        init();
     }
 
     public byte[] encryptClass(byte[] data)
@@ -600,9 +575,9 @@ public class Packager
 
         cw.accept(classWriter1);
 
-        JObfImpl.INSTANCE.getClassPath().put(cw.name, new ClassWrapper(cw, false, classWriter1.toByteArray()));
+        JarObfuscator.INSTANCE.getClassPath().put(cw.name, new ClassWrapper(cw, false, classWriter1.toByteArray()));
 
-        for (IClassTransformer processor : JObfImpl.processors)
+        for (IClassTransformer processor : JarObfuscator.processors)
         {
             processor.process(callback, cw);
         }

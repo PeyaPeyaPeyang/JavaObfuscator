@@ -63,7 +63,7 @@ public class JObf
         }
 
 
-        Class.forName(JObfImpl.class.getCanonicalName());
+        Class.forName(JarObfuscator.class.getCanonicalName());
 
         String version = checkForUpdate();
 
@@ -254,11 +254,11 @@ public class JObf
             Thread.sleep(10000);
         }
 
-        JObfImpl.INSTANCE.setThreadCount(threads);
+        JarObfuscator.INSTANCE.setThreadCount(threads);
 
         try
         {
-            JObfImpl.INSTANCE.processJar(config);
+            JarObfuscator.INSTANCE.processJar(config);
         }
         catch (Exception e)
         {

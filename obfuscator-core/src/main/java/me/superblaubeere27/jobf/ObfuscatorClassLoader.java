@@ -25,9 +25,9 @@ public class ObfuscatorClassLoader extends ClassLoader
     {
         String internalName = name.replace('.', '/');
 
-        if (JObfImpl.INSTANCE.getClassPath().containsKey(internalName))
+        if (JarObfuscator.INSTANCE.getClassPath().containsKey(internalName))
         {
-            ClassWrapper classWrapper = JObfImpl.INSTANCE.getClassPath().get(internalName);
+            ClassWrapper classWrapper = JarObfuscator.INSTANCE.getClassPath().get(internalName);
 
             if (classWrapper == null || classWrapper.originalClass == null)
                 throw new ClassNotFoundException(name);

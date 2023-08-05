@@ -13,7 +13,7 @@ package me.superblaubeere27.jobf.processors;
 import lombok.extern.slf4j.Slf4j;
 import me.superblaubeere27.annotations.ObfuscationTransformer;
 import me.superblaubeere27.jobf.IClassTransformer;
-import me.superblaubeere27.jobf.JObfImpl;
+import me.superblaubeere27.jobf.JarObfuscator;
 import me.superblaubeere27.jobf.ProcessorCallback;
 import me.superblaubeere27.jobf.utils.InliningUtils;
 import me.superblaubeere27.jobf.utils.NodeUtils;
@@ -47,9 +47,9 @@ public class InlineTransformer implements IClassTransformer
 
     private final EnabledValue enabled = new EnabledValue("Inlining", "Doesn't work, please don't use this", DeprecationLevel.BAD, false);
 
-    private final JObfImpl inst;
+    private final JarObfuscator inst;
 
-    public InlineTransformer(JObfImpl inst)
+    public InlineTransformer(JarObfuscator inst)
     {
         this.inst = inst;
     }

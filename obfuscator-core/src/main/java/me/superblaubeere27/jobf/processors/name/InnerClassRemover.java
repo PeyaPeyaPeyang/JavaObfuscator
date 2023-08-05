@@ -12,7 +12,7 @@ package me.superblaubeere27.jobf.processors.name;
 
 import me.superblaubeere27.annotations.ObfuscationTransformer;
 import me.superblaubeere27.jobf.IClassTransformer;
-import me.superblaubeere27.jobf.JObfImpl;
+import me.superblaubeere27.jobf.JarObfuscator;
 import me.superblaubeere27.jobf.ProcessorCallback;
 import me.superblaubeere27.jobf.utils.NameUtils;
 import me.superblaubeere27.jobf.utils.values.BooleanValue;
@@ -43,12 +43,12 @@ public class InnerClassRemover implements INameObfuscationProcessor, IClassTrans
     }
 
     @Override
-    public void transformPost(JObfImpl inst, HashMap<String, ClassNode> nodes)
+    public void transformPost(JarObfuscator inst, HashMap<String, ClassNode> nodes)
     {
         if (!(this.enabled.getObject() && this.remap.getObject()))
             return;
 
-        final List<ClassNode> classNodes = new ArrayList<>(JObfImpl.classes.values());
+        final List<ClassNode> classNodes = new ArrayList<>(JarObfuscator.classes.values());
 
         final Map<String, ClassNode> updatedClasses = new HashMap<>();
         final CustomRemapper remapper = new CustomRemapper();
@@ -58,7 +58,7 @@ public class InnerClassRemover implements INameObfuscationProcessor, IClassTrans
 
         for (final ClassNode classNode : classNodes)
         {
-            JObfImpl.classes.remove(classNode.name + ".class");
+            JarObfuscator.classes.remove(classNode.name + ".class");
 
             ClassNode newNode = new ClassNode();
             ClassRemapper classRemapper = new ClassRemapper(newNode, remapper);
@@ -69,7 +69,7 @@ public class InnerClassRemover implements INameObfuscationProcessor, IClassTrans
             updatedClasses.put(newNode.name + ".class", newNode);
         }
 
-        JObfImpl.classes.putAll(updatedClasses);
+        JarObfuscator.classes.putAll(updatedClasses);
     }
 
     private static void normalizeModifiers(ClassNode classNode)

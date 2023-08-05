@@ -207,7 +207,7 @@ public class NameUtils
 
     public static void applySettings(JObfSettings settings)
     {
-        if (settings.getGeneratorChars().getObject().length() == 0)
+        if (settings.getGeneratorChars().getObject().isEmpty())
         {
             settings.getGeneratorChars().setObject("Il");
             throw new IllegalStateException("The generator chars are empty. Changing them to 'Il'");
