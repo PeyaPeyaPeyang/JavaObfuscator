@@ -28,20 +28,20 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Modifier;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 @Slf4j(topic = "obfuscator")
@@ -73,168 +73,199 @@ public class NameObfuscation implements INameObfuscationProcessor
 
     public String getPackageName()
     {
-        if (this.shouldPackage.getObject())
-        {
-            if (this.packageNames == null) setupPackages();
+        if (!this.shouldPackage.getObject())
+            return "";
 
-            String retVal;
-            if (this.packageNames.size() == 1 && this.packageNames.get(0).equalsIgnoreCase("common"))
-            {
-                retVal = CommonPackageTrees.getRandomPackage();
-            }
-            else
-            {
-                retVal = this.packageNames.get(random.nextInt(this.packageNames.size()));
-            }
+        if (this.packageNames == null)
+            setupPackages();
 
-            if (retVal.startsWith("/"))
-                retVal = retVal.substring(1);
-            if (!retVal.endsWith("/"))
-                retVal = retVal + "/";
+        String retVal;
+        if (this.packageNames.size() == 1 && this.packageNames.get(0).equalsIgnoreCase("common"))
+            retVal = CommonPackageTrees.getRandomPackage();
+        else
+            retVal = this.packageNames.get(random.nextInt(this.packageNames.size()));
 
-            return retVal;
-        }
-        return "";
+        if (retVal.startsWith("/"))
+            retVal = retVal.substring(1);
+        if (!retVal.endsWith("/"))
+            retVal = retVal + "/";
+
+        return retVal;
+
     }
 
-    private void putMapping(HashMap<String, String> mappings, String str, String str1)
+    private void compileExcludePatterns()
     {
-        mappings.put(str, str1);
+        for (String s : this.excludedClasses.getObject().split("\n"))
+            this.excludedClassesPatterns.add(compileExcludePattern(s));
+        for (String s : this.excludedMethods.getObject().split("\n"))
+            this.excludedMethodsPatterns.add(compileExcludePattern(s));
+        for (String s : this.excludedFields.getObject().split("\n"))
+            this.excludedFieldsPatterns.add(compileExcludePattern(s));
+    }
+
+    private static List<ClassWrapper> buildHierarchies(Collection<? extends ClassNode> nodes, boolean ifAcceptMissingLib)
+    {
+        List<ClassWrapper> classWrappers = new ArrayList<>();
+
+        for (ClassNode value : nodes)
+        {
+            ClassWrapper cw = new ClassWrapper(value, false, new byte[0]);
+            classWrappers.add(cw);
+
+            JObfImpl.INSTANCE.buildHierarchy(cw, null, ifAcceptMissingLib);
+        }
+
+        return classWrappers;
     }
 
     @Override
     public void transformPost(JObfImpl inst, HashMap<String, ClassNode> nodes)
     {
-        if (!this.enabled.getObject()) return;
+        if (!this.enabled.getObject())
+            return;
 
         try
         {
             HashMap<String, String> mappings = new HashMap<>();
 
-            List<ClassWrapper> classWrappers = new ArrayList<>();
-
-            for (String s : this.excludedClasses.getObject().split("\n"))
-            {
-                this.excludedClassesPatterns.add(compileExcludePattern(s));
-            }
-            for (String s : this.excludedMethods.getObject().split("\n"))
-            {
-                this.excludedMethodsPatterns.add(compileExcludePattern(s));
-            }
-            for (String s : this.excludedFields.getObject().split("\n"))
-            {
-                this.excludedFieldsPatterns.add(compileExcludePattern(s));
-            }
+            compileExcludePatterns();
 
             log.info("Building Hierarchy...");
-
-            for (ClassNode value : nodes.values())
-            {
-                ClassWrapper cw = new ClassWrapper(value, false, new byte[0]);
-
-                classWrappers.add(cw);
-
-                JObfImpl.INSTANCE.buildHierarchy(cw, null, this.acceptMissingLibraries.getObject());
-            }
-
-            log.info("... Finished building hierarchy");
+            List<ClassWrapper> classWrappers = buildHierarchies(nodes.values(), this.acceptMissingLibraries.getObject());
+            log.info("Finished building hierarchy");
 
             long current = System.currentTimeMillis();
             log.info("Generating mappings...");
 
             NameUtils.setup();
 
-            AtomicInteger classCounter = new AtomicInteger();
-
-            classWrappers.forEach(classWrapper -> {
-                boolean excluded = this.isClassExcluded(classWrapper);
-                AtomicBoolean builtHierarchy = new AtomicBoolean(false);
-
-                for (MethodWrapper method : classWrapper.methods)
-                {
-                    if ((Modifier.isPrivate(method.methodNode.access) || Modifier.isProtected(method.methodNode.access)) && excluded)
-                        continue;
-
-                    method.methodNode.access &= ~Opcodes.ACC_PRIVATE;
-                    method.methodNode.access &= ~Opcodes.ACC_PROTECTED;
-                    method.methodNode.access |= Opcodes.ACC_PUBLIC;
-                }
-                for (FieldWrapper field : classWrapper.fields)
-                {
-                    if ((Modifier.isPrivate(field.fieldNode.access) || Modifier.isProtected(field.fieldNode.access)) && excluded)
-                        continue;
-
-                    field.fieldNode.access &= ~Opcodes.ACC_PRIVATE;
-                    field.fieldNode.access &= ~Opcodes.ACC_PROTECTED;
-                    field.fieldNode.access |= Opcodes.ACC_PUBLIC;
-                }
-
-                AtomicBoolean nativeMethodsFound = new AtomicBoolean(false);
-
-                classWrapper.methods.stream().filter(methodWrapper ->
-                        !methodWrapper.methodNode.name.equals("main") && !methodWrapper.methodNode.name.equals("premain")
-                                && !methodWrapper.methodNode.name.startsWith("<")).forEach(methodWrapper -> {
-
-                    if (Modifier.isNative(methodWrapper.methodNode.access))
-                    {
-                        nativeMethodsFound.set(true);
-                    }
-
-                    try
-                    {
-                        if (!isMethodExcluded(classWrapper.originalName, methodWrapper) && canRenameMethodTree(mappings, new HashSet<>(), methodWrapper, classWrapper.originalName))
-                        {
-                            this.renameMethodTree(mappings, new HashSet<>(), methodWrapper, classWrapper.originalName, NameUtils.generateMethodName(classWrapper.originalName, methodWrapper.originalDescription));
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        e.printStackTrace();
-                    }
-                });
-
-                classWrapper.fields.forEach(fieldWrapper -> {
-                    if (!isFieldExcluded(classWrapper.originalName, fieldWrapper) && canRenameFieldTree(mappings, new HashSet<>(), fieldWrapper, classWrapper.originalName))
-                    {
-                        this.renameFieldTree(new HashSet<>(), fieldWrapper, classWrapper.originalName, NameUtils.generateFieldName(classWrapper.originalName), mappings);
-                    }
-                });
-
-                if (!excluded && nativeMethodsFound.get())
-                {
-                    log.info("Automatically excluded " + classWrapper.originalName + " because it has native methods in it.");
-                }
-
-                if (excluded || nativeMethodsFound.get()) return;
-
-                classWrapper.classNode.access &= ~Opcodes.ACC_PRIVATE;
-                classWrapper.classNode.access &= ~Opcodes.ACC_PROTECTED;
-                classWrapper.classNode.access |= Opcodes.ACC_PUBLIC;
-
-                putMapping(mappings, classWrapper.originalName, getPackageName() + NameUtils.generateClassName());
-                classCounter.incrementAndGet();
-            });
+            processClasses(classWrappers, mappings);
 
             if (this.mappingsToSave.getObject() != null)
-                this.saveMapping(mappings);
-
+                this.saveMappingsFile(mappings);
 
             log.info(String.format("... Finished generating mappings (%s)", Utils.formatTime(System.currentTimeMillis() - current)));
+
             log.info("Applying mappings...");
-
             current = System.currentTimeMillis();
+            writeClasses(mappings, classWrappers);
+            log.info(String.format("... Finished applying mappings (%s)", Utils.formatTime(System.currentTimeMillis() - current)));
+        }
+        finally
+        {
+            this.excludedClassesPatterns.clear();
+            this.excludedMethodsPatterns.clear();
+            this.excludedFieldsPatterns.clear();
+        }
+    }
 
-            Remapper simpleRemapper = new MemberRemapper(mappings);
+    private void processClasses(Collection<ClassWrapper> classWrappers, Map<String, String> mappings)
+    {
+        classWrappers.stream()
+                .filter(classWrapper -> !this.isClassExcluded(classWrapper))
+                .forEach(classWrapper -> processClass(classWrapper, mappings));
+    }
 
-            for (ClassWrapper classWrapper : classWrappers)
+    private void processClass(ClassWrapper clazz, Map<String, String> mappings)
+    {
+        clazz.classNode.access &= ~Opcodes.ACC_PRIVATE;
+        clazz.classNode.access &= ~Opcodes.ACC_PROTECTED;
+        clazz.classNode.access |= Opcodes.ACC_PUBLIC;
+        // Inner を引っ張り出したときに, static がついてるとバグる
+        clazz.classNode.access &= ~Opcodes.ACC_STATIC;
+
+        processFields(clazz, mappings);
+        processMethods(clazz, mappings);
+
+        if (hasNativeMethodInClass(clazz.classNode))
+        {
+            log.info("Renaming class " + clazz.originalName + " is automatically excluded because it has native methods.");
+            mappings.put(clazz.originalName, clazz.originalName);
+        }
+        else
+            mappings.put(clazz.originalName, getPackageName() + NameUtils.generateClassName());
+    }
+
+    private static boolean hasNativeMethodInClass(ClassNode classNode)
+    {
+        return classNode.methods.stream().anyMatch(methodNode -> Modifier.isNative(methodNode.access));
+    }
+
+
+    private void processMethods(ClassWrapper classWrapper, Map<String, String> mappings)
+    {
+        Predicate<MethodWrapper> isExclude = method ->
+                !isMethodExcluded(classWrapper.originalName, method)
+                || !canRenameMethodTree(mappings, new HashSet<>(), method, classWrapper.originalName);
+
+        classWrapper.methods.stream()
+                .filter(isExclude.negate())
+                .forEach(methodWrapper -> processMethod(methodWrapper, classWrapper.originalName, mappings));
+    }
+
+    private static void processMethod(MethodWrapper methodWrapper, String ownerClassName, Map<String, String> mappings)
+    {
+        if (Modifier.isPrivate(methodWrapper.methodNode.access) || Modifier.isProtected(methodWrapper.methodNode.access))
+        {
+            methodWrapper.methodNode.access &= ~Opcodes.ACC_PRIVATE;
+            methodWrapper.methodNode.access &= ~Opcodes.ACC_PROTECTED;
+            methodWrapper.methodNode.access |= Opcodes.ACC_PUBLIC;
+        }
+
+        if (Modifier.isNative(methodWrapper.methodNode.access))
+            log.warn("Native method found in class " + ownerClassName + " method " + methodWrapper.methodNode.name + methodWrapper.methodNode.desc);
+        else
+            renameMethodTree(mappings, new HashSet<>(), methodWrapper, ownerClassName, NameUtils.generateMethodName(ownerClassName, methodWrapper.originalDescription));
+    }
+
+    private void processFields(ClassWrapper classWrapper, Map<String, String> mappings)
+    {
+        Predicate<FieldWrapper> isExclude = field ->
+                !isFieldExcluded(classWrapper.originalName, field)
+                || !canRenameFieldTree(mappings, new HashSet<>(), field, classWrapper.originalName);
+
+        classWrapper.fields.stream()
+                .filter(isExclude.negate())
+                .forEach(fieldWrapper -> processField(fieldWrapper, classWrapper.originalName, mappings));
+    }
+
+    private static void processField(FieldWrapper field, String ownerName, Map<String, String> mappings)
+    {
+        if (Modifier.isPrivate(field.fieldNode.access) || Modifier.isProtected(field.fieldNode.access))
+        {
+            field.fieldNode.access &= ~Opcodes.ACC_PRIVATE;
+            field.fieldNode.access &= ~Opcodes.ACC_PROTECTED;
+            field.fieldNode.access |= Opcodes.ACC_PUBLIC;
+        }
+
+        renameFieldTree(new HashSet<>(), field, ownerName, NameUtils.generateFieldName(ownerName), mappings);
+    }
+
+    private static void writeClasses(HashMap<String, String> mappings, List<ClassWrapper> classWrappers)
+    {
+        Remapper simpleRemapper = new MemberRemapper(mappings);
+
+        for (ClassWrapper classWrapper : classWrappers)
+            writeClass(classWrapper, simpleRemapper);
+    }
+    
+    private static void writeClass(ClassWrapper classWrapper, Remapper simpleRemapper)
+    {
+        ClassNode classNode = classWrapper.classNode;
+
+        ClassNode copy = new ClassNode();
+        for (int i = 0; i < copy.methods.size(); i++)
+        {
+            MethodWrapper originalMethodWrapper = classWrapper.methods.get(i);
+            // check native
+            if (Modifier.isNative(originalMethodWrapper.methodNode.access))
             {
-                ClassNode classNode = classWrapper.classNode;
+                log.info("Automatically excluded " + classWrapper.originalName + "#" + originalMethodWrapper.methodNode.name + " because it is native.");
+                continue;
+            }
 
-                ClassNode copy = new ClassNode();
-                classNode.accept(new ClassRemapper(copy, simpleRemapper));
-                for (int i = 0; i < copy.methods.size(); i++)
-                {
-                    classWrapper.methods.get(i).methodNode = copy.methods.get(i);
+            originalMethodWrapper.methodNode = copy.methods.get(i);
 
                     /*for (AbstractInsnNode insn : methodNode.instructions.toArray()) { // TODO: Fix lambdas + interface
                         if (insn instanceof InvokeDynamicInsnNode) {
@@ -249,43 +280,28 @@ public class NameObfuscation implements INameObfuscationProcessor
                             }
                         }
                     }*/
-                }
-
-                if (copy.fields != null)
-                {
-                    for (int i = 0; i < copy.fields.size(); i++)
-                    {
-                        classWrapper.fields.get(i).fieldNode = copy.fields.get(i);
-                    }
-                }
-
-                classWrapper.classNode = copy;
-                JObfImpl.classes.remove(classWrapper.originalName + ".class");
-                JObfImpl.classes.put(classWrapper.classNode.name + ".class", classWrapper.classNode);
-                //            JObfImpl.INSTANCE.getClassPath().put();
-                //            this.getClasses().put(classWrapper.classNode.name, classWrapper);
-
-                ClassWriter writer = new ClassWriter(0);
-
-                classWrapper.classNode.accept(writer);
-
-                classWrapper.originalClass = writer.toByteArray();
-
-                JObfImpl.INSTANCE.getClassPath().put(classWrapper.classNode.name, classWrapper);
-            }
-
-            log.info(String.format("... Finished applying mappings (%s)", Utils.formatTime(System.currentTimeMillis() - current)));
-        }
-        finally
-        {
-            this.excludedClassesPatterns.clear();
-            this.excludedMethodsPatterns.clear();
-            this.excludedFieldsPatterns.clear();
         }
 
+        classNode.accept(new ClassRemapper(copy, simpleRemapper));
+
+        if (copy.fields != null)
+            for (int i = 0; i < copy.fields.size(); i++)
+                classWrapper.fields.get(i).fieldNode = copy.fields.get(i);
+
+        classWrapper.classNode = copy;
+        JObfImpl.classes.remove(classWrapper.originalName + ".class");
+        JObfImpl.classes.put(classWrapper.classNode.name + ".class", classWrapper.classNode);
+        //            JObfImpl.INSTANCE.getClassPath().put();
+        //            this.getClasses().put(classWrapper.classNode.name, classWrapper);
+
+        ClassWriter writer = new ClassWriter(0);
+        classWrapper.classNode.accept(writer);
+        classWrapper.originalClass = writer.toByteArray();
+
+        JObfImpl.INSTANCE.getClassPath().put(classWrapper.classNode.name, classWrapper);
     }
 
-    private void saveMapping(HashMap<String, String> mappings)
+    private void saveMappingsFile(HashMap<String, String> mappings)
     {
         try (FileOutputStream fos = new FileOutputStream(this.mappingsToSave.getObject()))
         {
@@ -313,7 +329,7 @@ public class NameObfuscation implements INameObfuscationProcessor
             {
                 if (chars.length - 1 != i && chars[i + 1] == '*')
                 {
-                    sb.append(".*");
+                    sb.append(".*");  // Linux風の Glob に対応
                     i++;
                 }
                 else
@@ -322,13 +338,9 @@ public class NameObfuscation implements INameObfuscationProcessor
                 }
             }
             else if (c == '.')
-            {
-                sb.append('/');
-            }
+                sb.append('/');  // パッケージ名は . ではなく / で区切る
             else
-            {
                 sb.append(c);
-            }
         }
 
         return Pattern.compile(sb.toString());
@@ -339,13 +351,11 @@ public class NameObfuscation implements INameObfuscationProcessor
         String str = classWrapper.classNode.name;
 
         for (Pattern excludedMethodsPattern : this.excludedClassesPatterns)
-        {
             if (excludedMethodsPattern.matcher(str).matches())
             {
                 log.info("Class '" + classWrapper.classNode.name + "' was excluded from name obfuscation by regex '" + excludedMethodsPattern.pattern() + "'");
                 return true;
             }
-        }
 
         return false;
     }
@@ -355,12 +365,8 @@ public class NameObfuscation implements INameObfuscationProcessor
         String str = owner + '.' + methodWrapper.originalName;
 
         for (Pattern excludedMethodsPattern : this.excludedMethodsPatterns)
-        {
             if (excludedMethodsPattern.matcher(str).matches())
-            {
                 return true;
-            }
-        }
 
         return false;
     }
@@ -370,160 +376,110 @@ public class NameObfuscation implements INameObfuscationProcessor
         String str = owner + '.' + methodWrapper.originalName;
 
         for (Pattern excludedMethodsPattern : this.excludedFieldsPatterns)
-        {
             if (excludedMethodsPattern.matcher(str).matches())
-            {
                 return true;
-            }
-        }
 
         return false;
     }
 
-    private boolean canRenameMethodTree(HashMap<String, String> mappings, HashSet<ClassTree> visited, MethodWrapper methodWrapper, String owner)
+    private boolean canRenameMethodTree(Map<String, String> mappings, Set<ClassTree> visited, MethodWrapper methodWrapper, String owner)
     {
         ClassTree tree = JObfImpl.INSTANCE.getTree(owner);
 
         if (tree == null)
             return false;
 
-        if (!visited.contains(tree))
-        {
-            visited.add(tree);
+        if (visited.contains(tree))
+            return true;
 
-            if (tree.missingSuperClass)
-            {
-                return false;
-            }
-            if (Modifier.isNative(methodWrapper.methodNode.access))
-            {
-                return false;
-            }
+        visited.add(tree);
 
-            if (mappings.containsKey(owner + '.' + methodWrapper.originalName + methodWrapper.originalDescription))
-            {
-                return true;
-            }
-            if (!methodWrapper.owner.originalName.equals(owner) && tree.classWrapper.libraryNode)
-            {
-                for (MethodNode mn : tree.classWrapper.classNode.methods)
-                {
-                    if (mn.name.equals(methodWrapper.originalName)
-                            && mn.desc.equals(methodWrapper.originalDescription))
-                    {
-                        return false;
-                    }
-                }
-            }
-            for (String parent : tree.parentClasses)
-            {
-                if (parent != null && !canRenameMethodTree(mappings, visited, methodWrapper, parent))
-                {
+        if (tree.missingSuperClass || Modifier.isNative(methodWrapper.methodNode.access))
+            return false;
+
+        if (mappings.containsKey(owner + '.' + methodWrapper.originalName + methodWrapper.originalDescription))
+            return true;
+
+        if (!methodWrapper.owner.originalName.equals(owner) && tree.classWrapper.libraryNode)
+            for (MethodNode mn : tree.classWrapper.classNode.methods)
+                if (mn.name.equals(methodWrapper.originalName)
+                        && mn.desc.equals(methodWrapper.originalDescription))
                     return false;
-                }
-            }
-            for (String sub : tree.subClasses)
-            {
-                if (sub != null && !canRenameMethodTree(mappings, visited, methodWrapper, sub))
-                {
-                    return false;
-                }
-            }
-        }
+
+        for (String parent : tree.parentClasses)
+            if (!(parent == null || canRenameMethodTree(mappings, visited, methodWrapper, parent)))
+                return false;
+
+        for (String sub : tree.subClasses)
+            if (!(sub == null || canRenameMethodTree(mappings, visited, methodWrapper, sub)))
+                return false;
 
         return true;
     }
 
-    private void renameMethodTree(HashMap<String, String> mappings, HashSet<ClassTree> visited, MethodWrapper MethodWrapper, String className,
+    private static void renameMethodTree(Map<String, String> mappings, Set<ClassTree> visited, MethodWrapper MethodWrapper, String className,
                                   String newName)
     {
         ClassTree tree = JObfImpl.INSTANCE.getTree(className);
 
-        if (!tree.classWrapper.libraryNode && !visited.contains(tree))
-        {
-            putMapping(mappings, className + '.' + MethodWrapper.originalName + MethodWrapper.originalDescription, newName);
-            visited.add(tree);
-            for (String parentClass : tree.parentClasses)
-            {
-                this.renameMethodTree(mappings, visited, MethodWrapper, parentClass, newName);
-            }
-            for (String subClass : tree.subClasses)
-            {
-                this.renameMethodTree(mappings, visited, MethodWrapper, subClass, newName);
-            }
-        }
+        if (!(tree.classWrapper.libraryNode || visited.contains(tree)))
+            return;
+
+        mappings.put(className + '.' + MethodWrapper.originalName + MethodWrapper.originalDescription, newName);
+        visited.add(tree);
+        for (String parentClass : tree.parentClasses)
+            renameMethodTree(mappings, visited, MethodWrapper, parentClass, newName);
+
+        for (String subClass : tree.subClasses)
+            renameMethodTree(mappings, visited, MethodWrapper, subClass, newName);
+
     }
 
-    private boolean canRenameFieldTree(HashMap<String, String> mappings, HashSet<ClassTree> visited, FieldWrapper fieldWrapper, String owner)
+    private boolean canRenameFieldTree(Map<String, String> mappings, Set<ClassTree> visited, FieldWrapper fieldWrapper, String owner)
     {
         ClassTree tree = JObfImpl.INSTANCE.getTree(owner);
 
         if (tree == null)
             return false;
 
-        if (!visited.contains(tree))
-        {
-            visited.add(tree);
+        if (visited.contains(tree))
+            return true;
 
-            if (tree.missingSuperClass)
-            {
+        visited.add(tree);
+
+        if (tree.missingSuperClass)
+            return false;
+
+        if (mappings.containsKey(owner + '.' + fieldWrapper.originalName + '.' + fieldWrapper.originalDescription))
+            return true;
+        if (!fieldWrapper.owner.originalName.equals(owner) && tree.classWrapper.libraryNode)
+            for (FieldNode fn : tree.classWrapper.classNode.fields)
+                if (fieldWrapper.originalName.equals(fn.name) && fieldWrapper.originalDescription.equals(fn.desc))
+                    return false;
+
+        for (String parent : tree.parentClasses)
+            if (!(parent == null || canRenameFieldTree(mappings, visited, fieldWrapper, parent)))
                 return false;
-            }
 
-            if (mappings.containsKey(owner + '.' + fieldWrapper.originalName + '.' + fieldWrapper.originalDescription))
-                return true;
-            if (!fieldWrapper.owner.originalName.equals(owner) && tree.classWrapper.libraryNode)
-            {
-                for (FieldNode fn : tree.classWrapper.classNode.fields)
-                {
-                    if (fieldWrapper.originalName.equals(fn.name) && fieldWrapper.originalDescription.equals(fn.desc))
-                    {
-                        return false;
-                    }
-                }
-            }
-            for (String parent : tree.parentClasses)
-            {
-                if (parent != null && !canRenameFieldTree(mappings, visited, fieldWrapper, parent))
-                {
-                    return false;
-                }
-            }
-            for (String sub : tree.subClasses)
-            {
-                if (sub != null && !canRenameFieldTree(mappings, visited, fieldWrapper, sub))
-                {
-                    return false;
-                }
-            }
-        }
+        for (String sub : tree.subClasses)
+            if (!(sub == null || canRenameFieldTree(mappings, visited, fieldWrapper, sub)))
+                return false;
 
         return true;
     }
 
-    private void renameFieldTree(HashSet<ClassTree> visited, FieldWrapper fieldWrapper, String owner, String newName, HashMap<String, String> mappings)
+    private static void renameFieldTree(HashSet<ClassTree> visited, FieldWrapper fieldWrapper, String owner, String newName, Map<String, String> mappings)
     {
         ClassTree tree = JObfImpl.INSTANCE.getTree(owner);
 
-        if (!tree.classWrapper.libraryNode && !visited.contains(tree))
-        {
-            putMapping(mappings, owner + '.' + fieldWrapper.originalName + '.' + fieldWrapper.originalDescription, newName);
-            visited.add(tree);
-            for (String parentClass : tree.parentClasses)
-            {
-                this.renameFieldTree(visited, fieldWrapper, parentClass, newName, mappings);
-            }
-            for (String subClass : tree.subClasses)
-            {
-                this.renameFieldTree(visited, fieldWrapper, subClass, newName, mappings);
-            }
-        }
-    }
+        if (tree.classWrapper.libraryNode || visited.contains(tree))
+            return;
 
-//    @Override
-//    public void processClass(final ClassNode classNode) {
-//        for(final MethodNode method : classNode.methods)
-//            if(localVariables && method.localVariables != null && !method.localVariables.isEmpty())
-//                method.localVariables.forEach(localVariableNode -> localVariableNode.name = NameUtils.generateLocalVariableName(classNode.name, method.name));
-//    }
+        mappings.put(owner + '.' + fieldWrapper.originalName + '.' + fieldWrapper.originalDescription, newName);
+        visited.add(tree);
+        for (String parentClass : tree.parentClasses)
+            renameFieldTree(visited, fieldWrapper, parentClass, newName, mappings);
+        for (String subClass : tree.subClasses)
+            renameFieldTree(visited, fieldWrapper, subClass, newName, mappings);
+    }
 }
