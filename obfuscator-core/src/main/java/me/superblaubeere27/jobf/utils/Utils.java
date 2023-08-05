@@ -14,6 +14,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileFilter;
 import me.superblaubeere27.jobf.JObfImpl;
 import me.superblaubeere27.jobf.processors.name.ClassWrapper;
@@ -34,6 +35,9 @@ import org.objectweb.asm.tree.VarInsnNode;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.FileDialog;
+import java.awt.Frame;
+import java.awt.Panel;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -232,12 +236,9 @@ public class Utils
         return null;
     }
 
-    public static String chooseFile(final File currFolder, final Component parent)
+    public static String chooseFile(final File currFolder, final Component parent, boolean toSave)
     {
-        final JFileChooser chooser = new JFileChooser(currFolder);
-        if (chooser.showOpenDialog(parent) == JFileChooser.APPROVE_OPTION)
-            return chooser.getSelectedFile().getAbsolutePath();
-        return null;
+        return chooseFile(currFolder, parent, null, toSave);
     }
 
     public static String chooseFile(File currFolder, final Component parent, FileFilter filter)
@@ -248,7 +249,6 @@ public class Utils
     public static String chooseFile(File currFolder, final Component parent, FileFilter filter, boolean toSave)
     {
         if (currFolder == null)
-        {
             try
             {
                 currFolder = new File(Utils.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath());
@@ -256,17 +256,18 @@ public class Utils
             catch (Exception ignored)
             {
             }
-        }
-        final JFileChooser chooser = new JFileChooser(currFolder);
-        chooser.setFileFilter(filter);
-        int result;
-        if (toSave)
-            result = chooser.showSaveDialog(parent);
-        else
-            result = chooser.showOpenDialog(parent);
-        if (result == JFileChooser.APPROVE_OPTION)
-            return chooser.getSelectedFile().getAbsolutePath();
-        return null;
+
+        Frame awtFrame = JOptionPane.getFrameForComponent(parent);
+        FileDialog dialog = new FileDialog(awtFrame, "Choose a file", toSave ? FileDialog.SAVE : FileDialog.LOAD);
+        if (filter != null)
+            dialog.setFilenameFilter((dir, name) -> filter.accept(new File(dir, name)));
+        if (currFolder != null)
+            dialog.setDirectory(currFolder.getAbsolutePath());
+
+        dialog.setVisible(true);
+        String file = dialog.getFile();
+
+        return file == null ? null : new File(dialog.getDirectory(), file).getAbsolutePath();
     }
 
     public static long copy(final InputStream from, final OutputStream to) throws IOException
