@@ -10,14 +10,26 @@
 
 package me.superblaubeere27.jobf.processors.packager;
 
+import lombok.Getter;
 import me.superblaubeere27.jobf.IClassTransformer;
 import me.superblaubeere27.jobf.JObfImpl;
 import me.superblaubeere27.jobf.ProcessorCallback;
 import me.superblaubeere27.jobf.processors.name.ClassWrapper;
 import me.superblaubeere27.jobf.utils.NameUtils;
 import me.superblaubeere27.jobf.utils.NodeUtils;
-import me.superblaubeere27.jobf.utils.values.*;
-import org.objectweb.asm.*;
+import me.superblaubeere27.jobf.utils.values.BooleanValue;
+import me.superblaubeere27.jobf.utils.values.DeprecationLevel;
+import me.superblaubeere27.jobf.utils.values.EnabledValue;
+import me.superblaubeere27.jobf.utils.values.StringValue;
+import me.superblaubeere27.jobf.utils.values.ValueManager;
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.FieldVisitor;
+import org.objectweb.asm.Label;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.ModifiedClassWriter;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 
 import java.nio.charset.StandardCharsets;
@@ -26,55 +38,65 @@ import java.util.Random;
 
 import static org.objectweb.asm.Opcodes.T_BYTE;
 
-public class Packager {
+public class Packager
+{
     private static final Random RANDOM = new Random();
     private static final String PROCESSOR_NAME = "Packager";
     public static Packager INSTANCE = new Packager();
     private byte[] key;
+    @Getter
     private String decryptionClassName;
-    private EnabledValue enabledValue = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.OK, false);
-    private BooleanValue autoFindMainClass = new BooleanValue(PROCESSOR_NAME, "Use MainClass from the JAR manifest", DeprecationLevel.GOOD, true);
-    private StringValue mainClassValue = new StringValue(PROCESSOR_NAME, "Main class", DeprecationLevel.GOOD, "org.example.Main");
+    private final EnabledValue enabledValue = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.OK, false);
+    private final BooleanValue autoFindMainClass = new BooleanValue(PROCESSOR_NAME, "Use MainClass from the JAR manifest", DeprecationLevel.GOOD, true);
+    private final StringValue mainClassValue = new StringValue(PROCESSOR_NAME, "Main class", DeprecationLevel.GOOD, "org.example.Main");
     private String mainClass;
 
-    private Packager() {
+    private Packager()
+    {
         ValueManager.registerClass(this);
     }
 
-    private static byte[] xor(byte[] data, byte[] key) {
+    private static byte[] xor(byte[] data, byte[] key)
+    {
         byte[] result = new byte[data.length];
 
-        for (int i = 0; i < data.length; i++) {
+        for (int i = 0; i < data.length; i++)
+        {
             result[i] = (byte) (data[i] ^ key[i % key.length]);
         }
         return result;
     }
 
-    public boolean isEnabled() {
-        return enabledValue.getObject();
+    public boolean isEnabled()
+    {
+        return this.enabledValue.getObject();
     }
 
-    public void init() {
-        decryptionClassName = NameUtils.generateLocalVariableName();
-        mainClass = autoFindMainClass.getObject() ? JObfImpl.INSTANCE.getMainClass() : mainClassValue.getObject();
+    public void init()
+    {
+        this.decryptionClassName = NameUtils.generateLocalVariableName();
+        this.mainClass = this.autoFindMainClass.getObject() ? JObfImpl.INSTANCE.getMainClass(): this.mainClassValue.getObject();
 
-        if (autoFindMainClass.getObject() && mainClass == null) {
+        if (this.autoFindMainClass.getObject() && this.mainClass == null)
+        {
             throw new RuntimeException("[Packager] Failed to resolve main class, please add it or specify it manually");
         }
 //        DatatypeConverter.parseHexBinary();
 //        System.out.println(Arrays.toString(DatatypeConverter.parseHexBinary("A57BD48F77747419338AD9933A29A2D5")));
 //        System.out.println(Arrays.toString(HWID.hexStringToByteArray("A57BD48F77747419338AD9933A29A2D5")));
-        key = new byte[RANDOM.nextInt(40) + 10];
+        this.key = new byte[RANDOM.nextInt(40) + 10];
 //        key = new byte[1];
-        for (int i = 0; i < key.length; i++) {
-            key[i] = (byte) (RANDOM.nextInt(126) + 1);
+        for (int i = 0; i < this.key.length; i++)
+        {
+            this.key[i] = (byte) (RANDOM.nextInt(126) + 1);
 //            key[i] = 127;
         }
 
 //        RANDOM.nextBytes(key);
     }
 
-    public void initHWID(byte[] hwid) {
+    public void initHWID(byte[] hwid)
+    {
 //        decryptionClassName = NameUtils.generateLocalVariableName();
 //        hwidBound = true;
 //        this.key = hwid;
@@ -87,25 +109,24 @@ public class Packager {
         init();
     }
 
-    public byte[] encryptClass(byte[] data) {
-        return xor(data, key);
+    public byte[] encryptClass(byte[] data)
+    {
+        return xor(data, this.key);
     }
 
-    public String encryptName(String name) {
-        return new String(xor(name.replace("/", ".").getBytes(StandardCharsets.UTF_8), key));
+    public String encryptName(String name)
+    {
+        return new String(xor(name.replace("/", ".").getBytes(StandardCharsets.UTF_8), this.key));
     }
 
-    public String getDecryptionClassName() {
-        return decryptionClassName;
-    }
-
-    public byte[] generateEncryptionClass() {
+    public byte[] generateEncryptionClass()
+    {
         NameUtils.setup();
 
-        String keyFieldName = NameUtils.generateFieldName(decryptionClassName);
-        String xorMethodName = NameUtils.generateMethodName(decryptionClassName, "([B[B)[B");
-        String generatehwidMethod = NameUtils.generateMethodName(decryptionClassName, "()[B");
-        String getBytesMethodName = NameUtils.generateMethodName(decryptionClassName, "(Ljava/lang/String;)[B");
+        String keyFieldName = NameUtils.generateFieldName(this.decryptionClassName);
+        String xorMethodName = NameUtils.generateMethodName(this.decryptionClassName, "([B[B)[B");
+        String generatehwidMethod = NameUtils.generateMethodName(this.decryptionClassName, "()[B");
+        String getBytesMethodName = NameUtils.generateMethodName(this.decryptionClassName, "(Ljava/lang/String;)[B");
 
         ClassNode cw = new ClassNode();
 
@@ -113,7 +134,7 @@ public class Packager {
         MethodVisitor mv;
         AnnotationVisitor av0;
 
-        cw.visit(Opcodes.V1_6, Opcodes.ACC_PUBLIC + Opcodes.ACC_SUPER, decryptionClassName, null, "java/lang/ClassLoader", new String[0]);
+        cw.visit(Opcodes.V1_6, Opcodes.ACC_PUBLIC + Opcodes.ACC_SUPER, this.decryptionClassName, null, "java/lang/ClassLoader", new String[0]);
 
         {
             fv = cw.visitField(Opcodes.ACC_PRIVATE + Opcodes.ACC_STATIC, keyFieldName, "[B", null, null);
@@ -121,33 +142,37 @@ public class Packager {
         }
 
         boolean hwidBound = false;
-        if (!hwidBound) {
+        if (!hwidBound)
+        {
             mv = cw.visitMethod(Opcodes.ACC_STATIC, "<clinit>", "()V", null, null);
             mv.visitCode();
             Label l0 = new Label();
             mv.visitLabel(l0);
-            NodeUtils.generateIntPush(key.length).accept(mv);
+            NodeUtils.generateIntPush(this.key.length).accept(mv);
             mv.visitIntInsn(Opcodes.NEWARRAY, T_BYTE);
 
-            for (int i = 0; i < key.length; i++) {
+            for (int i = 0; i < this.key.length; i++)
+            {
                 mv.visitInsn(Opcodes.DUP);
                 NodeUtils.generateIntPush(i).accept(mv);
-                NodeUtils.generateIntPush(key[i]).accept(mv);
+                NodeUtils.generateIntPush(this.key[i]).accept(mv);
                 mv.visitInsn(Opcodes.BASTORE);
             }
 
-            mv.visitFieldInsn(Opcodes.PUTSTATIC, decryptionClassName, keyFieldName, "[B");
+            mv.visitFieldInsn(Opcodes.PUTSTATIC, this.decryptionClassName, keyFieldName, "[B");
             mv.visitInsn(Opcodes.RETURN);
             mv.visitMaxs(8, 0);
             mv.visitEnd();
-        } else {
+        }
+        else
+        {
             mv = cw.visitMethod(Opcodes.ACC_STATIC, "<clinit>", "()V", null, new String[0]);
             mv.visitCode();
             Label l0 = new Label();
             mv.visitLabel(l0);
             mv.visitLineNumber(11, l0);
-            mv.visitMethodInsn(Opcodes.INVOKESTATIC, decryptionClassName, generatehwidMethod, "()[B", false);
-            mv.visitFieldInsn(Opcodes.PUTSTATIC, decryptionClassName, keyFieldName, "[B");
+            mv.visitMethodInsn(Opcodes.INVOKESTATIC, this.decryptionClassName, generatehwidMethod, "()[B", false);
+            mv.visitFieldInsn(Opcodes.PUTSTATIC, this.decryptionClassName, keyFieldName, "[B");
             Label l1 = new Label();
             mv.visitLabel(l1);
             mv.visitLineNumber(13, l1);
@@ -161,9 +186,9 @@ public class Packager {
             mv.visitLabel(l4);
             mv.visitLineNumber(14, l4);
             mv.visitFrame(Opcodes.F_APPEND, 1, new Object[]{Opcodes.INTEGER}, 0, null);
-            mv.visitFieldInsn(Opcodes.GETSTATIC, decryptionClassName, keyFieldName, "[B");
+            mv.visitFieldInsn(Opcodes.GETSTATIC, this.decryptionClassName, keyFieldName, "[B");
             mv.visitVarInsn(Opcodes.ILOAD, 0);
-            mv.visitFieldInsn(Opcodes.GETSTATIC, decryptionClassName, keyFieldName, "[B");
+            mv.visitFieldInsn(Opcodes.GETSTATIC, this.decryptionClassName, keyFieldName, "[B");
             mv.visitVarInsn(Opcodes.ILOAD, 0);
             mv.visitInsn(Opcodes.BALOAD);
             mv.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Math", "abs", "(I)I", false);
@@ -176,7 +201,7 @@ public class Packager {
             mv.visitLabel(l3);
             mv.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
             mv.visitVarInsn(Opcodes.ILOAD, 0);
-            mv.visitFieldInsn(Opcodes.GETSTATIC, decryptionClassName, keyFieldName, "[B");
+            mv.visitFieldInsn(Opcodes.GETSTATIC, this.decryptionClassName, keyFieldName, "[B");
             mv.visitInsn(Opcodes.ARRAYLENGTH);
             mv.visitJumpInsn(Opcodes.IF_ICMPLT, l4);
             Label l6 = new Label();
@@ -184,7 +209,7 @@ public class Packager {
             mv.visitLineNumber(16, l6);
             mv.visitLineNumber(18, l6);
             mv.visitFieldInsn(Opcodes.GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
-            mv.visitFieldInsn(Opcodes.GETSTATIC, decryptionClassName, keyFieldName, "[B");
+            mv.visitFieldInsn(Opcodes.GETSTATIC, this.decryptionClassName, keyFieldName, "[B");
             mv.visitMethodInsn(Opcodes.INVOKESTATIC, "java/util/Arrays", "toString", "([B)Ljava/lang/String;", false);
             mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/String;)V", false);
             mv.visitInsn(Opcodes.RETURN);
@@ -202,7 +227,7 @@ public class Packager {
             mv.visitInsn(Opcodes.RETURN);
             Label l1 = new Label();
             mv.visitLabel(l1);
-            mv.visitLocalVariable("this", "L" + decryptionClassName + ";", null, l0, l1, 0);
+            mv.visitLocalVariable("this", "L" + this.decryptionClassName + ";", null, l0, l1, 0);
             mv.visitMaxs(5, 1);
             mv.visitEnd();
         }
@@ -214,14 +239,14 @@ public class Packager {
             Label l2 = new Label();
             mv.visitTryCatchBlock(l0, l1, l2, "java/lang/Exception");
             mv.visitLabel(l0);
-            mv.visitTypeInsn(Opcodes.NEW, decryptionClassName);
+            mv.visitTypeInsn(Opcodes.NEW, this.decryptionClassName);
             mv.visitInsn(Opcodes.DUP);
-            mv.visitMethodInsn(Opcodes.INVOKESPECIAL, decryptionClassName, "<init>", "()V", false);
+            mv.visitMethodInsn(Opcodes.INVOKESPECIAL, this.decryptionClassName, "<init>", "()V", false);
             mv.visitVarInsn(Opcodes.ASTORE, 1);
             Label l3 = new Label();
             mv.visitLabel(l3);
             mv.visitVarInsn(Opcodes.ALOAD, 1);
-            mv.visitLdcInsn(Objects.requireNonNull(mainClass));
+            mv.visitLdcInsn(Objects.requireNonNull(this.mainClass));
             mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/ClassLoader", "loadClass", "(Ljava/lang/String;)Ljava/lang/Class;", false);
             mv.visitVarInsn(Opcodes.ASTORE, 2);
             Label l4 = new Label();
@@ -282,10 +307,10 @@ public class Packager {
             mv.visitVarInsn(Opcodes.ALOAD, 1);
             mv.visitLdcInsn("UTF-8");
             mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/String", "getBytes", "(Ljava/lang/String;)[B", false);
-            mv.visitFieldInsn(Opcodes.GETSTATIC, decryptionClassName, keyFieldName, "[B");
-            mv.visitMethodInsn(Opcodes.INVOKESTATIC, decryptionClassName, xorMethodName, "([B[B)[B", false);
+            mv.visitFieldInsn(Opcodes.GETSTATIC, this.decryptionClassName, keyFieldName, "[B");
+            mv.visitMethodInsn(Opcodes.INVOKESTATIC, this.decryptionClassName, xorMethodName, "([B[B)[B", false);
             mv.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/String", "<init>", "([B)V", false);
-            mv.visitMethodInsn(Opcodes.INVOKESTATIC, decryptionClassName, getBytesMethodName, "(Ljava/lang/String;)[B", false);
+            mv.visitMethodInsn(Opcodes.INVOKESTATIC, this.decryptionClassName, getBytesMethodName, "(Ljava/lang/String;)[B", false);
             mv.visitVarInsn(Opcodes.ASTORE, 2);
             Label l3 = new Label();
             mv.visitLabel(l3);
@@ -293,12 +318,12 @@ public class Packager {
             mv.visitVarInsn(Opcodes.ALOAD, 0);
             mv.visitVarInsn(Opcodes.ALOAD, 1);
             mv.visitVarInsn(Opcodes.ALOAD, 2);
-            mv.visitFieldInsn(Opcodes.GETSTATIC, decryptionClassName, keyFieldName, "[B");
-            mv.visitMethodInsn(Opcodes.INVOKESTATIC, decryptionClassName, xorMethodName, "([B[B)[B", false);
+            mv.visitFieldInsn(Opcodes.GETSTATIC, this.decryptionClassName, keyFieldName, "[B");
+            mv.visitMethodInsn(Opcodes.INVOKESTATIC, this.decryptionClassName, xorMethodName, "([B[B)[B", false);
             mv.visitInsn(Opcodes.ICONST_0);
             mv.visitVarInsn(Opcodes.ALOAD, 2);
             mv.visitInsn(Opcodes.ARRAYLENGTH);
-            mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, decryptionClassName, "defineClass", "(Ljava/lang/String;[BII)Ljava/lang/Class;", false);
+            mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, this.decryptionClassName, "defineClass", "(Ljava/lang/String;[BII)Ljava/lang/Class;", false);
             mv.visitLabel(l1);
             mv.visitInsn(Opcodes.ARETURN);
             mv.visitLabel(l2);
@@ -315,7 +340,7 @@ public class Packager {
             mv.visitInsn(Opcodes.ARETURN);
             Label l5 = new Label();
             mv.visitLabel(l5);
-            mv.visitLocalVariable(NameUtils.generateLocalVariableName(), "L" + decryptionClassName + ";", null, l0, l5, 0);
+            mv.visitLocalVariable(NameUtils.generateLocalVariableName(), "L" + this.decryptionClassName + ";", null, l0, l5, 0);
             mv.visitLocalVariable(NameUtils.generateLocalVariableName(), "Ljava/lang/String;", null, l0, l5, 1);
             mv.visitLocalVariable(NameUtils.generateLocalVariableName(), "[B", null, l3, l2, 2);
             mv.visitLocalVariable(NameUtils.generateLocalVariableName(), "Ljava/lang/Exception;", null, l4, l5, 2);
@@ -384,7 +409,7 @@ public class Packager {
             Label l0 = new Label();
             mv.visitLabel(l0);
             mv.visitLineNumber(47, l0);
-            mv.visitLdcInsn(Type.getType("L" + decryptionClassName + ";"));
+            mv.visitLdcInsn(Type.getType("L" + this.decryptionClassName + ";"));
             mv.visitVarInsn(Opcodes.ALOAD, 0);
             mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Class", "getResourceAsStream", "(Ljava/lang/String;)Ljava/io/InputStream;", false);
             mv.visitVarInsn(Opcodes.ASTORE, 1);
@@ -452,7 +477,8 @@ public class Packager {
             mv.visitMaxs(8, 5);
             mv.visitEnd();
         }
-        if (hwidBound) {
+        if (hwidBound)
+        {
             mv = cw.visitMethod(Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC, generatehwidMethod, "()[B", null, null);
             mv.visitCode();
             Label l0 = new Label();
@@ -576,11 +602,12 @@ public class Packager {
 
         JObfImpl.INSTANCE.getClassPath().put(cw.name, new ClassWrapper(cw, false, classWriter1.toByteArray()));
 
-        for (IClassTransformer processor : JObfImpl.processors) {
+        for (IClassTransformer processor : JObfImpl.processors)
+        {
             processor.process(callback, cw);
         }
 
-        ModifiedClassWriter writer = new ModifiedClassWriter((callback.isForceComputeFrames() ? ModifiedClassWriter.COMPUTE_FRAMES : 0) | ModifiedClassWriter.COMPUTE_MAXS);
+        ModifiedClassWriter writer = new ModifiedClassWriter((callback.isForceComputeFrames() ? ModifiedClassWriter.COMPUTE_FRAMES: 0) | ModifiedClassWriter.COMPUTE_MAXS);
 
         cw.accept(writer);
 

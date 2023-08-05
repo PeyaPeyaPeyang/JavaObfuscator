@@ -14,12 +14,20 @@ import me.superblaubeere27.jobf.ProcessorCallback;
 import me.superblaubeere27.jobf.utils.VariableProvider;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.*;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.JumpInsnNode;
+import org.objectweb.asm.tree.LabelNode;
+import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.VarInsnNode;
 
 import java.lang.reflect.Modifier;
 
-class ReturnMangler {
-    static void mangleReturn(ProcessorCallback callback, MethodNode node) {
+class ReturnMangler
+{
+    static void mangleReturn(ProcessorCallback callback, MethodNode node)
+    {
         if (Modifier.isAbstract(node.access) || Modifier.isNative(node.access)) return;
 
         VariableProvider variableProvider = new VariableProvider(node);
@@ -29,15 +37,19 @@ class ReturnMangler {
         boolean isVoidType = returnType.getSort() == Type.VOID;
         int returnSlot = -1;
 
-        if (!isVoidType) {
+        if (!isVoidType)
+        {
             returnSlot = variableProvider.allocateVar();
         }
 
-        for (AbstractInsnNode abstractInsnNode : node.instructions.toArray()) {
-            if (abstractInsnNode.getOpcode() >= Opcodes.IRETURN && abstractInsnNode.getOpcode() <= Opcodes.RETURN) {
+        for (AbstractInsnNode abstractInsnNode : node.instructions.toArray())
+        {
+            if (abstractInsnNode.getOpcode() >= Opcodes.IRETURN && abstractInsnNode.getOpcode() <= Opcodes.RETURN)
+            {
                 InsnList insnList = new InsnList();
 
-                if (!isVoidType) {
+                if (!isVoidType)
+                {
                     insnList.add(new VarInsnNode(returnType.getOpcode(Opcodes.ISTORE), returnSlot));
                 }
 
@@ -48,10 +60,13 @@ class ReturnMangler {
             }
         }
 
-        if (isVoidType) {
+        if (isVoidType)
+        {
             node.instructions.add(returnLabel);
             node.instructions.add(new InsnNode(Opcodes.RETURN));
-        } else {
+        }
+        else
+        {
             node.instructions.add(returnLabel);
             node.instructions.add(new VarInsnNode(returnType.getOpcode(Opcodes.ILOAD), returnSlot));
             node.instructions.add(new InsnNode((returnType.getOpcode(Opcodes.IRETURN))));

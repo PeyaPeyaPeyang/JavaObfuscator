@@ -16,26 +16,35 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 
-public class ObfuscatorClassLoader extends ClassLoader {
+public class ObfuscatorClassLoader extends ClassLoader
+{
     public static ObfuscatorClassLoader INSTANCE = new ObfuscatorClassLoader();
 
     @Override
-    protected Class<?> findClass(String name) throws ClassNotFoundException {
+    protected Class<?> findClass(String name) throws ClassNotFoundException
+    {
         String internalName = name.replace('.', '/');
 
-        if (JObfImpl.INSTANCE.getClassPath().containsKey(internalName)) {
+        if (JObfImpl.INSTANCE.getClassPath().containsKey(internalName))
+        {
             ClassWrapper classWrapper = JObfImpl.INSTANCE.getClassPath().get(internalName);
 
             if (classWrapper == null || classWrapper.originalClass == null)
                 throw new ClassNotFoundException(name);
 
-            try {
+            try
+            {
                 return defineClass(name, classWrapper.originalClass, 0, classWrapper.originalClass.length);
-            } catch (ClassFormatError classFormatError) {
+            }
+            catch (ClassFormatError classFormatError)
+            {
                 classFormatError.printStackTrace();
-                try {
+                try
+                {
                     Files.write(new File("A:/invalid.class").toPath(), classWrapper.originalClass);
-                } catch (IOException e) {
+                }
+                catch (IOException e)
+                {
                     e.printStackTrace();
                 }
             }

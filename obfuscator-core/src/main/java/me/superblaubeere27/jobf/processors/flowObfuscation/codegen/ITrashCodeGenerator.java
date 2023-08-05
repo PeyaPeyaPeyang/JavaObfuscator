@@ -14,7 +14,8 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.MethodNode;
 
-public interface ITrashCodeGenerator {
+public interface ITrashCodeGenerator
+{
 
     InsnList gen(TrashCodeGenerator generator, ClassNode classNode, MethodNode methodNode);
 

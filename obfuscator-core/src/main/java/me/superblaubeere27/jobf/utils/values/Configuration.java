@@ -14,42 +14,52 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class Configuration {
+@Getter
+public class Configuration
+{
     private String input;
     private String output;
     private String script;
-    private List<String> libraries;
+    private final List<String> libraries;
 
-    public Configuration(String input, String output, String script, List<String> libraries) {
+    public Configuration(String input, String output, String script, List<String> libraries)
+    {
         this.input = input;
         this.output = output;
         this.script = script;
         this.libraries = libraries;
     }
 
-    static Configuration fromJsonObject(JsonObject obj) {
+    static Configuration fromJsonObject(JsonObject obj)
+    {
         String input = "";
         String output = "";
         String script = null;
         List<String> libraries = new ArrayList<>();
 
-        if (obj.has("input")) {
+        if (obj.has("input"))
+        {
             input = obj.get("input").getAsString();
         }
-        if (obj.has("output")) {
+        if (obj.has("output"))
+        {
             output = obj.get("output").getAsString();
         }
-        if (obj.has("script")) {
+        if (obj.has("script"))
+        {
             script = obj.get("script").getAsString();
         }
-        if (obj.has("libraries")) {
+        if (obj.has("libraries"))
+        {
             JsonArray jsonArray = obj.getAsJsonArray("libraries");
 
-            for (JsonElement jsonElement : jsonArray) {
+            for (JsonElement jsonElement : jsonArray)
+            {
                 libraries.add(jsonElement.getAsString());
             }
         }
@@ -57,45 +67,35 @@ public class Configuration {
         return new Configuration(input, output, script, libraries);
     }
 
-    void addToJsonObject(JsonObject jsonObject) {
-        jsonObject.addProperty("input", input);
-        jsonObject.addProperty("output", output);
-        jsonObject.addProperty("script", script);
+    void addToJsonObject(JsonObject jsonObject)
+    {
+        jsonObject.addProperty("input", this.input);
+        jsonObject.addProperty("output", this.output);
+        jsonObject.addProperty("script", this.script);
 
         JsonArray array = new JsonArray();
 
-        for (String library : libraries) {
+        for (String library : this.libraries)
+        {
             array.add(new JsonPrimitive(library));
         }
 
         jsonObject.add("libraries", array);
     }
 
-    public String getInput() {
-        return input;
-    }
-
-    public void setInput(String input) {
+    public void setInput(String input)
+    {
         this.input = input;
     }
 
-    public String getOutput() {
-        return output;
-    }
-
-    public void setOutput(String output) {
+    public void setOutput(String output)
+    {
         this.output = output;
     }
 
-    public String getScript() {
-        return script;
-    }
-
-    public void setScript(String script) {
+    public void setScript(String script)
+    {
         this.script = script;
     }
 
-    public List<String> getLibraries() {
-        return libraries;
-    }
 }

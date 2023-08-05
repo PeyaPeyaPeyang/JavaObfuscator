@@ -10,41 +10,6 @@
 
 package me.superblaubeere27.jobf.processors;
 
-import static org.objectweb.asm.Opcodes.AALOAD;
-import static org.objectweb.asm.Opcodes.ACONST_NULL;
-import static org.objectweb.asm.Opcodes.ALOAD;
-import static org.objectweb.asm.Opcodes.ARETURN;
-import static org.objectweb.asm.Opcodes.ASTORE;
-import static org.objectweb.asm.Opcodes.DUP;
-import static org.objectweb.asm.Opcodes.GETSTATIC;
-import static org.objectweb.asm.Opcodes.GOTO;
-import static org.objectweb.asm.Opcodes.H_INVOKESTATIC;
-import static org.objectweb.asm.Opcodes.ICONST_0;
-import static org.objectweb.asm.Opcodes.ICONST_1;
-import static org.objectweb.asm.Opcodes.ICONST_2;
-import static org.objectweb.asm.Opcodes.ICONST_3;
-import static org.objectweb.asm.Opcodes.ICONST_4;
-import static org.objectweb.asm.Opcodes.ICONST_5;
-import static org.objectweb.asm.Opcodes.IF_ICMPGT;
-import static org.objectweb.asm.Opcodes.IF_ICMPNE;
-import static org.objectweb.asm.Opcodes.ILOAD;
-import static org.objectweb.asm.Opcodes.INVOKESPECIAL;
-import static org.objectweb.asm.Opcodes.INVOKESTATIC;
-import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
-import static org.objectweb.asm.Opcodes.ISTORE;
-import static org.objectweb.asm.Opcodes.NEW;
-
-import java.lang.invoke.CallSite;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
-import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-
 import lombok.extern.slf4j.Slf4j;
 import me.superblaubeere27.annotations.ObfuscationTransformer;
 import me.superblaubeere27.jobf.IClassTransformer;
@@ -70,14 +35,50 @@ import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TypeInsnNode;
 
+import java.lang.invoke.CallSite;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+
+import static org.objectweb.asm.Opcodes.AALOAD;
+import static org.objectweb.asm.Opcodes.ACONST_NULL;
+import static org.objectweb.asm.Opcodes.ALOAD;
+import static org.objectweb.asm.Opcodes.ARETURN;
+import static org.objectweb.asm.Opcodes.ASTORE;
+import static org.objectweb.asm.Opcodes.DUP;
+import static org.objectweb.asm.Opcodes.GETSTATIC;
+import static org.objectweb.asm.Opcodes.GOTO;
+import static org.objectweb.asm.Opcodes.H_INVOKESTATIC;
+import static org.objectweb.asm.Opcodes.ICONST_0;
+import static org.objectweb.asm.Opcodes.ICONST_1;
+import static org.objectweb.asm.Opcodes.ICONST_2;
+import static org.objectweb.asm.Opcodes.ICONST_3;
+import static org.objectweb.asm.Opcodes.ICONST_4;
+import static org.objectweb.asm.Opcodes.ICONST_5;
+import static org.objectweb.asm.Opcodes.IF_ICMPGT;
+import static org.objectweb.asm.Opcodes.IF_ICMPNE;
+import static org.objectweb.asm.Opcodes.ILOAD;
+import static org.objectweb.asm.Opcodes.INVOKESPECIAL;
+import static org.objectweb.asm.Opcodes.INVOKESTATIC;
+import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
+import static org.objectweb.asm.Opcodes.ISTORE;
+import static org.objectweb.asm.Opcodes.NEW;
+
 @Slf4j(topic = "obfuscator")
-public class InvokeDynamic implements IClassTransformer {
+public class InvokeDynamic implements IClassTransformer
+{
     private static final String PROCESSOR_NAME = "InvokeDynamic";
-    private static Random random = new Random();
-    private EnabledValue enabled = new EnabledValue(PROCESSOR_NAME, "Hides method calls", DeprecationLevel.OK, false);
+    private static final Random random = new Random();
+    private final EnabledValue enabled = new EnabledValue(PROCESSOR_NAME, "Hides method calls", DeprecationLevel.OK, false);
 
-
-    private static MethodNode bootstrap(FieldNode arrayField, FieldNode typeField, ClassNode node) {
+    private static MethodNode bootstrap(FieldNode arrayField, FieldNode typeField, ClassNode node)
+    {
         String className = node.name;
 
         String referenceFieldName = arrayField.name;
@@ -407,13 +408,16 @@ public class InvokeDynamic implements IClassTransformer {
     }
 
     @Override
-    public void process(ProcessorCallback callback, ClassNode classNode) {
-        if (!enabled.getObject()) return;
+    public void process(ProcessorCallback callback, ClassNode classNode)
+    {
+        if (!this.enabled.getObject()) return;
 
-        if (!NodeUtils.isClassValid(classNode)) {
+        if (!NodeUtils.isClassValid(classNode))
+        {
             return;
         }
-        if (classNode.version == Opcodes.V1_1 || classNode.version < Opcodes.V1_4) {
+        if (classNode.version == Opcodes.V1_1 || classNode.version < Opcodes.V1_4)
+        {
             log.warn("!!! WARNING !!! " + classNode.name + "'s lang level is too low (VERSION < V1_4)");
             return;
         }
@@ -425,7 +429,9 @@ public class InvokeDynamic implements IClassTransformer {
         MethodNode bootstrap = bootstrap(arrayField, typeArrayField, classNode);
         Handle bootstrapMethod = new Handle(H_INVOKESTATIC, classNode.name, bootstrap.name,
                 MethodType.methodType(CallSite.class, MethodHandles.Lookup.class, String.class,
-                        MethodType.class).toMethodDescriptorString(), false);
+                        MethodType.class
+                ).toMethodDescriptorString(), false
+        );
 
         int count = 0;
         int indexCount = 0;
@@ -435,37 +441,49 @@ public class InvokeDynamic implements IClassTransformer {
         HashMap<String, Integer> map = new HashMap<>();
         HashMap<Type, Integer> typeMap = new HashMap<>();
 
-        for (MethodNode method : classNode.methods) {
-            if (!NodeUtils.isMethodValid(method)) {
+        for (MethodNode method : classNode.methods)
+        {
+            if (!NodeUtils.isMethodValid(method))
+            {
                 continue;
             }
 
-            for (AbstractInsnNode abstractInsnNode : method.instructions.toArray()) {
-                if (abstractInsnNode instanceof MethodInsnNode) {
+            for (AbstractInsnNode abstractInsnNode : method.instructions.toArray())
+            {
+                if (abstractInsnNode instanceof MethodInsnNode)
+                {
                     MethodInsnNode methodInsnNode = (MethodInsnNode) abstractInsnNode;
 
-                    if (methodInsnNode.getOpcode() == Opcodes.INVOKEVIRTUAL || methodInsnNode.getOpcode() == Opcodes.INVOKEINTERFACE) {
+                    if (methodInsnNode.getOpcode() == Opcodes.INVOKEVIRTUAL || methodInsnNode.getOpcode() == Opcodes.INVOKEINTERFACE)
+                    {
                         String name = methodInsnNode.owner.replace('/', '.') + ":" + methodInsnNode.name + ":" + methodInsnNode.desc + ":" + NameUtils.generateSpaceString(2);
                         int index;
 
-                        if (map.containsKey(name)) {
+                        if (map.containsKey(name))
+                        {
                             index = map.get(name);
-                        } else {
+                        }
+                        else
+                        {
                             index = indexCount++;
                             map.put(name, index);
                         }
 
-                        method.instructions.insert(methodInsnNode, new InvokeDynamicInsnNode(Integer.toString(index), (methodInsnNode.owner.startsWith("[") ? "(" : "(L") + methodInsnNode.owner + (methodInsnNode.owner.endsWith(";") ? "" : ";") + methodInsnNode.desc.substring(1), bootstrapMethod));
+                        method.instructions.insert(methodInsnNode, new InvokeDynamicInsnNode(Integer.toString(index), (methodInsnNode.owner.startsWith("[") ? "(": "(L") + methodInsnNode.owner + (methodInsnNode.owner.endsWith(";") ? "": ";") + methodInsnNode.desc.substring(1), bootstrapMethod));
                         method.instructions.remove(methodInsnNode);
                         count++;
                     }
-                    if (methodInsnNode.getOpcode() == Opcodes.INVOKESTATIC) {
+                    if (methodInsnNode.getOpcode() == Opcodes.INVOKESTATIC)
+                    {
                         String name = methodInsnNode.owner.replace('/', '.') + ":" + methodInsnNode.name + ":" + methodInsnNode.desc + ":" + NameUtils.generateSpaceString(1);
                         int index;
 
-                        if (map.containsKey(name)) {
+                        if (map.containsKey(name))
+                        {
                             index = map.get(name);
-                        } else {
+                        }
+                        else
+                        {
                             index = indexCount++;
                             map.put(name, index);
                         }
@@ -474,27 +492,35 @@ public class InvokeDynamic implements IClassTransformer {
                         count++;
                     }
                 }
-                if (abstractInsnNode instanceof FieldInsnNode) {
+                if (abstractInsnNode instanceof FieldInsnNode)
+                {
                     FieldInsnNode fieldInsnNode = (FieldInsnNode) abstractInsnNode;
 
                     Type fieldType = Type.getType(fieldInsnNode.desc);
                     int typeIndex;
 
-                    if (typeMap.containsKey(fieldType)) {
+                    if (typeMap.containsKey(fieldType))
+                    {
                         typeIndex = typeMap.get(fieldType);
-                    } else {
+                    }
+                    else
+                    {
                         typeIndex = typeCount++;
                         typeMap.put(fieldType, typeIndex);
                     }
 
 
-                    if (fieldInsnNode.getOpcode() == Opcodes.GETFIELD) {
+                    if (fieldInsnNode.getOpcode() == Opcodes.GETFIELD)
+                    {
                         String name = fieldInsnNode.owner.replace('/', '.') + ":" + fieldInsnNode.name + ":" + typeIndex + ":" + NameUtils.generateSpaceString(3);
                         int index;
 
-                        if (map.containsKey(name)) {
+                        if (map.containsKey(name))
+                        {
                             index = map.get(name);
-                        } else {
+                        }
+                        else
+                        {
                             index = indexCount++;
                             map.put(name, index);
                         }
@@ -502,13 +528,18 @@ public class InvokeDynamic implements IClassTransformer {
                         method.instructions.insert(fieldInsnNode, new InvokeDynamicInsnNode(Integer.toString(index), "(L" + fieldInsnNode.owner + ";)" + fieldInsnNode.desc, bootstrapMethod));
                         method.instructions.remove(fieldInsnNode);
                         count++;
-                    } else if (fieldInsnNode.getOpcode() == Opcodes.GETSTATIC) {
+                    }
+                    else if (fieldInsnNode.getOpcode() == Opcodes.GETSTATIC)
+                    {
                         String name = fieldInsnNode.owner.replace('/', '.') + ":" + fieldInsnNode.name + ":" + typeIndex + ":" + NameUtils.generateSpaceString(4);
                         int index;
 
-                        if (map.containsKey(name)) {
+                        if (map.containsKey(name))
+                        {
                             index = map.get(name);
-                        } else {
+                        }
+                        else
+                        {
                             index = indexCount++;
                             map.put(name, index);
                         }
@@ -522,21 +553,27 @@ public class InvokeDynamic implements IClassTransformer {
 
                     if (owner != null) field = Utils.getField(owner, fieldInsnNode.name);
 
-                    if (field == null) {
+                    if (field == null)
+                    {
                         log.warn("Field " + fieldInsnNode.owner + "." + fieldInsnNode.name + " wasn't found. Please add it as library");
                         continue;
                     }
-                    if (Modifier.isFinal(field.access)) {
+                    if (Modifier.isFinal(field.access))
+                    {
                         continue;
                     }
 
-                    if (fieldInsnNode.getOpcode() == Opcodes.PUTFIELD) {
+                    if (fieldInsnNode.getOpcode() == Opcodes.PUTFIELD)
+                    {
                         String name = fieldInsnNode.owner.replace('/', '.') + ":" + fieldInsnNode.name + ":" + typeIndex + ":" + NameUtils.generateSpaceString(5);
                         int index;
 
-                        if (map.containsKey(name)) {
+                        if (map.containsKey(name))
+                        {
                             index = map.get(name);
-                        } else {
+                        }
+                        else
+                        {
                             index = indexCount++;
                             map.put(name, index);
                         }
@@ -544,13 +581,18 @@ public class InvokeDynamic implements IClassTransformer {
                         method.instructions.insert(fieldInsnNode, new InvokeDynamicInsnNode(Integer.toString(index), "(L" + fieldInsnNode.owner + ";" + fieldInsnNode.desc + ")V", bootstrapMethod));
                         method.instructions.remove(fieldInsnNode);
                         count++;
-                    } else if (fieldInsnNode.getOpcode() == Opcodes.PUTSTATIC) {
+                    }
+                    else if (fieldInsnNode.getOpcode() == Opcodes.PUTSTATIC)
+                    {
                         String name = fieldInsnNode.owner.replace('/', '.') + ":" + fieldInsnNode.name + ":" + typeIndex + ":" + NameUtils.generateSpaceString(6);
                         int index;
 
-                        if (map.containsKey(name)) {
+                        if (map.containsKey(name))
+                        {
                             index = map.get(name);
-                        } else {
+                        }
+                        else
+                        {
                             index = indexCount++;
                             map.put(name, index);
                         }
@@ -565,8 +607,10 @@ public class InvokeDynamic implements IClassTransformer {
 //        System.out.println(count);
 
 
-        if (count > 0) {
-            if (classNode.version < Opcodes.V1_7) {
+        if (count > 0)
+        {
+            if (classNode.version < Opcodes.V1_7)
+            {
                 callback.setForceComputeFrames();
             }
             classNode.version = Math.max(Opcodes.V1_7, classNode.version);
@@ -583,7 +627,8 @@ public class InvokeDynamic implements IClassTransformer {
                 generatorMethodNodes.add(new TypeInsnNode(Opcodes.ANEWARRAY, "java/lang/String"));
                 generatorMethodNodes.add(new FieldInsnNode(Opcodes.PUTSTATIC, classNode.name, arrayField.name, arrayField.desc));
 
-                for (Map.Entry<String, Integer> integerStringEntry : list) {
+                for (Map.Entry<String, Integer> integerStringEntry : list)
+                {
                     generatorMethodNodes.add(new FieldInsnNode(Opcodes.GETSTATIC, classNode.name, arrayField.name, arrayField.desc));
                     generatorMethodNodes.add(NodeUtils.generateIntPush(integerStringEntry.getValue()));
                     generatorMethodNodes.add(new LdcInsnNode(integerStringEntry.getKey()));
@@ -599,13 +644,17 @@ public class InvokeDynamic implements IClassTransformer {
                 generatorMethodNodes.add(new TypeInsnNode(Opcodes.ANEWARRAY, "java/lang/Class"));
                 generatorMethodNodes.add(new FieldInsnNode(Opcodes.PUTSTATIC, classNode.name, typeArrayField.name, typeArrayField.desc));
 
-                for (Map.Entry<Type, Integer> integerStringEntry : list) {
+                for (Map.Entry<Type, Integer> integerStringEntry : list)
+                {
                     generatorMethodNodes.add(new FieldInsnNode(Opcodes.GETSTATIC, classNode.name, typeArrayField.name, typeArrayField.desc));
                     generatorMethodNodes.add(NodeUtils.generateIntPush(integerStringEntry.getValue()));
 
-                    if (integerStringEntry.getKey().getSort() == Type.ARRAY || integerStringEntry.getKey().getSort() == Type.OBJECT) {
+                    if (integerStringEntry.getKey().getSort() == Type.ARRAY || integerStringEntry.getKey().getSort() == Type.OBJECT)
+                    {
                         generatorMethodNodes.add(new LdcInsnNode(integerStringEntry.getKey()));
-                    } else {
+                    }
+                    else
+                    {
                         generatorMethodNodes.add(NodeUtils.getTypeNode(integerStringEntry.getKey()));
                     }
                     generatorMethodNodes.add(new InsnNode(Opcodes.AASTORE));
@@ -618,17 +667,21 @@ public class InvokeDynamic implements IClassTransformer {
 
             MethodNode clInit = NodeUtils.getMethod(classNode, "<clinit>");
 
-            if (clInit == null) {
+            if (clInit == null)
+            {
                 clInit = new MethodNode(Opcodes.ACC_STATIC, "<clinit>", "()V", null, new String[0]);
                 classNode.methods.add(clInit);
             }
             if (clInit.instructions == null)
                 clInit.instructions = new InsnList();
 
-            if (clInit.instructions.getFirst() == null) {
+            if (clInit.instructions.getFirst() == null)
+            {
                 clInit.instructions.add(new MethodInsnNode(Opcodes.INVOKESTATIC, classNode.name, generatorMethod.name, generatorMethod.desc, false));
                 clInit.instructions.add(new InsnNode(Opcodes.RETURN));
-            } else {
+            }
+            else
+            {
                 clInit.instructions.insertBefore(clInit.instructions.getFirst(), new MethodInsnNode(Opcodes.INVOKESTATIC, classNode.name, generatorMethod.name, generatorMethod.desc, false));
             }
 
@@ -642,7 +695,8 @@ public class InvokeDynamic implements IClassTransformer {
     }
 
     @Override
-    public ObfuscationTransformer getType() {
+    public ObfuscationTransformer getType()
+    {
         return ObfuscationTransformer.INVOKE_DYNAMIC;
     }
 

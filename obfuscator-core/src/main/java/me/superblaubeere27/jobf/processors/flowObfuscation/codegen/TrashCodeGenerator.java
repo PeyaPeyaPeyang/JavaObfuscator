@@ -10,7 +10,7 @@
 
 package me.superblaubeere27.jobf.processors.flowObfuscation.codegen;
 
-public class TrashCodeGenerator {
-
+public class TrashCodeGenerator
+{
 
 }

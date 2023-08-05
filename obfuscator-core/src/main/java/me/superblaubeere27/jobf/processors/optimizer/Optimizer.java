@@ -19,26 +19,30 @@ import me.superblaubeere27.jobf.utils.values.EnabledValue;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
-public class Optimizer implements IClassTransformer {
+public class Optimizer implements IClassTransformer
+{
     private static final String PROCESSOR_NAME = "Optimizer";
-    private EnabledValue enabledValue = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.OK, false);
-    private BooleanValue replaceEquals = new BooleanValue(PROCESSOR_NAME, "Replace String.equals()", "NOT TESTED", DeprecationLevel.OK, false);
-    private BooleanValue replaceEqualsIgnoreCase = new BooleanValue(PROCESSOR_NAME, "Replace String.equalsIgnoreCase()", "Might break some comparisons with strings that contains unicode chars", DeprecationLevel.OK, false);
-    private BooleanValue optimizeStringCalls = new BooleanValue(PROCESSOR_NAME, "Optimize static string calls", null, DeprecationLevel.GOOD, false);
+    private final EnabledValue enabledValue = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.OK, false);
+    private final BooleanValue replaceEquals = new BooleanValue(PROCESSOR_NAME, "Replace String.equals()", "NOT TESTED", DeprecationLevel.OK, false);
+    private final BooleanValue replaceEqualsIgnoreCase = new BooleanValue(PROCESSOR_NAME, "Replace String.equalsIgnoreCase()", "Might break some comparisons with strings that contains unicode chars", DeprecationLevel.OK, false);
+    private final BooleanValue optimizeStringCalls = new BooleanValue(PROCESSOR_NAME, "Optimize static string calls", null, DeprecationLevel.GOOD, false);
 
     @Override
-    public void process(ProcessorCallback callback, ClassNode node) {
-        if (!enabledValue.getObject()) return;
+    public void process(ProcessorCallback callback, ClassNode node)
+    {
+        if (!this.enabledValue.getObject()) return;
 
-        for (MethodNode method : node.methods) {
-            if (replaceEquals.getObject() || replaceEqualsIgnoreCase.getObject())
-                ComparisionReplacer.replaceComparisons(method, replaceEquals.getObject(), replaceEqualsIgnoreCase.getObject());
-            if (optimizeStringCalls.getObject()) StaticStringCallOptimizer.optimize(method);
+        for (MethodNode method : node.methods)
+        {
+            if (this.replaceEquals.getObject() || this.replaceEqualsIgnoreCase.getObject())
+                ComparisionReplacer.replaceComparisons(method, this.replaceEquals.getObject(), this.replaceEqualsIgnoreCase.getObject());
+            if (this.optimizeStringCalls.getObject()) StaticStringCallOptimizer.optimize(method);
         }
     }
 
     @Override
-    public ObfuscationTransformer getType() {
+    public ObfuscationTransformer getType()
+    {
         return ObfuscationTransformer.PEEPHOLE_OPTIMIZER;
     }
 

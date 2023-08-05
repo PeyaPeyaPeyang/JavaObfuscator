@@ -10,9 +10,23 @@
 
 package me.superblaubeere27.annotations;
 
-import static me.superblaubeere27.annotations.ObfuscationTransformer.*;
+import static me.superblaubeere27.annotations.ObfuscationTransformer.CRASHER;
+import static me.superblaubeere27.annotations.ObfuscationTransformer.FLOW_OBFUSCATION;
+import static me.superblaubeere27.annotations.ObfuscationTransformer.HIDE_MEMBERS;
+import static me.superblaubeere27.annotations.ObfuscationTransformer.HWID_PROTECTION;
+import static me.superblaubeere27.annotations.ObfuscationTransformer.INLINING;
+import static me.superblaubeere27.annotations.ObfuscationTransformer.INNER_CLASS_REMOVER;
+import static me.superblaubeere27.annotations.ObfuscationTransformer.INVOKE_DYNAMIC;
+import static me.superblaubeere27.annotations.ObfuscationTransformer.LINE_NUMBER_REMOVER;
+import static me.superblaubeere27.annotations.ObfuscationTransformer.NAME_OBFUSCATION;
+import static me.superblaubeere27.annotations.ObfuscationTransformer.NUMBER_OBFUSCATION;
+import static me.superblaubeere27.annotations.ObfuscationTransformer.PEEPHOLE_OPTIMIZER;
+import static me.superblaubeere27.annotations.ObfuscationTransformer.REFERENCE_PROXY;
+import static me.superblaubeere27.annotations.ObfuscationTransformer.SHUFFLE_MEMBERS;
+import static me.superblaubeere27.annotations.ObfuscationTransformer.STRING_ENCRYPTION;
 
-public @interface Rule {
+public @interface Rule
+{
     Action value();
 
     ObfuscationTransformer[] processors() default {FLOW_OBFUSCATION,
@@ -30,7 +44,9 @@ public @interface Rule {
             HIDE_MEMBERS,
             INLINING};
 
-    enum Action {
-        ALLOW, DISALLOW
+    enum Action
+    {
+        ALLOW,
+        DISALLOW
     }
 }

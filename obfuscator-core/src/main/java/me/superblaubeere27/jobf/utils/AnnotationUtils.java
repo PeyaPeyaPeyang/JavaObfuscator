@@ -10,7 +10,8 @@
 
 package me.superblaubeere27.jobf.utils;
 
-public class AnnotationUtils {
+public class AnnotationUtils
+{
 
 //    public static boolean isExcluded(ClassNode node, ObfuscationTransformer type) {
 //        if (node.visibleAnnotations != null && isExcluded(node.invisibleAnnotations, type)) {

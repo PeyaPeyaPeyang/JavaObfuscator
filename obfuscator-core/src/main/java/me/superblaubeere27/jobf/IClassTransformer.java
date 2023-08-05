@@ -13,7 +13,8 @@ package me.superblaubeere27.jobf;
 import me.superblaubeere27.annotations.ObfuscationTransformer;
 import org.objectweb.asm.tree.ClassNode;
 
-public interface IClassTransformer {
+public interface IClassTransformer
+{
     void process(ProcessorCallback callback, ClassNode node);
 
     ObfuscationTransformer getType();

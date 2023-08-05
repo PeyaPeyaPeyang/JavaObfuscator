@@ -12,15 +12,24 @@ package me.superblaubeere27.jobf.processors.optimizer;
 
 import me.superblaubeere27.jobf.utils.Utils;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.tree.*;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.tree.MethodNode;
 
-class ComparisionReplacer {
-    static void replaceComparisons(MethodNode method, boolean replaceEquals, boolean replaceEqualsIgnoreCase) {
-        for (AbstractInsnNode insnNode : method.instructions.toArray()) {
-            if (insnNode instanceof MethodInsnNode) {
+class ComparisionReplacer
+{
+    static void replaceComparisons(MethodNode method, boolean replaceEquals, boolean replaceEqualsIgnoreCase)
+    {
+        for (AbstractInsnNode insnNode : method.instructions.toArray())
+        {
+            if (insnNode instanceof MethodInsnNode)
+            {
                 MethodInsnNode methodInsnNode = (MethodInsnNode) insnNode;
 
-                if (replaceEquals && Utils.matchMethodNode(methodInsnNode, "java/lang/String.equals:(Ljava/lang/Object;)Z")) {
+                if (replaceEquals && Utils.matchMethodNode(methodInsnNode, "java/lang/String.equals:(Ljava/lang/Object;)Z"))
+                {
                     InsnList replacement = new InsnList();
 
                     replacement.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/Object", "hashCode", "()I", false));
@@ -36,7 +45,8 @@ class ComparisionReplacer {
                     method.instructions.insert(insnNode, replacement);
                     method.instructions.remove(insnNode);
                 }
-                if (replaceEqualsIgnoreCase && Utils.matchMethodNode(methodInsnNode, "java/lang/String.equalsIgnoreCase:(Ljava/lang/String;)Z")) {
+                if (replaceEqualsIgnoreCase && Utils.matchMethodNode(methodInsnNode, "java/lang/String.equalsIgnoreCase:(Ljava/lang/String;)Z"))
+                {
                     InsnList replacement = new InsnList();
 
                     replacement.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/String", "toUpperCase", "()Ljava/lang/String;", false));

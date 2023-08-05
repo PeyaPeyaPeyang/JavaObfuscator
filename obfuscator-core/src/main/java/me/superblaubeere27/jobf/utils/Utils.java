@@ -13,16 +13,27 @@ package me.superblaubeere27.jobf.utils;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
+import javax.swing.JFileChooser;
+import javax.swing.filechooser.FileFilter;
 import me.superblaubeere27.jobf.JObfImpl;
 import me.superblaubeere27.jobf.processors.name.ClassWrapper;
 import me.superblaubeere27.jobf.utils.values.DeprecationLevel;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.*;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FieldNode;
+import org.objectweb.asm.tree.FrameNode;
+import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.JumpInsnNode;
+import org.objectweb.asm.tree.LabelNode;
+import org.objectweb.asm.tree.LineNumberNode;
+import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.VarInsnNode;
 
-import javax.swing.*;
-import javax.swing.filechooser.FileFilter;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,13 +45,36 @@ import java.util.Random;
 import java.util.StringJoiner;
 import java.util.zip.ZipFile;
 
-import static org.objectweb.asm.Opcodes.*;
+import static org.objectweb.asm.Opcodes.ACC_ABSTRACT;
+import static org.objectweb.asm.Opcodes.ACC_BRIDGE;
+import static org.objectweb.asm.Opcodes.ACC_FINAL;
+import static org.objectweb.asm.Opcodes.ACC_INTERFACE;
+import static org.objectweb.asm.Opcodes.ACC_NATIVE;
+import static org.objectweb.asm.Opcodes.ACC_PRIVATE;
+import static org.objectweb.asm.Opcodes.ACC_PROTECTED;
+import static org.objectweb.asm.Opcodes.ACC_PUBLIC;
+import static org.objectweb.asm.Opcodes.ACC_STATIC;
+import static org.objectweb.asm.Opcodes.ACC_STRICT;
+import static org.objectweb.asm.Opcodes.ACC_SYNCHRONIZED;
+import static org.objectweb.asm.Opcodes.ACC_SYNTHETIC;
+import static org.objectweb.asm.Opcodes.ACC_TRANSIENT;
+import static org.objectweb.asm.Opcodes.ACC_VOLATILE;
+import static org.objectweb.asm.Opcodes.ALOAD;
+import static org.objectweb.asm.Opcodes.ASTORE;
+import static org.objectweb.asm.Opcodes.DLOAD;
+import static org.objectweb.asm.Opcodes.FLOAD;
+import static org.objectweb.asm.Opcodes.ILOAD;
+import static org.objectweb.asm.Opcodes.ISTORE;
+import static org.objectweb.asm.Opcodes.LLOAD;
+import static org.objectweb.asm.Opcodes.RET;
 
-public class Utils {
+public class Utils
+{
     private static final Random random = new Random();
     private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
-    public static ClassNode lookupClass(String name) {
+    public static ClassNode lookupClass(String name)
+    {
         ClassWrapper a = JObfImpl.INSTANCE.getClassPath().get(name);
 
         if (a != null) return a.classNode;
@@ -48,60 +82,72 @@ public class Utils {
         return JObfImpl.getClasses().get(name);
     }
 
-    public static boolean isWindows() {
+    public static boolean isWindows()
+    {
         return System.getProperty("os.name").toLowerCase().contains("win");
     }
 
-
-    public static MethodNode getMethod(ClassNode cls, String name, String desc, boolean parentClasses) {
-        for (MethodNode method : cls.methods) {
+    public static MethodNode getMethod(ClassNode cls, String name, String desc, boolean parentClasses)
+    {
+        for (MethodNode method : cls.methods)
+        {
             if (method.name.equals(name) && method.desc.equals(desc))
                 return method;
         }
 
-        ClassNode lookup = parentClasses ? lookupClass(cls.superName) : null;
+        ClassNode lookup = parentClasses ? lookupClass(cls.superName): null;
 
-        return lookup == null || cls.name.equals("java/lang/Object") ? null : getMethod(lookup, name, desc, true);
+        return lookup == null || cls.name.equals("java/lang/Object") ? null: getMethod(lookup, name, desc, true);
     }
 
-    public static FieldNode getField(ClassNode cls, String name) {
-        for (FieldNode method : cls.fields) {
+    public static FieldNode getField(ClassNode cls, String name)
+    {
+        for (FieldNode method : cls.fields)
+        {
             if (method.name.equals(name))
                 return method;
         }
         return null;
     }
 
-    private static boolean isNotInstruction(AbstractInsnNode node) {
+    private static boolean isNotInstruction(AbstractInsnNode node)
+    {
         return node instanceof LineNumberNode || node instanceof FrameNode || node instanceof LabelNode;
     }
 
-    public static boolean notAbstractOrNative(MethodNode methodNode) {
+    public static boolean notAbstractOrNative(MethodNode methodNode)
+    {
         return !Modifier.isNative(methodNode.access) && !Modifier.isAbstract(methodNode.access);
     }
 
-    public static AbstractInsnNode getNextFollowGoto(AbstractInsnNode node) {
+    public static AbstractInsnNode getNextFollowGoto(AbstractInsnNode node)
+    {
         AbstractInsnNode next = node.getNext();
-        while (next instanceof LabelNode || next instanceof LineNumberNode || next instanceof FrameNode) {
+        while (next instanceof LabelNode || next instanceof LineNumberNode || next instanceof FrameNode)
+        {
             next = next.getNext();
         }
-        if (next.getOpcode() == Opcodes.GOTO) {
+        if (next.getOpcode() == Opcodes.GOTO)
+        {
             JumpInsnNode cast = (JumpInsnNode) next;
             next = cast.label;
-            while (Utils.isNotInstruction(next)) {
+            while (Utils.isNotInstruction(next))
+            {
                 next = next.getNext();
             }
         }
         return next;
     }
 
-    public static AbstractInsnNode getNext(AbstractInsnNode node) {
+    public static AbstractInsnNode getNext(AbstractInsnNode node)
+    {
         if (node == null) return null;
         AbstractInsnNode next = node.getNext();
 
         if (next == null) return null;
 
-        while (Utils.isNotInstruction(next)) {
+        while (Utils.isNotInstruction(next))
+        {
             next = next.getNext();
 
             if (next == null) break;
@@ -109,26 +155,32 @@ public class Utils {
         return next;
     }
 
-    public static AbstractInsnNode getPrevious(AbstractInsnNode node, int amount) {
-        for (int i = 0; i < amount; i++) {
+    public static AbstractInsnNode getPrevious(AbstractInsnNode node, int amount)
+    {
+        for (int i = 0; i < amount; i++)
+        {
             node = getPrevious(node);
         }
         return node;
     }
 
-    public static AbstractInsnNode getPrevious(AbstractInsnNode node) {
+    public static AbstractInsnNode getPrevious(AbstractInsnNode node)
+    {
         AbstractInsnNode prev = node.getPrevious();
-        while (Utils.isNotInstruction(prev)) {
+        while (Utils.isNotInstruction(prev))
+        {
             prev = prev.getPrevious();
         }
         return prev;
     }
 
-    public static int random(int min, int max) {
-        return min >= max ? min : random.nextInt(max - min) + min;
+    public static int random(int min, int max)
+    {
+        return min >= max ? min: random.nextInt(max - min) + min;
     }
 
-    public static <T> T[] concatenate(T[] a, T[] b) {
+    public static <T> T[] concatenate(T[] a, T[] b)
+    {
         int aLen = a.length;
         int bLen = b.length;
 
@@ -140,11 +192,14 @@ public class Utils {
         return c;
     }
 
-    public static HashMap<LabelNode, LabelNode> generateNewLabelMap(InsnList insnList) {
+    public static HashMap<LabelNode, LabelNode> generateNewLabelMap(InsnList insnList)
+    {
         HashMap<LabelNode, LabelNode> labelNodeHashMap = new HashMap<>();
 
-        for (AbstractInsnNode abstractInsnNode : insnList.toArray()) {
-            if (abstractInsnNode instanceof LabelNode) {
+        for (AbstractInsnNode abstractInsnNode : insnList.toArray())
+        {
+            if (abstractInsnNode instanceof LabelNode)
+            {
                 LabelNode label = (LabelNode) abstractInsnNode;
 
                 labelNodeHashMap.put(label, new LabelNode());
@@ -154,11 +209,13 @@ public class Utils {
         return labelNodeHashMap;
     }
 
-    public static boolean matchMethodNode(MethodInsnNode methodInsnNode, String s) {
+    public static boolean matchMethodNode(MethodInsnNode methodInsnNode, String s)
+    {
         return s.equals(methodInsnNode.owner + "." + methodInsnNode.name + ":" + methodInsnNode.desc);
     }
 
-    public static String chooseDirectory(final File currFolder, final Component parent) {
+    public static String chooseDirectory(final File currFolder, final Component parent)
+    {
         final JFileChooser chooser = new JFileChooser(currFolder);
         chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         if (chooser.showOpenDialog(parent) == JFileChooser.APPROVE_OPTION)
@@ -166,7 +223,8 @@ public class Utils {
         return null;
     }
 
-    public static String chooseDirectoryOrFile(final File currFolder, final Component parent) {
+    public static String chooseDirectoryOrFile(final File currFolder, final Component parent)
+    {
         final JFileChooser chooser = new JFileChooser(currFolder);
         chooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
         if (chooser.showOpenDialog(parent) == JFileChooser.APPROVE_OPTION)
@@ -174,28 +232,35 @@ public class Utils {
         return null;
     }
 
-    public static String chooseFile(final File currFolder, final Component parent) {
+    public static String chooseFile(final File currFolder, final Component parent)
+    {
         final JFileChooser chooser = new JFileChooser(currFolder);
         if (chooser.showOpenDialog(parent) == JFileChooser.APPROVE_OPTION)
             return chooser.getSelectedFile().getAbsolutePath();
         return null;
     }
 
-    public static String chooseFile(File currFolder, final Component parent, FileFilter filter) {
+    public static String chooseFile(File currFolder, final Component parent, FileFilter filter)
+    {
         return chooseFile(currFolder, parent, filter, false);
     }
 
-    public static String chooseFile(File currFolder, final Component parent, FileFilter filter, boolean toSave) {
-        if(currFolder == null) {
-            try {
+    public static String chooseFile(File currFolder, final Component parent, FileFilter filter, boolean toSave)
+    {
+        if (currFolder == null)
+        {
+            try
+            {
                 currFolder = new File(Utils.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath());
-            } catch (Exception ignored) {
+            }
+            catch (Exception ignored)
+            {
             }
         }
         final JFileChooser chooser = new JFileChooser(currFolder);
         chooser.setFileFilter(filter);
         int result;
-        if(toSave)
+        if (toSave)
             result = chooser.showSaveDialog(parent);
         else
             result = chooser.showOpenDialog(parent);
@@ -204,12 +269,15 @@ public class Utils {
         return null;
     }
 
-    public static long copy(final InputStream from, final OutputStream to) throws IOException {
+    public static long copy(final InputStream from, final OutputStream to) throws IOException
+    {
         byte[] buf = new byte[1024];
         long total = 0L;
-        while (true) {
+        while (true)
+        {
             int r = from.read(buf);
-            if (r == -1) {
+            if (r == -1)
+            {
                 break;
             }
             to.write(buf, 0, r);
@@ -218,8 +286,10 @@ public class Utils {
         return total;
     }
 
-    public static Color getColor(DeprecationLevel deprecationLevel) {
-        switch (deprecationLevel) {
+    public static Color getColor(DeprecationLevel deprecationLevel)
+    {
+        switch (deprecationLevel)
+        {
             case GOOD:
                 return null;
             case OK:
@@ -231,11 +301,13 @@ public class Utils {
         }
     }
 
-    public static String prettyGson(final JsonObject newObj) {
+    public static String prettyGson(final JsonObject newObj)
+    {
         return gson.toJson(newObj);
     }
 
-    public static String modifierToString(int mod) {
+    public static String modifierToString(int mod)
+    {
         StringJoiner sj = new StringJoiner(" ");
 
         if ((mod & ACC_BRIDGE) != 0) sj.add("[bridge]");
@@ -259,7 +331,8 @@ public class Utils {
         return sj.toString();
     }
 
-    public static String toIl(int i) {
+    public static String toIl(int i)
+    {
         return Integer.toBinaryString(i).replace('0', 'I').replace('1', 'l');
     }
 
@@ -267,31 +340,39 @@ public class Utils {
      * Converts a string to a new string based on a dictionary. Not actually randomised, but based on the provided
      *
      * @param i value, which will always generate a string unique to that integer.
-     * <p>
-     * It converts an integer into another base based on the length of the dictionary.
-     * For example, if the dictionary was ["hello", "goodbye"] the length of the dictionary is 2, and it will be
-     * converted to its base2 equivalent (binary). But instead of the integer characters they are assigned to
-     * the strings of the dictionary
+     *          <p>
+     *          It converts an integer into another base based on the length of the dictionary.
+     *          For example, if the dictionary was ["hello", "goodbye"] the length of the dictionary is 2, and it will be
+     *          converted to its base2 equivalent (binary). But instead of the integer characters they are assigned to
+     *          the strings of the dictionary
      * @author cookiedragon234, superblaubeere27
      */
-    public static String convertToBase(int i, String str) {
+    public static String convertToBase(int i, String str)
+    {
         StringBuilder sb = new StringBuilder();
 
-        do {
+        do
+        {
             sb.append(str.charAt(i % str.length()));
             i /= str.length();
-        } while (i != 0);
+        }
+        while (i != 0);
 
         return sb.toString();
     }
 
-    public static String replaceMainClass(String s, String main) {
+    public static String replaceMainClass(String s, String main)
+    {
         StringBuilder sb = new StringBuilder();
 
-        for (String s1 : s.split("\n")) {
-            if (s1.startsWith("Main-Class")) {
+        for (String s1 : s.split("\n"))
+        {
+            if (s1.startsWith("Main-Class"))
+            {
                 sb.append("Main-Class: ").append(main).append("\n");
-            } else {
+            }
+            else
+            {
                 sb.append(s1).append("\n");
             }
         }
@@ -299,11 +380,14 @@ public class Utils {
         return sb.toString();
     }
 
-    public static String getMainClass(String s) {
+    public static String getMainClass(String s)
+    {
         String mainClass = null;
 
-        for (String s1 : s.split("\n")) {
-            if (s1.startsWith("Main-Class: ")) {
+        for (String s1 : s.split("\n"))
+        {
+            if (s1.startsWith("Main-Class: "))
+            {
                 mainClass = s1.substring("Main-Class: ".length()).trim().replace("\r", "");
             }
         }
@@ -311,9 +395,10 @@ public class Utils {
         return mainClass;
     }
 
-
-    public static String getInternalName(Type type) {
-        switch (type.toString()) {
+    public static String getInternalName(Type type)
+    {
+        switch (type.toString())
+        {
             case "V":
                 return "void";
             case "Z":
@@ -337,16 +422,21 @@ public class Utils {
         }
     }
 
-    public static boolean checkZip(String file) {
-        try {
+    public static boolean checkZip(String file)
+    {
+        try
+        {
             new ZipFile(file).entries();
-        } catch (Throwable e) {
+        }
+        catch (Throwable e)
+        {
             return false;
         }
         return true;
     }
 
-    public static String formatTime(long l) {
+    public static String formatTime(long l)
+    {
         long hours = l / (1000 * 60 * 60);
 
         l -= hours * 1000 * 60 * 60;
@@ -373,7 +463,8 @@ public class Utils {
         return sb.toString();
     }
 
-    public static Type getType(VarInsnNode abstractInsnNode) {
+    public static Type getType(VarInsnNode abstractInsnNode)
+    {
         int offset;
 
         if (abstractInsnNode.getOpcode() >= ISTORE && abstractInsnNode.getOpcode() <= ASTORE)
@@ -385,7 +476,8 @@ public class Utils {
         else
             throw new UnsupportedOperationException();
 
-        switch (offset) {
+        switch (offset)
+        {
             case 0:
                 return Type.INT_TYPE;
             case LLOAD - ILOAD:

@@ -19,19 +19,28 @@ import me.superblaubeere27.jobf.utils.values.BooleanValue;
 import me.superblaubeere27.jobf.utils.values.DeprecationLevel;
 import me.superblaubeere27.jobf.utils.values.EnabledValue;
 import me.superblaubeere27.jobf.utils.values.StringValue;
-import org.objectweb.asm.tree.*;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.LabelNode;
+import org.objectweb.asm.tree.LineNumberNode;
+import org.objectweb.asm.tree.LocalVariableNode;
+import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.ParameterNode;
+import org.objectweb.asm.tree.VarInsnNode;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
-public class LineNumberRemover implements IClassTransformer {
+public class LineNumberRemover implements IClassTransformer
+{
     private static final String PROCESSOR_NAME = "LineNumberRemover";
-    private static Random random = new Random();
-    private static ArrayList<String> TYPES = new ArrayList<>();
+    private static final Random random = new Random();
+    private static final ArrayList<String> TYPES = new ArrayList<>();
 
-    static {
+    static
+    {
         TYPES.add("Z");
         TYPES.add("C");
         TYPES.add("B");
@@ -44,44 +53,53 @@ public class LineNumberRemover implements IClassTransformer {
         TYPES.add("Ljava/lang/String;");
     }
 
-    private JObfImpl inst;
-    private EnabledValue enabled = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.GOOD, true);
-    private BooleanValue renameValues = new BooleanValue(PROCESSOR_NAME, "Rename local variables", DeprecationLevel.GOOD, true);
-    private BooleanValue removeLineNumbers = new BooleanValue(PROCESSOR_NAME, "Remove Line Numbers", DeprecationLevel.GOOD, true);
-    private BooleanValue removeDebugNames = new BooleanValue(PROCESSOR_NAME, "Remove Debug Names", DeprecationLevel.GOOD, true);
-    private BooleanValue addLocalVariables = new BooleanValue(PROCESSOR_NAME, "Add Local Variables", "Adds random local variables with wrong types. Might break some decompilers", DeprecationLevel.GOOD, true);
-    private StringValue newSourceFileName = new StringValue(PROCESSOR_NAME, "New SourceFile Name", DeprecationLevel.GOOD, "");
+    private final JObfImpl inst;
+    private final EnabledValue enabled = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.GOOD, true);
+    private final BooleanValue renameValues = new BooleanValue(PROCESSOR_NAME, "Rename local variables", DeprecationLevel.GOOD, true);
+    private final BooleanValue removeLineNumbers = new BooleanValue(PROCESSOR_NAME, "Remove Line Numbers", DeprecationLevel.GOOD, true);
+    private final BooleanValue removeDebugNames = new BooleanValue(PROCESSOR_NAME, "Remove Debug Names", DeprecationLevel.GOOD, true);
+    private final BooleanValue addLocalVariables = new BooleanValue(PROCESSOR_NAME, "Add Local Variables", "Adds random local variables with wrong types. Might break some decompilers", DeprecationLevel.GOOD, true);
+    private final StringValue newSourceFileName = new StringValue(PROCESSOR_NAME, "New SourceFile Name", DeprecationLevel.GOOD, "");
 
-    public LineNumberRemover(JObfImpl inst) {
+    public LineNumberRemover(JObfImpl inst)
+    {
         this.inst = inst;
     }
 
     @Override
-    public void process(ProcessorCallback callback, ClassNode node) {
-        if (!enabled.getObject()) return;
+    public void process(ProcessorCallback callback, ClassNode node)
+    {
+        if (!this.enabled.getObject()) return;
 
-        for (MethodNode method : node.methods) {
+        for (MethodNode method : node.methods)
+        {
             LabelNode firstLabel = null;
             LabelNode lastLabel = null;
             HashMap<Integer, String> varMap = new HashMap<>();
 
-            for (AbstractInsnNode abstractInsnNode : method.instructions.toArray()) {
-                if (abstractInsnNode instanceof LineNumberNode && removeLineNumbers.getObject()) {
+            for (AbstractInsnNode abstractInsnNode : method.instructions.toArray())
+            {
+                if (abstractInsnNode instanceof LineNumberNode && this.removeLineNumbers.getObject())
+                {
                     LineNumberNode insnNode = (LineNumberNode) abstractInsnNode;
                     method.instructions.remove(insnNode);
                 }
 
-                if (abstractInsnNode instanceof VarInsnNode) {
+                if (abstractInsnNode instanceof VarInsnNode)
+                {
                     VarInsnNode insnNode = (VarInsnNode) abstractInsnNode;
 
-                    if (!varMap.containsKey(insnNode.var)) {
+                    if (!varMap.containsKey(insnNode.var))
+                    {
                         varMap.put(insnNode.var, TYPES.get(random.nextInt(TYPES.size())));
                     }
                 }
-                if (abstractInsnNode instanceof LabelNode) {
+                if (abstractInsnNode instanceof LabelNode)
+                {
                     LabelNode insnNode = (LabelNode) abstractInsnNode;
 
-                    if (firstLabel == null) {
+                    if (firstLabel == null)
+                    {
                         firstLabel = insnNode;
                     }
 
@@ -89,34 +107,42 @@ public class LineNumberRemover implements IClassTransformer {
                 }
             }
 
-            if (firstLabel != null && addLocalVariables.getObject()) {
+            if (firstLabel != null && this.addLocalVariables.getObject())
+            {
                 if (method.localVariables == null) method.localVariables = new ArrayList<>();
 
-                for (Map.Entry<Integer, String> integerStringEntry : varMap.entrySet()) {
+                for (Map.Entry<Integer, String> integerStringEntry : varMap.entrySet())
+                {
                     method.localVariables.add(new LocalVariableNode(NameUtils.generateLocalVariableName(), integerStringEntry.getValue(), null, firstLabel, lastLabel, integerStringEntry.getKey()));
                 }
             }
 
-            if (method.parameters != null && renameValues.getObject()) {
-                for (ParameterNode parameter : method.parameters) {
+            if (method.parameters != null && this.renameValues.getObject())
+            {
+                for (ParameterNode parameter : method.parameters)
+                {
                     parameter.name = NameUtils.generateLocalVariableName();
                 }
             }
-            if (method.localVariables != null && renameValues.getObject()) {
-                for (LocalVariableNode parameter : method.localVariables) {
+            if (method.localVariables != null && this.renameValues.getObject())
+            {
+                for (LocalVariableNode parameter : method.localVariables)
+                {
                     parameter.name = NameUtils.generateLocalVariableName();
                 }
             }
         }
-        if ((node.sourceFile == null || !node.sourceFile.contains(StringEncryptionTransformer.MAGICNUMBER_START)) && removeDebugNames.getObject()) {
-            node.sourceFile = newSourceFileName.getObject().isEmpty() ? null : newSourceFileName.getObject();
+        if ((node.sourceFile == null || !node.sourceFile.contains(StringEncryptionTransformer.MAGICNUMBER_START)) && this.removeDebugNames.getObject())
+        {
+            node.sourceFile = this.newSourceFileName.getObject().isEmpty() ? null: this.newSourceFileName.getObject();
         }
 
-        inst.setWorkDone();
+        this.inst.setWorkDone();
     }
-	
+
     @Override
-    public ObfuscationTransformer getType() {
+    public ObfuscationTransformer getType()
+    {
         return ObfuscationTransformer.LINE_NUMBER_REMOVER;
     }
 

@@ -10,23 +10,29 @@
 
 package me.superblaubeere27.jobf.utils;
 
-public class MissingClassException extends RuntimeException {
-    public MissingClassException() {
+public class MissingClassException extends RuntimeException
+{
+    public MissingClassException()
+    {
     }
 
-    public MissingClassException(String message) {
+    public MissingClassException(String message)
+    {
         super(message);
     }
 
-    public MissingClassException(String message, Throwable cause) {
+    public MissingClassException(String message, Throwable cause)
+    {
         super(message, cause);
     }
 
-    public MissingClassException(Throwable cause) {
+    public MissingClassException(Throwable cause)
+    {
         super(cause);
     }
 
-    public MissingClassException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public MissingClassException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace)
+    {
         super(message, cause, enableSuppression, writableStackTrace);
     }
 }

@@ -10,26 +10,30 @@
 
 package me.superblaubeere27.jobf.utils.values;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
-
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+
 @Slf4j(topic = "obfuscator")
-public class ConfigManager {
+public class ConfigManager
+{
     private static Gson gson = new Gson();
 
-    public static String generateConfig(Configuration config, boolean prettyPrint) {
-        if (prettyPrint) {
+    public static String generateConfig(Configuration config, boolean prettyPrint)
+    {
+        if (prettyPrint)
+        {
             gson = new GsonBuilder().setPrettyPrinting().create();
-        } else {
+        }
+        else
+        {
             gson = new GsonBuilder().create();
         }
 
@@ -39,22 +43,31 @@ public class ConfigManager {
 
         HashMap<String, ArrayList<Value<?>>> ownerValueMap = new HashMap<>();
 
-        for (Value<?> value : ValueManager.getValues()) {
-            if (!ownerValueMap.containsKey(value.getOwner())) {
+        for (Value<?> value : ValueManager.getValues())
+        {
+            if (!ownerValueMap.containsKey(value.getOwner()))
+            {
                 ownerValueMap.put(value.getOwner(), new ArrayList<>());
             }
             ownerValueMap.get(value.getOwner()).add(value);
         }
 
-        for (Map.Entry<String, ArrayList<Value<?>>> entry : ownerValueMap.entrySet()) {
+        for (Map.Entry<String, ArrayList<Value<?>>> entry : ownerValueMap.entrySet())
+        {
             final JsonObject moduleJson = new JsonObject();
 
-            for (final Value value : entry.getValue()) {
-                if (value.getObject() instanceof Number) {
+            for (final Value value : entry.getValue())
+            {
+                if (value.getObject() instanceof Number)
+                {
                     moduleJson.addProperty(value.getName(), (Number) value.getObject());
-                } else if (value.getObject() instanceof Boolean) {
+                }
+                else if (value.getObject() instanceof Boolean)
+                {
                     moduleJson.addProperty(value.getName(), (Boolean) value.getObject());
-                } else if (value.getObject() instanceof String) {
+                }
+                else if (value.getObject() instanceof String)
+                {
                     moduleJson.addProperty(value.getName(), (String) value.getObject());
                 }
             }
@@ -66,10 +79,12 @@ public class ConfigManager {
     }
 
     @SuppressWarnings("unchecked")
-    public static Configuration loadConfig(String config) {
+    public static Configuration loadConfig(String config)
+    {
         final JsonElement jsonElement = gson.fromJson(config, JsonElement.class);
 
-        if (jsonElement instanceof JsonNull) {
+        if (jsonElement instanceof JsonNull)
+        {
             throw new IllegalArgumentException("JsonObject isn't valid");
         }
 
@@ -79,48 +94,71 @@ public class ConfigManager {
 
         HashMap<String, ArrayList<Value<?>>> ownerValueMap = new HashMap<>();
 
-        for (Value<?> value : ValueManager.getValues()) {
-            if (!ownerValueMap.containsKey(value.getOwner())) {
+        for (Value<?> value : ValueManager.getValues())
+        {
+            if (!ownerValueMap.containsKey(value.getOwner()))
+            {
                 ownerValueMap.put(value.getOwner(), new ArrayList<>());
             }
             ownerValueMap.get(value.getOwner()).add(value);
         }
 
-        for (Map.Entry<String, ArrayList<Value<?>>> entry : ownerValueMap.entrySet()) {
-            if (!jsonObject.has(entry.getKey())) {
+        for (Map.Entry<String, ArrayList<Value<?>>> entry : ownerValueMap.entrySet())
+        {
+            if (!jsonObject.has(entry.getKey()))
+            {
                 continue;
             }
 
             final JsonElement moduleElement = jsonObject.get(entry.getKey());
 
-            if (moduleElement instanceof JsonNull) {
+            if (moduleElement instanceof JsonNull)
+            {
                 continue;
             }
 
             final JsonObject moduleJson = (JsonObject) moduleElement;
 
-            for (final Value value : entry.getValue()) {
-                try {
-                    if (!moduleJson.has(value.getName())) {
+            for (final Value value : entry.getValue())
+            {
+                try
+                {
+                    if (!moduleJson.has(value.getName()))
+                    {
                         continue;
                     }
 
-                    if (value.getObject() instanceof Float) {
+                    if (value.getObject() instanceof Float)
+                    {
                         value.setObject(moduleJson.get(value.getName()).getAsFloat());
-                    } else if (value.getObject() instanceof Double) {
+                    }
+                    else if (value.getObject() instanceof Double)
+                    {
                         value.setObject(moduleJson.get(value.getName()).getAsDouble());
-                    } else if (value.getObject() instanceof Integer) {
+                    }
+                    else if (value.getObject() instanceof Integer)
+                    {
                         value.setObject(moduleJson.get(value.getName()).getAsInt());
-                    } else if (value.getObject() instanceof Long) {
+                    }
+                    else if (value.getObject() instanceof Long)
+                    {
                         value.setObject(moduleJson.get(value.getName()).getAsLong());
-                    } else if (value.getObject() instanceof Byte) {
+                    }
+                    else if (value.getObject() instanceof Byte)
+                    {
                         value.setObject(moduleJson.get(value.getName()).getAsByte());
-                    } else if (value.getObject() instanceof Boolean) {
+                    }
+                    else if (value.getObject() instanceof Boolean)
+                    {
                         value.setObject(moduleJson.get(value.getName()).getAsBoolean());
-                    } else if (value.getObject() instanceof String) {
+                    }
+                    else if (value.getObject() instanceof String)
+                    {
                         value.setObject(moduleJson.get(value.getName()).getAsString());
                     }
-                } catch (Throwable e) {
+                }
+                catch (Throwable e)
+                {
                     log.error(value.getName(), e);
                 }
             }

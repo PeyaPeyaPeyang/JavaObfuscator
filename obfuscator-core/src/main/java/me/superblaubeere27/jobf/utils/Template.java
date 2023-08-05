@@ -10,25 +10,23 @@
 
 package me.superblaubeere27.jobf.utils;
 
-public class Template {
-    private String name;
-    private String json;
+import lombok.Getter;
 
-    Template(String name, String json) {
+@Getter
+public class Template
+{
+    private final String name;
+    private final String json;
+
+    Template(String name, String json)
+    {
         this.name = name;
         this.json = json;
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public String getJson() {
-        return json;
-    }
-
     @Override
-    public String toString() {
-        return String.format("%s", name);
+    public String toString()
+    {
+        return String.format("%s", this.name);
     }
 }

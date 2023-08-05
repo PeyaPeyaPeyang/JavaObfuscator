@@ -15,11 +15,13 @@ import org.objectweb.asm.Opcodes;
 import java.util.HashMap;
 import java.util.Map;
 
-public class PrimitiveUtils {
+public class PrimitiveUtils
+{
     private static final Map<String, Class<?>> nameToPrimitive = new HashMap<>();
     private static final Map<Class<?>, Object> defaultPrimitiveValues = new HashMap<>();
 
-    static {
+    static
+    {
         defaultPrimitiveValues.put(Integer.TYPE, 0);
         defaultPrimitiveValues.put(Long.TYPE, 0L);
         defaultPrimitiveValues.put(Double.TYPE, 0D);
@@ -40,16 +42,20 @@ public class PrimitiveUtils {
         nameToPrimitive.put("void", Void.TYPE);
     }
 
-    public static Class<?> getPrimitiveByName(String name) {
+    public static Class<?> getPrimitiveByName(String name)
+    {
         return nameToPrimitive.get(name);
     }
 
-    public static Object getDefaultValue(Class<?> primitive) {
+    public static Object getDefaultValue(Class<?> primitive)
+    {
         return defaultPrimitiveValues.get(primitive);
     }
 
-    public static Class<?> getPrimitiveByNewArrayId(int id) {
-        switch (id) {
+    public static Class<?> getPrimitiveByNewArrayId(int id)
+    {
+        switch (id)
+        {
             case Opcodes.T_BOOLEAN:
                 return boolean.class;
             case Opcodes.T_CHAR:

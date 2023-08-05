@@ -14,6 +14,7 @@ import org.objectweb.asm.tree.ClassNode;
 
 import java.util.Collection;
 
-public interface IPreClassTransformer {
+public interface IPreClassTransformer
+{
     void process(Collection<ClassNode> node);
 }

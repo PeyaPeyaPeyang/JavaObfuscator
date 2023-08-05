@@ -12,12 +12,15 @@ package me.superblaubeere27.jobf.utils;
 
 import java.util.List;
 
-public class ConsoleUtils {
+public class ConsoleUtils
+{
 
-    public static String formatBox(String title, boolean center, List<String> lines) {
+    public static String formatBox(String title, boolean center, List<String> lines)
+    {
         int width = title.length() + 4;
 
-        for (String line : lines) {
+        for (String line : lines)
+        {
             int lineWidth = line.length() + 2;
 
             if (lineWidth > width) width = lineWidth;
@@ -34,12 +37,16 @@ public class ConsoleUtils {
 
         sb.append("\n");
 
-        for (String line : lines) {
+        for (String line : lines)
+        {
             sb.append("|");
 
-            if (center) {
+            if (center)
+            {
                 centerString(sb, line, " ", width);
-            } else {
+            }
+            else
+            {
                 sb.append(" ").append(line);
 
                 addTimes(sb, width - line.length() - 1, " ");
@@ -59,7 +66,8 @@ public class ConsoleUtils {
         return sb.toString();
     }
 
-    private static void centerString(StringBuilder stringBuilder, String stringToCenter, String fillChar, int width) {
+    private static void centerString(StringBuilder stringBuilder, String stringToCenter, String fillChar, int width)
+    {
         int sideOffset = width - stringToCenter.length();
 
         addTimes(stringBuilder, sideOffset / 2, fillChar);
@@ -69,8 +77,10 @@ public class ConsoleUtils {
         addTimes(stringBuilder, sideOffset - sideOffset / 2, fillChar);
     }
 
-    private static void addTimes(StringBuilder sb, int times, String s) {
-        for (int i = 0; i < times; i++) {
+    private static void addTimes(StringBuilder sb, int times, String s)
+    {
+        for (int i = 0; i < times; i++)
+        {
             sb.append(s);
         }
     }

@@ -10,12 +10,16 @@
 
 package me.superblaubeere27.jobf.utils.values;
 
-public class NumberValue<T extends Number> extends Value<T> {
+public class NumberValue<T extends Number> extends Value<T>
+{
 
-    public NumberValue(String owner, String name, String description, DeprecationLevel deprecated, T object) {
+    public NumberValue(String owner, String name, String description, DeprecationLevel deprecated, T object)
+    {
         super(owner, name, description, deprecated, object);
     }
-    public NumberValue(String owner, String name, DeprecationLevel deprecated, T object) {
+
+    public NumberValue(String owner, String name, DeprecationLevel deprecated, T object)
+    {
         super(owner, name, deprecated, object);
     }
 

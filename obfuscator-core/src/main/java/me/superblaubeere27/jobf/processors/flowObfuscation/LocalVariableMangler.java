@@ -15,25 +15,41 @@ import me.superblaubeere27.jobf.utils.NodeUtils;
 import me.superblaubeere27.jobf.utils.VariableProvider;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.*;
-import org.objectweb.asm.tree.analysis.*;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.IincInsnNode;
+import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.IntInsnNode;
+import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.VarInsnNode;
+import org.objectweb.asm.tree.analysis.Analyzer;
+import org.objectweb.asm.tree.analysis.AnalyzerException;
+import org.objectweb.asm.tree.analysis.Frame;
+import org.objectweb.asm.tree.analysis.SourceInterpreter;
+import org.objectweb.asm.tree.analysis.SourceValue;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-class LocalVariableMangler {
-    static void mangleLocalVariables(ProcessorCallback callback, ClassNode node, MethodNode method) {
+class LocalVariableMangler
+{
+    static void mangleLocalVariables(ProcessorCallback callback, ClassNode node, MethodNode method)
+    {
         int maxStackSize = method.maxStack;
         int maxLocals = method.maxLocals;
         method.maxStack = 1337;
         method.maxLocals = 1337;
 
         Frame<SourceValue>[] frames;
-        try {
+        try
+        {
             frames = new Analyzer<>(new SourceInterpreter()).analyze(node.name, method);
-        } catch (AnalyzerException e) {
+        }
+        catch (AnalyzerException e)
+        {
             throw new RuntimeException(e);
         }
 
@@ -58,16 +74,20 @@ class LocalVariableMangler {
         HashMap<Integer, Integer> arrayIndices = new HashMap<>();
 
         //<editor-fold desc="Scanning">
-        for (AbstractInsnNode abstractInsnNode : method.instructions.toArray()) {
-            if (abstractInsnNode instanceof VarInsnNode) {
+        for (AbstractInsnNode abstractInsnNode : method.instructions.toArray())
+        {
+            if (abstractInsnNode instanceof VarInsnNode)
+            {
                 VarInsnNode insnNode = (VarInsnNode) abstractInsnNode;
 
                 if (provider.isArgument(insnNode.var)) continue;
 
-                if (!localVarMap.containsKey(insnNode.var)) {
+                if (!localVarMap.containsKey(insnNode.var))
+                {
                     Type t = null;
 
-                    switch (insnNode.getOpcode() - Opcodes.ILOAD) {
+                    switch (insnNode.getOpcode() - Opcodes.ILOAD)
+                    {
                         case 0:
                             t = Type.INT_TYPE;
                             break;
@@ -81,17 +101,20 @@ class LocalVariableMangler {
 //                            t = Type.DOUBLE_TYPE;
 //                            break;
                     }
-                    if (t != null) {
+                    if (t != null)
+                    {
                         localVarMap.put(insnNode.var, t);
                     }
                 }
 
-                if (insnNode.getOpcode() >= Opcodes.ISTORE && insnNode.getOpcode() <= Opcodes.ASTORE) {
+                if (insnNode.getOpcode() >= Opcodes.ISTORE && insnNode.getOpcode() <= Opcodes.ASTORE)
+                {
                     Frame<SourceValue> currentFrame = frames[method.instructions.indexOf(insnNode)];
 
                     SourceValue stack = currentFrame.getStack(currentFrame.getStackSize() - 1);
 
-                    if (stack.getSize() > 1) {
+                    if (stack.getSize() > 1)
+                    {
                         localVarMap.put(insnNode.var, Type.VOID_TYPE);
                     }
                 }
@@ -103,19 +126,23 @@ class LocalVariableMangler {
         {
             List<Integer> remove = new ArrayList<>();
 
-            for (Map.Entry<Integer, Type> integerTypeEntry : localVarMap.entrySet()) {
-                if (integerTypeEntry.getValue().getSort() == Type.VOID) {
+            for (Map.Entry<Integer, Type> integerTypeEntry : localVarMap.entrySet())
+            {
+                if (integerTypeEntry.getValue().getSort() == Type.VOID)
+                {
                     remove.add(integerTypeEntry.getKey());
                 }
             }
 
-            for (Integer integer : remove) {
+            for (Integer integer : remove)
+            {
                 localVarMap.remove(integer);
             }
         }
 
         {
-            for (Map.Entry<Integer, Type> integerTypeEntry : localVarMap.entrySet()) {
+            for (Map.Entry<Integer, Type> integerTypeEntry : localVarMap.entrySet())
+            {
 
                 if (!typeArrayMap.containsKey(integerTypeEntry.getValue()))
                     typeArrayMap.put(integerTypeEntry.getValue(), provider.allocateVar());
@@ -123,7 +150,8 @@ class LocalVariableMangler {
                 int index = typeArrayMap.get(integerTypeEntry.getValue());
                 int arrayIndex;
 
-                if (!arrayIndices.containsKey(index)) {
+                if (!arrayIndices.containsKey(index))
+                {
                     arrayIndices.put(index, 0);
                 }
 
@@ -137,10 +165,12 @@ class LocalVariableMangler {
 
         InsnList initialize = new InsnList();
 
-        for (Map.Entry<Type, Integer> integerTypeEntry : typeArrayMap.entrySet()) {
+        for (Map.Entry<Type, Integer> integerTypeEntry : typeArrayMap.entrySet())
+        {
             int arrayType = integerTypeEntry.getKey().getSort();
 
-            switch (arrayType) {
+            switch (arrayType)
+            {
                 case Type.INT:
                     arrayType = Opcodes.T_INT;
                     break;
@@ -162,16 +192,20 @@ class LocalVariableMangler {
             initialize.add(new VarInsnNode(Opcodes.ASTORE, integerTypeEntry.getValue()));
         }
 
-        for (AbstractInsnNode abstractInsnNode : method.instructions.toArray()) {
-            if (abstractInsnNode instanceof VarInsnNode) {
+        for (AbstractInsnNode abstractInsnNode : method.instructions.toArray())
+        {
+            if (abstractInsnNode instanceof VarInsnNode)
+            {
                 VarInsnNode varInsnNode = (VarInsnNode) abstractInsnNode;
 
-                if (slotMap.containsKey(varInsnNode.var)) {
+                if (slotMap.containsKey(varInsnNode.var))
+                {
                     // Check if it is a load instruction
                     if (abstractInsnNode.getOpcode() == Opcodes.ILOAD
                             || abstractInsnNode.getOpcode() == Opcodes.LLOAD
                             || abstractInsnNode.getOpcode() == Opcodes.FLOAD
-                            || abstractInsnNode.getOpcode() == Opcodes.DLOAD) {
+                            || abstractInsnNode.getOpcode() == Opcodes.DLOAD)
+                    {
                         int[] value = slotMap.get(varInsnNode.var);
 
                         InsnList replace = new InsnList();
@@ -187,7 +221,8 @@ class LocalVariableMangler {
                     if (abstractInsnNode.getOpcode() == Opcodes.ISTORE
                             || abstractInsnNode.getOpcode() == Opcodes.LSTORE
                             || abstractInsnNode.getOpcode() == Opcodes.FSTORE
-                            || abstractInsnNode.getOpcode() == Opcodes.DSTORE) {
+                            || abstractInsnNode.getOpcode() == Opcodes.DSTORE)
+                    {
                         int[] value = slotMap.get(varInsnNode.var);
 
 
@@ -209,10 +244,12 @@ class LocalVariableMangler {
                 }
             }
 
-            if (abstractInsnNode instanceof IincInsnNode) {
+            if (abstractInsnNode instanceof IincInsnNode)
+            {
                 IincInsnNode iincInsnNode = (IincInsnNode) abstractInsnNode;
 
-                if (slotMap.containsKey(iincInsnNode.var)) {
+                if (slotMap.containsKey(iincInsnNode.var))
+                {
                     int[] value = slotMap.get(iincInsnNode.var);
 
                     InsnList replace = new InsnList();

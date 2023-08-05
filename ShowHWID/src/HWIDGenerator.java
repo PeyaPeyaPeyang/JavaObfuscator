@@ -1,16 +1,22 @@
 import me.superblaubeere27.hwid.HWID;
 
 import javax.swing.*;
+
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.util.Arrays;
 
-public class HWIDGenerator {
+public class HWIDGenerator
+{
 
-    public static void main(String args[]) {
-        try {
+    public static void main(String args[])
+    {
+        try
+        {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception e) {
+        }
+        catch (Exception e)
+        {
             e.printStackTrace();
         }
 

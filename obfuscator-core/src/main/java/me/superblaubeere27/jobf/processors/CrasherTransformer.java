@@ -24,59 +24,69 @@ import org.objectweb.asm.tree.ClassNode;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 
-public class CrasherTransformer implements IClassTransformer {
+public class CrasherTransformer implements IClassTransformer
+{
     private static final String EMPTY_STRINGS;
 
-    static {
+    static
+    {
         StringBuilder stringBuilder = new StringBuilder();
 
-        for (int j = 0; j < 50000; j++) {
+        for (int j = 0; j < 50000; j++)
+        {
             stringBuilder.append("\n");
         }
 
         EMPTY_STRINGS = stringBuilder.toString();
     }
 
-    private EnabledValue enabled = new EnabledValue("Crasher", DeprecationLevel.GOOD, false);
-    private BooleanValue invalidSignatures = new BooleanValue("Crasher", "Invalid Signatures", "Adds invalid signatures", DeprecationLevel.GOOD, true);
-    private BooleanValue emptyAnnotation = new BooleanValue("Crasher", "Empty annotation spam", "Adds annotations which are repeated newline", DeprecationLevel.GOOD, true);
-    private JObfImpl inst;
+    private final EnabledValue enabled = new EnabledValue("Crasher", DeprecationLevel.GOOD, false);
+    private final BooleanValue invalidSignatures = new BooleanValue("Crasher", "Invalid Signatures", "Adds invalid signatures", DeprecationLevel.GOOD, true);
+    private final BooleanValue emptyAnnotation = new BooleanValue("Crasher", "Empty annotation spam", "Adds annotations which are repeated newline", DeprecationLevel.GOOD, true);
+    private final JObfImpl inst;
 
-    public CrasherTransformer(JObfImpl inst) {
+    public CrasherTransformer(JObfImpl inst)
+    {
         this.inst = inst;
     }
 
     @Override
-    public void process(ProcessorCallback callback, ClassNode node) {
+    public void process(ProcessorCallback callback, ClassNode node)
+    {
         if (Modifier.isInterface(node.access)) return;
-        if (!enabled.getObject()) return;
+        if (!this.enabled.getObject()) return;
 
-        if (invalidSignatures.getObject()) {
+        if (this.invalidSignatures.getObject())
+        {
             /*
              * By ItzSomebody
              */
-            if (node.signature == null) {
+            if (node.signature == null)
+            {
                 node.signature = NameUtils.crazyString(10);
             }
         }
 
-        if (emptyAnnotation.getObject()) {
+        if (this.emptyAnnotation.getObject())
+        {
             node.methods.forEach(method -> {
 
                 if (method.invisibleAnnotations == null)
                     method.invisibleAnnotations = new ArrayList<>();
 
-                for (int i = 0; i < 50; i++) {
+                for (int i = 0; i < 50; i++)
+                {
                     method.invisibleAnnotations.add(new AnnotationNode(EMPTY_STRINGS));
                 }
             });
         }
 
-        inst.setWorkDone();
+        this.inst.setWorkDone();
     }
 
     @Override
-    public ObfuscationTransformer getType() {
+    public ObfuscationTransformer getType()
+    {
         return ObfuscationTransformer.CRASHER;
     }
 

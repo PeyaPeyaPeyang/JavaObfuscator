@@ -14,20 +14,51 @@ import com.google.common.base.Throwables;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
-import me.superblaubeere27.jobf.JObf;
-import me.superblaubeere27.jobf.JObfImpl;
-import me.superblaubeere27.jobf.utils.*;
-import me.superblaubeere27.jobf.utils.values.*;
-import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
-import org.fife.ui.rsyntaxtextarea.Theme;
-import org.fife.ui.rtextarea.RTextScrollPane;
-
-import javax.swing.*;
+import javax.swing.AbstractButton;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSlider;
+import javax.swing.JTabbedPane;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.JTextPane;
+import javax.swing.WindowConstants;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import java.awt.*;
+import me.superblaubeere27.jobf.JObf;
+import me.superblaubeere27.jobf.JObfImpl;
+import me.superblaubeere27.jobf.utils.JObfFileFilter;
+import me.superblaubeere27.jobf.utils.JarFileFilter;
+import me.superblaubeere27.jobf.utils.Template;
+import me.superblaubeere27.jobf.utils.Templates;
+import me.superblaubeere27.jobf.utils.Utils;
+import me.superblaubeere27.jobf.utils.values.BooleanValue;
+import me.superblaubeere27.jobf.utils.values.ConfigManager;
+import me.superblaubeere27.jobf.utils.values.Configuration;
+import me.superblaubeere27.jobf.utils.values.FilePathValue;
+import me.superblaubeere27.jobf.utils.values.StringValue;
+import me.superblaubeere27.jobf.utils.values.Value;
+import me.superblaubeere27.jobf.utils.values.ValueManager;
+import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
+import org.fife.ui.rsyntaxtextarea.Theme;
+import org.fife.ui.rtextarea.RTextScrollPane;
+
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Desktop;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.GridLayout;
+import java.awt.Insets;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
@@ -37,10 +68,15 @@ import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
-import java.util.*;
+import java.util.ResourceBundle;
 
-public class GUI extends JFrame {
+public class GUI extends JFrame
+{
     public JTextPane logArea;
     private JTabbedPane tabbedPane1;
     private JPanel panel1;
@@ -75,54 +111,65 @@ public class GUI extends JFrame {
         $$$setupUI$$$();
     }
 
-    public GUI(String updateCheckResult) {
+    public GUI(String updateCheckResult)
+    {
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        setContentPane(panel1);
+        setContentPane(this.panel1);
         setSize(900, 600);
         setLocationRelativeTo(null);
         setTitle(JObf.VERSION);
 
-        inputBrowseButton.addActionListener(e -> {
+        this.inputBrowseButton.addActionListener(e -> {
             String file = Utils.chooseFile(null, GUI.this, new JarFileFilter());
-            if (file != null) {
-                inputTextField.setText(file);
+            if (file != null)
+            {
+                this.inputTextField.setText(file);
             }
         });
-        outputBrowseButton.addActionListener(e -> {
+        this.outputBrowseButton.addActionListener(e -> {
             String file = Utils.chooseFile(null, GUI.this, new JarFileFilter(), true);
-            if (file != null) {
-                outputTextField.setText(file);
+            if (file != null)
+            {
+                this.outputTextField.setText(file);
             }
         });
-        obfuscateButton.addActionListener(e -> startObfuscator());
-        buildButton.addActionListener(e -> buildConfig());
-        saveButton.addActionListener(e -> {
+        this.obfuscateButton.addActionListener(e -> startObfuscator());
+        this.buildButton.addActionListener(e -> buildConfig());
+        this.saveButton.addActionListener(e -> {
             String name = Utils.chooseFile(null, GUI.this, new JObfFileFilter(), true);
-            if (name != null) {
+            if (name != null)
+            {
                 buildConfig();
-                try {
-                    Files.write(new File(name).toPath(), configPanel.getText().getBytes(StandardCharsets.UTF_8));
-                } catch (IOException e1) {
+                try
+                {
+                    Files.write(new File(name).toPath(), this.configPanel.getText().getBytes(StandardCharsets.UTF_8));
+                }
+                catch (IOException e1)
+                {
                     e1.printStackTrace();
                     JOptionPane.showMessageDialog(GUI.this, e1.toString(), "ERROR", JOptionPane.ERROR_MESSAGE);
                 }
             }
         });
-        clearLogButton.addActionListener(e -> logArea.setText(""));
-        loadButton.addActionListener(e -> {
+        this.clearLogButton.addActionListener(e -> this.logArea.setText(""));
+        this.loadButton.addActionListener(e -> {
             String name = Utils.chooseFile(null, GUI.this, new JObfFileFilter());
-            if (name != null) {
+            if (name != null)
+            {
                 buildConfig();
-                try {
+                try
+                {
                     Configuration configuration = ConfigManager.loadConfig(new String(Files.readAllBytes(Paths.get(name)), StandardCharsets.UTF_8));
-                    inputTextField.setText(configuration.getInput());
-                    outputTextField.setText(configuration.getOutput());
-                    scriptArea.setText(configuration.getScript());
-                    libraryList = new ArrayList<>(configuration.getLibraries());
+                    this.inputTextField.setText(configuration.getInput());
+                    this.outputTextField.setText(configuration.getOutput());
+                    this.scriptArea.setText(configuration.getScript());
+                    this.libraryList = new ArrayList<>(configuration.getLibraries());
                     updateLibraries();
                     initValues();
                     System.gc();
-                } catch (IOException e1) {
+                }
+                catch (IOException e1)
+                {
                     e1.printStackTrace();
                     JOptionPane.showMessageDialog(GUI.this, e1.toString(), "ERROR", JOptionPane.ERROR_MESSAGE);
                 }
@@ -130,48 +177,62 @@ public class GUI extends JFrame {
         });
         Object[] tmplts = Templates.getTemplates().toArray();
         Template[] templatesArray = Arrays.copyOf(tmplts, tmplts.length, Template[].class);
-        templates.setListData(templatesArray);
-        try {
-            Theme.load(GUI.class.getResourceAsStream("/theme.xml")).apply(scriptArea);
-        } catch (IOException e) {
+        this.templates.setListData(templatesArray);
+        try
+        {
+            Theme.load(GUI.class.getResourceAsStream("/theme.xml")).apply(this.scriptArea);
+        }
+        catch (IOException e)
+        {
             e.printStackTrace();
         }
-        scriptArea.setText("function isRemappingEnabledForClass(node) {\n" +
+        this.scriptArea.setText("function isRemappingEnabledForClass(node) {\n" +
                 "    return true;\n" +
                 "}\n" +
                 "function isObfuscatorEnabledForClass(node) {\n" +
                 "    return true;\n" +
                 "}");
         initValues();
-        loadTemplateButton.addActionListener(e -> {
-            if (templates.getSelectedIndex() != -1) {
-                Configuration config = ConfigManager.loadConfig(templates.getSelectedValue().getJson());
+        this.loadTemplateButton.addActionListener(e -> {
+            if (this.templates.getSelectedIndex() != -1)
+            {
+                Configuration config = ConfigManager.loadConfig(this.templates.getSelectedValue().getJson());
                 initValues();
-                if (config.getScript() != null && !config.getScript().isEmpty()) {
-                    scriptArea.setText(config.getScript());
+                if (config.getScript() != null && !config.getScript().isEmpty())
+                {
+                    this.scriptArea.setText(config.getScript());
                 }
-            } else {
+            }
+            else
+            {
                 JOptionPane.showMessageDialog(GUI.this, "Maybe you should select a template before applying it :thinking:", "Hmmmm...", JOptionPane.ERROR_MESSAGE);
             }
         });
 
-        addButton.addActionListener(e -> {
+        this.addButton.addActionListener(e -> {
             String file = Utils.chooseDirectoryOrFile(new File(System.getProperty("java.home")), GUI.this);
 
-            if (file != null) {
-                if (new File(file).isDirectory() || Utils.checkZip(file)) {
-                    libraryList.add(file);
+            if (file != null)
+            {
+                if (new File(file).isDirectory() || Utils.checkZip(file))
+                {
+                    this.libraryList.add(file);
                     updateLibraries();
-                } else {
+                }
+                else
+                {
                     JOptionPane.showMessageDialog(GUI.this, "This file isn't a valid file. Allowed: ZIP-Files, Directories", "ERROR", JOptionPane.ERROR_MESSAGE);
                 }
             }
         });
-        removeButton.addActionListener(e -> {
-            if (libraries.getSelectedIndex() != -1) {
-                libraryList.remove(libraries.getSelectedIndex());
+        this.removeButton.addActionListener(e -> {
+            if (this.libraries.getSelectedIndex() != -1)
+            {
+                this.libraryList.remove(this.libraries.getSelectedIndex());
                 updateLibraries();
-            } else {
+            }
+            else
+            {
                 JOptionPane.showMessageDialog(GUI.this, "Maybe you should select a library before removing it :thinking:", "Hmmmm...", JOptionPane.ERROR_MESSAGE);
             }
         });
@@ -179,24 +240,30 @@ public class GUI extends JFrame {
         int cores = Runtime.getRuntime().availableProcessors();
 
 
-        threadsSlider.addChangeListener(e -> threadsLabel.setText(Integer.toString(threadsSlider.getValue())));
+        this.threadsSlider.addChangeListener(e -> this.threadsLabel.setText(Integer.toString(this.threadsSlider.getValue())));
 
-        threadsSlider.setMinimum(1);
-        threadsSlider.setMaximum(cores);
-        threadsSlider.setValue(cores);
+        this.threadsSlider.setMinimum(1);
+        this.threadsSlider.setMaximum(cores);
+        this.threadsSlider.setValue(cores);
 
 
         setVisible(true);
 
-        if (updateCheckResult != null) {
+        if (updateCheckResult != null)
+        {
             JLabel label = new JLabel("<html>You are using an outdated version of obfuscator. Latest: " + updateCheckResult + "<br/> You can download the latest version at: <a>https://github.com/superblaubeere27/obfuscator/releases/latest</a> <br/>(Click on the link to open it)</html>");
 
-            label.addMouseListener(new MouseAdapter() {
+            label.addMouseListener(new MouseAdapter()
+            {
                 @Override
-                public void mouseClicked(MouseEvent e) {
-                    try {
+                public void mouseClicked(MouseEvent e)
+                {
+                    try
+                    {
                         Desktop.getDesktop().browse(new URI("https://github.com/superblaubeere27/obfuscator/releases/latest"));
-                    } catch (IOException | URISyntaxException e1) {
+                    }
+                    catch (IOException | URISyntaxException e1)
+                    {
                         e1.printStackTrace();
                     }
                 }
@@ -206,28 +273,35 @@ public class GUI extends JFrame {
         }
     }
 
-    private void updateLibraries() {
-        Object[] libraries = libraryList.toArray();
+    private void updateLibraries()
+    {
+        Object[] libraries = this.libraryList.toArray();
         this.libraries.setListData(Arrays.copyOf(libraries, libraries.length, String[].class));
     }
 
-    public void scrollDown() {
-        if (this.autoScroll.isSelected()) {
+    public void scrollDown()
+    {
+        if (this.autoScroll.isSelected())
+        {
             this.logArea.setCaretPosition(this.logArea.getDocument().getLength());
         }
 
     }
 
-    private void buildConfig() {
-        configPanel.setText(ConfigManager.generateConfig(new Configuration(inputTextField.getText(), outputTextField.getText(), scriptArea.getText(), libraryList), prettyPrintCheckBox.isSelected()));
+    private void buildConfig()
+    {
+        this.configPanel.setText(ConfigManager.generateConfig(new Configuration(this.inputTextField.getText(), this.outputTextField.getText(), this.scriptArea.getText(), this.libraryList), this.prettyPrintCheckBox.isSelected()));
     }
 
-    private void initValues() {
-        processorOptions.removeAll();
+    private void initValues()
+    {
+        this.processorOptions.removeAll();
         HashMap<String, ArrayList<Value<?>>> ownerValueMap = new HashMap<>();
 
-        for (Value<?> value : ValueManager.getValues()) {
-            if (!ownerValueMap.containsKey(value.getOwner())) {
+        for (Value<?> value : ValueManager.getValues())
+        {
+            if (!ownerValueMap.containsKey(value.getOwner()))
+            {
                 ownerValueMap.put(value.getOwner(), new ArrayList<>());
             }
             ownerValueMap.get(value.getOwner()).add(value);
@@ -238,54 +312,63 @@ public class GUI extends JFrame {
             JPanel panel = new JPanel();
             int rows = 0;
 
-            for (Value<?> value : entry.getValue()) {
-                if (value instanceof BooleanValue) {
+            for (Value<?> value : entry.getValue())
+            {
+                if (value instanceof BooleanValue)
+                {
                     BooleanValue booleanValue = (BooleanValue) value;
 
                     JCheckBox checkBox = new JCheckBox(value.getName(), booleanValue.getObject());
                     checkBox.addActionListener(event -> booleanValue.setObject(checkBox.isSelected()));
                     panel.add(checkBox);
 
-                    panel.add(new JLabel(booleanValue.getDescription() == null ? "" : booleanValue.getDescription()));
+                    panel.add(new JLabel(booleanValue.getDescription() == null ? "": booleanValue.getDescription()));
 
                     Color c = Utils.getColor(booleanValue.getDeprecation());
 
-                    if (c != null) {
+                    if (c != null)
+                    {
                         checkBox.setForeground(c);
                     }
 
                     rows++;
                 }
 
-                if (value instanceof FilePathValue) {
+                if (value instanceof FilePathValue)
+                {
                     FilePathValue stringValue = (FilePathValue) value;
 
                     JTextField textBox = new JTextField(stringValue.getObject());
 
-                    textBox.getDocument().addDocumentListener(new DocumentListener() {
+                    textBox.getDocument().addDocumentListener(new DocumentListener()
+                    {
                         @Override
-                        public void insertUpdate(DocumentEvent e) {
+                        public void insertUpdate(DocumentEvent e)
+                        {
                             stringValue.setObject(textBox.getText());
                         }
 
                         @Override
-                        public void removeUpdate(DocumentEvent e) {
+                        public void removeUpdate(DocumentEvent e)
+                        {
                             stringValue.setObject(textBox.getText());
                         }
 
                         @Override
-                        public void changedUpdate(DocumentEvent e) {
+                        public void changedUpdate(DocumentEvent e)
+                        {
                             stringValue.setObject(textBox.getText());
                         }
                     });
 
                     Color c = Utils.getColor(stringValue.getDeprecation());
 
-                    if (c != null) {
+                    if (c != null)
+                    {
                         textBox.setForeground(c);
                     }
                     panel.add(new JLabel(stringValue.getName() + ":"));
-                    panel.add(new JLabel(stringValue.getDescription() == null ? "" : stringValue.getDescription()));
+                    panel.add(new JLabel(stringValue.getDescription() == null ? "": stringValue.getDescription()));
                     panel.add(textBox);
                     JButton browseButton;
                     panel.add(browseButton = new JButton("Browse"));
@@ -293,71 +376,87 @@ public class GUI extends JFrame {
                     browseButton.addActionListener(e -> {
                         String file = Utils.chooseFile(null, GUI.this, new FileNameExtensionFilter("Text files", "txt"), true);
 
-                        if (file != null) {
+                        if (file != null)
+                        {
                             textBox.setText(file);
                         }
                     });
 
                     rows += 4;
-                } else if (value instanceof StringValue) {
+                }
+                else if (value instanceof StringValue)
+                {
                     StringValue stringValue = (StringValue) value;
 
-                    if (stringValue.getTextFieldLines() > 1) {
+                    if (stringValue.getTextFieldLines() > 1)
+                    {
                         JTextArea textBox = new JTextArea(stringValue.getObject(), 3, 60);
 
-                        textBox.getDocument().addDocumentListener(new DocumentListener() {
+                        textBox.getDocument().addDocumentListener(new DocumentListener()
+                        {
                             @Override
-                            public void insertUpdate(DocumentEvent e) {
+                            public void insertUpdate(DocumentEvent e)
+                            {
                                 stringValue.setObject(textBox.getText());
                             }
 
                             @Override
-                            public void removeUpdate(DocumentEvent e) {
+                            public void removeUpdate(DocumentEvent e)
+                            {
                                 stringValue.setObject(textBox.getText());
                             }
 
                             @Override
-                            public void changedUpdate(DocumentEvent e) {
+                            public void changedUpdate(DocumentEvent e)
+                            {
                                 stringValue.setObject(textBox.getText());
                             }
                         });
 
                         Color c = Utils.getColor(stringValue.getDeprecation());
 
-                        if (c != null) {
+                        if (c != null)
+                        {
                             textBox.setForeground(c);
                         }
                         panel.add(new JLabel(stringValue.getName() + ":"));
-                        panel.add(new JLabel(stringValue.getDescription() == null ? "" : stringValue.getDescription()));
+                        panel.add(new JLabel(stringValue.getDescription() == null ? "": stringValue.getDescription()));
                         panel.add(new JScrollPane(textBox));
                         panel.add(new JLabel(""));
-                    } else {
+                    }
+                    else
+                    {
                         JTextField textBox = new JTextField(stringValue.getObject());
 
-                        textBox.getDocument().addDocumentListener(new DocumentListener() {
+                        textBox.getDocument().addDocumentListener(new DocumentListener()
+                        {
                             @Override
-                            public void insertUpdate(DocumentEvent e) {
+                            public void insertUpdate(DocumentEvent e)
+                            {
                                 stringValue.setObject(textBox.getText());
                             }
 
                             @Override
-                            public void removeUpdate(DocumentEvent e) {
+                            public void removeUpdate(DocumentEvent e)
+                            {
                                 stringValue.setObject(textBox.getText());
                             }
 
                             @Override
-                            public void changedUpdate(DocumentEvent e) {
+                            public void changedUpdate(DocumentEvent e)
+                            {
                                 stringValue.setObject(textBox.getText());
                             }
                         });
 
                         Color c = Utils.getColor(stringValue.getDeprecation());
 
-                        if (c != null) {
+                        if (c != null)
+                        {
                             textBox.setForeground(c);
                         }
                         panel.add(new JLabel(stringValue.getName() + ":"));
-                        panel.add(new JLabel(stringValue.getDescription() == null ? "" : stringValue.getDescription()));
+                        panel.add(new JLabel(stringValue.getDescription() == null ? "": stringValue.getDescription()));
                         panel.add(textBox);
                         panel.add(new JLabel(""));
                     }
@@ -370,7 +469,7 @@ public class GUI extends JFrame {
             p1.setLayout(new FlowLayout(FlowLayout.LEFT));
             p1.add(panel);
 
-            processorOptions.addTab(entry.getKey(), p1);
+            this.processorOptions.addTab(entry.getKey(), p1);
         });
 
 //            }
@@ -378,28 +477,34 @@ public class GUI extends JFrame {
 //        }
     }
 
-    private void startObfuscator() {
+    private void startObfuscator()
+    {
 //        impl.loadConfig(config);
 
-        File in = new File(inputTextField.getText());
+        File in = new File(this.inputTextField.getText());
 
-        if (!in.exists()) {
+        if (!in.exists())
+        {
             JOptionPane.showMessageDialog(this, "Input file doesn't exist!", "ERROR", JOptionPane.ERROR_MESSAGE);
             return;
         }
-        try {
+        try
+        {
             new Thread(() -> {
-                obfuscateButton.setEnabled(false);
+                this.obfuscateButton.setEnabled(false);
 
-                try {
-                    Configuration config = new Configuration(inputTextField.getText(), outputTextField.getText(), scriptArea.getText(), libraryList);
+                try
+                {
+                    Configuration config = new Configuration(this.inputTextField.getText(), this.outputTextField.getText(), this.scriptArea.getText(), this.libraryList);
 
-                    JObf.VERBOSE = verbose.isSelected();
+                    JObf.VERBOSE = this.verbose.isSelected();
 
-                    JObfImpl.INSTANCE.setThreadCount(threadsSlider.getValue());
+                    JObfImpl.INSTANCE.setThreadCount(this.threadsSlider.getValue());
 
                     JObfImpl.INSTANCE.processJar(config);
-                } catch (Throwable e) {
+                }
+                catch (Throwable e)
+                {
                     e.printStackTrace();
 
                     JPanel panel = new JPanel();
@@ -414,9 +519,11 @@ public class GUI extends JFrame {
 
                     JOptionPane.showMessageDialog(this, panel, "ERROR encountered at " + e.getStackTrace()[0].getClassName(), JOptionPane.ERROR_MESSAGE);
                 }
-                obfuscateButton.setEnabled(true);
+                this.obfuscateButton.setEnabled(true);
             }, "Obfuscator thread").start();
-        } catch (Exception e) {
+        }
+        catch (Exception e)
+        {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, e.toString(), "ERROR", JOptionPane.ERROR_MESSAGE);
         }
@@ -429,7 +536,8 @@ public class GUI extends JFrame {
      *
      * @noinspection ALL
      */
-    private void $$$setupUI$$$() {
+    private void $$$setupUI$$$()
+    {
         panel1 = new JPanel();
         panel1.setLayout(new GridLayoutManager(2, 1, new Insets(0, 0, 0, 0), -1, -1));
         tabbedPane1 = new JTabbedPane();
@@ -545,11 +653,11 @@ public class GUI extends JFrame {
         verbose.setSelected(false);
         verbose.setText("Verbose");
         panel9.add(verbose, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-       
+
         clearLogButton = new JButton();
         clearLogButton.setText("Clear");
         panel9.add(clearLogButton, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_EAST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-        
+
         obfuscateButton = new JButton();
         this.$$$loadButtonText$$$(obfuscateButton, ResourceBundle.getBundle("strings").getString("obfuscate"));
         panel1.add(obfuscateButton, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
@@ -560,16 +668,20 @@ public class GUI extends JFrame {
     /**
      * @noinspection ALL
      */
-    private void $$$loadLabelText$$$(JLabel component, String text) {
+    private void $$$loadLabelText$$$(JLabel component, String text)
+    {
         StringBuffer result = new StringBuffer();
         boolean haveMnemonic = false;
         char mnemonic = '\0';
         int mnemonicIndex = -1;
-        for (int i = 0; i < text.length(); i++) {
-            if (text.charAt(i) == '&') {
+        for (int i = 0; i < text.length(); i++)
+        {
+            if (text.charAt(i) == '&')
+            {
                 i++;
                 if (i == text.length()) break;
-                if (!haveMnemonic && text.charAt(i) != '&') {
+                if (!haveMnemonic && text.charAt(i) != '&')
+                {
                     haveMnemonic = true;
                     mnemonic = text.charAt(i);
                     mnemonicIndex = result.length();
@@ -578,7 +690,8 @@ public class GUI extends JFrame {
             result.append(text.charAt(i));
         }
         component.setText(result.toString());
-        if (haveMnemonic) {
+        if (haveMnemonic)
+        {
             component.setDisplayedMnemonic(mnemonic);
             component.setDisplayedMnemonicIndex(mnemonicIndex);
         }
@@ -587,16 +700,20 @@ public class GUI extends JFrame {
     /**
      * @noinspection ALL
      */
-    private void $$$loadButtonText$$$(AbstractButton component, String text) {
+    private void $$$loadButtonText$$$(AbstractButton component, String text)
+    {
         StringBuffer result = new StringBuffer();
         boolean haveMnemonic = false;
         char mnemonic = '\0';
         int mnemonicIndex = -1;
-        for (int i = 0; i < text.length(); i++) {
-            if (text.charAt(i) == '&') {
+        for (int i = 0; i < text.length(); i++)
+        {
+            if (text.charAt(i) == '&')
+            {
                 i++;
                 if (i == text.length()) break;
-                if (!haveMnemonic && text.charAt(i) != '&') {
+                if (!haveMnemonic && text.charAt(i) != '&')
+                {
                     haveMnemonic = true;
                     mnemonic = text.charAt(i);
                     mnemonicIndex = result.length();
@@ -605,7 +722,8 @@ public class GUI extends JFrame {
             result.append(text.charAt(i));
         }
         component.setText(result.toString());
-        if (haveMnemonic) {
+        if (haveMnemonic)
+        {
             component.setMnemonic(mnemonic);
             component.setDisplayedMnemonicIndex(mnemonicIndex);
         }
@@ -614,7 +732,8 @@ public class GUI extends JFrame {
     /**
      * @noinspection ALL
      */
-    public JComponent $$$getRootComponent$$$() {
+    public JComponent $$$getRootComponent$$$()
+    {
         return panel1;
     }
 

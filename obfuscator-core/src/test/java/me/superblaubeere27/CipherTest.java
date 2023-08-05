@@ -18,10 +18,12 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-public class CipherTest {
+public class CipherTest
+{
 
     @Test
-    public void testDES() {
+    public void testDES()
+    {
         String encrypt = "Encryption works.";
         String key = "123456 is a safe key";
 
@@ -33,9 +35,9 @@ public class CipherTest {
         assertEquals(encrypt, DESEncryptionAlgorithm.decrypt(enc, key));
     }
 
-
     @Test
-    public void testXOR() {
+    public void testXOR()
+    {
         String encrypt = "Encryption works.";
         String key = "123456 is a safe key";
 
@@ -48,7 +50,8 @@ public class CipherTest {
     }
 
     @Test
-    public void testAES() {
+    public void testAES()
+    {
         String encrypt = "Encryption works.";
         String key = "123456 is a safe key";
 
@@ -60,7 +63,8 @@ public class CipherTest {
     }
 
     @Test
-    public void testBlowfish() {
+    public void testBlowfish()
+    {
         String encrypt = "Encryption works.";
         String key = "123456 is a safe key";
 

@@ -13,22 +13,32 @@ package me.superblaubeere27.jobf.processors.flowObfuscation;
 import me.superblaubeere27.jobf.processors.NumberObfuscationTransformer;
 import me.superblaubeere27.jobf.utils.VariableProvider;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.tree.*;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.JumpInsnNode;
+import org.objectweb.asm.tree.LookupSwitchInsnNode;
+import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.TableSwitchInsnNode;
+import org.objectweb.asm.tree.VarInsnNode;
 
 import java.lang.reflect.Modifier;
 import java.util.List;
 
-class SwitchMangler {
+class SwitchMangler
+{
 
-    static void mangleSwitches(MethodNode node) {
+    static void mangleSwitches(MethodNode node)
+    {
         if (Modifier.isAbstract(node.access) || Modifier.isNative(node.access))
             return;
 
         VariableProvider provider = new VariableProvider(node);
         int resultSlot = provider.allocateVar();
 
-        for (AbstractInsnNode abstractInsnNode : node.instructions.toArray()) {
-            if (abstractInsnNode instanceof TableSwitchInsnNode) {
+        for (AbstractInsnNode abstractInsnNode : node.instructions.toArray())
+        {
+            if (abstractInsnNode instanceof TableSwitchInsnNode)
+            {
                 TableSwitchInsnNode switchInsnNode = (TableSwitchInsnNode) abstractInsnNode;
 
                 InsnList insnList = new InsnList();
@@ -36,7 +46,8 @@ class SwitchMangler {
 
                 int j = 0;
 
-                for (int i = switchInsnNode.min; i <= switchInsnNode.max; i++) {
+                for (int i = switchInsnNode.min; i <= switchInsnNode.max; i++)
+                {
                     insnList.add(new VarInsnNode(Opcodes.ILOAD, resultSlot));
                     insnList.add(NumberObfuscationTransformer.getInstructions(i));
                     insnList.add(new JumpInsnNode(Opcodes.IF_ICMPEQ, switchInsnNode.labels.get(j)));
@@ -49,14 +60,16 @@ class SwitchMangler {
                 node.instructions.insert(abstractInsnNode, insnList);
                 node.instructions.remove(abstractInsnNode);
             }
-            if (abstractInsnNode instanceof LookupSwitchInsnNode) {
+            if (abstractInsnNode instanceof LookupSwitchInsnNode)
+            {
                 LookupSwitchInsnNode switchInsnNode = (LookupSwitchInsnNode) abstractInsnNode;
 
                 InsnList insnList = new InsnList();
                 insnList.add(new VarInsnNode(Opcodes.ISTORE, resultSlot));
 
                 List<Integer> keys = switchInsnNode.keys;
-                for (int i = 0; i < keys.size(); i++) {
+                for (int i = 0; i < keys.size(); i++)
+                {
                     Integer key = keys.get(i);
                     insnList.add(new VarInsnNode(Opcodes.ILOAD, resultSlot));
                     insnList.add(NumberObfuscationTransformer.getInstructions(key));

@@ -31,34 +31,42 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
 
-public class ReferenceProxy implements IClassTransformer {
+public class ReferenceProxy implements IClassTransformer
+{
     private static final String PROCESSOR_NAME = "ReferenceProxy";
-    private static Random random = new Random();
-    private JObfImpl inst;
-    private EnabledValue enabled = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.BAD, false);
+    private static final Random random = new Random();
+    private final JObfImpl inst;
+    private final EnabledValue enabled = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.BAD, false);
 
-    public ReferenceProxy(JObfImpl inst) {
+    public ReferenceProxy(JObfImpl inst)
+    {
         this.inst = inst;
     }
 
     @Override
-    public void process(ProcessorCallback callback, ClassNode node) {
-        if (!enabled.getObject()) return;
+    public void process(ProcessorCallback callback, ClassNode node)
+    {
+        if (!this.enabled.getObject()) return;
 
-        try {
+        try
+        {
             HashMap<String, MethodNode> nodes = new HashMap<>();
             List<MethodNode> add = new ArrayList<>();
 
-            for (MethodNode method : node.methods) {
-                for (AbstractInsnNode abstractInsnNode : method.instructions.toArray()) {
-                    if (abstractInsnNode instanceof MethodInsnNode) {
+            for (MethodNode method : node.methods)
+            {
+                for (AbstractInsnNode abstractInsnNode : method.instructions.toArray())
+                {
+                    if (abstractInsnNode instanceof MethodInsnNode)
+                    {
                         MethodInsnNode insnNode = (MethodInsnNode) abstractInsnNode;
 
 //                        System.out.println(insnNode.getOpcode() + "/" + insnNode.name + insnNode.desc);
 
                         if (
 //                                insnNode.desc.endsWith(")V") &&
-                                (insnNode.getOpcode() == Opcodes.INVOKESTATIC || insnNode.getOpcode() == Opcodes.INVOKEVIRTUAL) && !(insnNode.desc.contains("J") || insnNode.desc.contains("D") || insnNode.desc.contains("[") || insnNode.desc.contains("Object"))) {
+                                (insnNode.getOpcode() == Opcodes.INVOKESTATIC || insnNode.getOpcode() == Opcodes.INVOKEVIRTUAL) && !(insnNode.desc.contains("J") || insnNode.desc.contains("D") || insnNode.desc.contains("[") || insnNode.desc.contains("Object")))
+                        {
                             MethodNode referenceProxy = getProxyNode(node, insnNode, insnNode.getOpcode() == Opcodes.INVOKEVIRTUAL);
 
                             method.instructions.insert(insnNode, new MethodInsnNode(Opcodes.INVOKESTATIC, node.name, referenceProxy.name, referenceProxy.desc, false));
@@ -71,7 +79,8 @@ public class ReferenceProxy implements IClassTransformer {
                 }
             }
 
-            for (MethodNode method : add) {
+            for (MethodNode method : add)
+            {
                 System.out.println(method);
                 node.methods.add(method);
             }
@@ -79,25 +88,29 @@ public class ReferenceProxy implements IClassTransformer {
 //        for (Map.Entry<String, MethodNode> stringMethodNodeEntry : nodes.entrySet()) {
 //            node.methods.add(stringMethodNodeEntry.getValue());
 //        }
-            inst.setWorkDone();
-        } catch (Exception e) {
+            this.inst.setWorkDone();
+        }
+        catch (Exception e)
+        {
             e.printStackTrace();
         }
     }
 
     @Override
-    public ObfuscationTransformer getType() {
+    public ObfuscationTransformer getType()
+    {
         return ObfuscationTransformer.REFERENCE_PROXY;
     }
 
-    private MethodNode getProxyNode(ClassNode node, MethodInsnNode insnNode, boolean isVirtual) {
+    private MethodNode getProxyNode(ClassNode node, MethodInsnNode insnNode, boolean isVirtual)
+    {
         String name = NameUtils.generateMethodName(node, insnNode.desc);
         MethodNode mv;
 
         Type[] argumentTypes = Type.getArgumentTypes(insnNode.desc);
         Type returnType = Type.getReturnType(insnNode.desc);
 
-        int offset = (isVirtual ? 1 : 0);
+        int offset = (isVirtual ? 1: 0);
 
         int slot1 = argumentTypes.length + offset;
         int slot2 = argumentTypes.length + offset + 1;
@@ -107,7 +120,7 @@ public class ReferenceProxy implements IClassTransformer {
 
         //MethodNode method = new MethodNode(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC, name, insnNode.desc, null, new String[0]);
         {
-            mv = new MethodNode(Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC, name, isVirtual ? "(Ljava/lang/Object;" + insnNode.desc.substring(1) : insnNode.desc, null, null);
+            mv = new MethodNode(Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC, name, isVirtual ? "(Ljava/lang/Object;" + insnNode.desc.substring(1): insnNode.desc, null, null);
 
 
             mv.visitCode();
@@ -127,7 +140,8 @@ public class ReferenceProxy implements IClassTransformer {
             mv.visitTypeInsn(Opcodes.ANEWARRAY, "java/lang/Class");
             mv.visitVarInsn(Opcodes.ASTORE, slot1);
 
-            for (int i = 0; i < argumentTypes.length; i++) {
+            for (int i = 0; i < argumentTypes.length; i++)
+            {
                 mv.visitVarInsn(Opcodes.ALOAD, slot1);
                 mv.instructions.add(NodeUtils.generateIntPush(i));
                 mv.instructions.add(NodeUtils.getTypeNode(argumentTypes[i]));
@@ -154,7 +168,8 @@ public class ReferenceProxy implements IClassTransformer {
             mv.visitLabel(l5);
 //            mv.visitLineNumber(17, l5);
 
-            for (int i = 0; i < argumentTypes.length; i++) {
+            for (int i = 0; i < argumentTypes.length; i++)
+            {
                 mv.visitVarInsn(Opcodes.ALOAD, slot2);
                 mv.instructions.add(NodeUtils.generateIntPush(i));
                 mv.visitVarInsn(argumentTypes[i].getOpcode(Opcodes.ILOAD), i + 1);
@@ -173,9 +188,12 @@ public class ReferenceProxy implements IClassTransformer {
             mv.visitVarInsn(Opcodes.ALOAD, slot2);
             mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/reflect/Method", "invoke", "(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;", false);
 
-            if (returnType.toString().equals("V")) {
+            if (returnType.toString().equals("V"))
+            {
                 mv.visitInsn(Opcodes.POP);
-            } else {
+            }
+            else
+            {
                 mv.visitVarInsn(Opcodes.ASTORE, slot3);
             }
 
@@ -196,14 +214,20 @@ public class ReferenceProxy implements IClassTransformer {
 //            mv.visitLineNumber(22, l7);
             mv.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
 
-            if (returnType.toString().equals("V")) {
+            if (returnType.toString().equals("V"))
+            {
                 mv.visitInsn(Opcodes.RETURN);
-            } else {
+            }
+            else
+            {
                 mv.visitVarInsn(Opcodes.ALOAD, slot3);
 
-                if (!returnType.toString().startsWith("L")) {
+                if (!returnType.toString().startsWith("L"))
+                {
                     mv.instructions.add(NodeUtils.getUnWrapMethod(returnType));
-                } else {
+                }
+                else
+                {
                     mv.visitTypeInsn(Opcodes.CHECKCAST, returnType.toString().substring(1, returnType.toString().length() - 1));
                 }
 
@@ -214,7 +238,8 @@ public class ReferenceProxy implements IClassTransformer {
             mv.visitMaxs(6, 3);
             mv.visitEnd();
 
-            for (int i = 0; i < argumentTypes.length; i++) {
+            for (int i = 0; i < argumentTypes.length; i++)
+            {
                 mv.visitLocalVariable(NameUtils.generateLocalVariableName(), argumentTypes[i].toString(), null, l0, l7, i);
             }
 //            mv.visitLocalVariable(NameUtils.generateLocalVariableName(), argumentTypes[i].toString(), null, l0, l7, i);

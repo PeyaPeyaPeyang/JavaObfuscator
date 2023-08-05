@@ -19,7 +19,8 @@ import java.util.ArrayList;
  *
  * @author ItzSomebody
  */
-public class ClassWrapper {
+public class ClassWrapper
+{
     /**
      * Attached class node.
      */
@@ -57,18 +58,22 @@ public class ClassWrapper {
      * @param libraryNode   is this a library class?
      * @param originalClass Original bytes of the class
      */
-    public ClassWrapper(ClassNode classNode, boolean libraryNode, byte[] originalClass) {
+    public ClassWrapper(ClassNode classNode, boolean libraryNode, byte[] originalClass)
+    {
         this.classNode = classNode;
         this.originalName = classNode.name;
         this.libraryNode = libraryNode;
         this.originalClass = originalClass;
 
         ClassWrapper instance = this;
-        classNode.methods.forEach(methodNode -> methods.add(new MethodWrapper(methodNode, instance, methodNode.name,
-                methodNode.desc)));
-        if (classNode.fields != null) {
-            classNode.fields.forEach(fieldNode -> fields.add(new FieldWrapper(fieldNode, instance, fieldNode.name,
-                    fieldNode.desc)));
+        classNode.methods.forEach(methodNode -> this.methods.add(new MethodWrapper(methodNode, instance, methodNode.name,
+                methodNode.desc
+        )));
+        if (classNode.fields != null)
+        {
+            classNode.fields.forEach(fieldNode -> this.fields.add(new FieldWrapper(fieldNode, instance, fieldNode.name,
+                    fieldNode.desc
+            )));
         }
     }
 }

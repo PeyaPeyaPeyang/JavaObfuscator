@@ -10,14 +10,15 @@
 
 package me.superblaubeere27.jobf;
 
-public class ProcessorCallback {
-    private boolean forceComputeFrames = false;
+import lombok.Getter;
 
-    public boolean isForceComputeFrames() {
-        return forceComputeFrames;
-    }
+@Getter
+public class ProcessorCallback
+{
+    private boolean forceComputeFrames;
 
-    public void setForceComputeFrames() {
+    public void setForceComputeFrames()
+    {
         this.forceComputeFrames = true;
     }
 }

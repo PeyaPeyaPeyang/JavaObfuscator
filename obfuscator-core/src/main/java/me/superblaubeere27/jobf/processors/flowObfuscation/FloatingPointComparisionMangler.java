@@ -13,19 +13,30 @@ package me.superblaubeere27.jobf.processors.flowObfuscation;
 import me.superblaubeere27.jobf.utils.NameUtils;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.*;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.VarInsnNode;
 
 import java.util.Collection;
 import java.util.HashMap;
 
-class FloatingPointComparisionMangler {
+class FloatingPointComparisionMangler
+{
 
-    static Collection<MethodNode> mangleComparisions(ClassNode cn, MethodNode node) {
+    static Collection<MethodNode> mangleComparisions(ClassNode cn, MethodNode node)
+    {
         HashMap<Integer, MethodNode> comparisionMethodMap = new HashMap<>();
 
-        for (AbstractInsnNode insnNode : node.instructions.toArray()) {
-            if (insnNode.getOpcode() >= Opcodes.LCMP && insnNode.getOpcode() <= Opcodes.DCMPG) {
-                if (!comparisionMethodMap.containsKey(insnNode.getOpcode())) {
+        for (AbstractInsnNode insnNode : node.instructions.toArray())
+        {
+            if (insnNode.getOpcode() >= Opcodes.LCMP && insnNode.getOpcode() <= Opcodes.DCMPG)
+            {
+                if (!comparisionMethodMap.containsKey(insnNode.getOpcode()))
+                {
                     comparisionMethodMap.put(insnNode.getOpcode(), generateComparisionMethod(cn, insnNode.getOpcode()));
                 }
 
@@ -57,13 +68,14 @@ class FloatingPointComparisionMangler {
      * @param opcode the comparision opcode. Allowed opcodes: LCMP, FCMPL, FCMPG, DCMPL, DCMPG
      * @return The method node
      */
-    private static MethodNode generateComparisionMethod(ClassNode cn, int opcode) {
+    private static MethodNode generateComparisionMethod(ClassNode cn, int opcode)
+    {
         if (!(opcode >= Opcodes.LCMP && opcode <= Opcodes.DCMPG))
             throw new IllegalArgumentException("The opcode must be LCMP, FCMPL, FCMPG, DCMPL or DCMPG");
 
         // The type of numbers which are compared
-        Type type = opcode == Opcodes.LCMP ? Type.LONG_TYPE : (opcode == Opcodes.FCMPG || opcode == Opcodes.FCMPL) ? Type.FLOAT_TYPE : Type.DOUBLE_TYPE;
-        String desc = "(" + type.toString() + type.toString() + ")I";
+        Type type = opcode == Opcodes.LCMP ? Type.LONG_TYPE: (opcode == Opcodes.FCMPG || opcode == Opcodes.FCMPL) ? Type.FLOAT_TYPE: Type.DOUBLE_TYPE;
+        String desc = "(" + type + type + ")I";
 
         MethodNode methodNode = new MethodNode(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC, NameUtils.generateMethodName(cn, desc), desc, null, new String[0]);
 

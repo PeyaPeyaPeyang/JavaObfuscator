@@ -26,9 +26,11 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
-public class Main {
+public class Main
+{
 
-    public static void main(String args[]) {
+    public static void main(String args[])
+    {
         OptionParser parser = new OptionParser();
 
         AbstractOptionSpec<Void> helpOption = parser.accepts("help").forHelp();
@@ -40,48 +42,64 @@ public class Main {
         ArgumentAcceptingOptionSpec<File> configOption = parser.accepts("config").requiredUnless(generateConfig).withOptionalArg().ofType(File.class);
         ArgumentAcceptingOptionSpec<String> watermarkOption = parser.accepts("watermark").availableIf(outputOption).requiredIf(outputOption).withOptionalArg().ofType(String.class);
 
-        try {
+        try
+        {
             OptionSet optionSet = parser.parse(args);
 
-            if (optionSet.has(helpOption)) {
-                try {
+            if (optionSet.has(helpOption))
+            {
+                try
+                {
                     parser.printHelpOn(System.err);
-                } catch (IOException e) {
+                }
+                catch (IOException e)
+                {
                     e.printStackTrace();
                 }
                 return;
             }
 
-            if (optionSet.has(generateConfig)) {
-                try {
+            if (optionSet.has(generateConfig))
+            {
+                try
+                {
                     File file = generateConfig.value(optionSet);
                     Files.write(Config.generateConfig().toJsonObject().toString().getBytes(StandardCharsets.UTF_8), file);
                     System.out.println("Config was written to " + file);
-                } catch (IOException e) {
+                }
+                catch (IOException e)
+                {
                     System.out.println("Error while generating config:");
                     e.printStackTrace();
                 }
-            } else {
-                try {
+            }
+            else
+            {
+                try
+                {
                     File configFile = configOption.value(optionSet);
 
-                    if (!configFile.exists()) {
+                    if (!configFile.exists())
+                    {
                         System.out.println("Config file doesn't exist");
                         return;
                     }
                     Config config = Config.fromJson(new JsonParser().parse(new InputStreamReader(new FileInputStream(configFile))).getAsJsonObject());
 
-                    if (optionSet.has(outputOption)) {
+                    if (optionSet.has(outputOption))
+                    {
                         File input = inputOption.value(optionSet);
                         File output = outputOption.value(optionSet);
                         String watermark = watermarkOption.value(optionSet);
 
-                        if (!input.exists()) {
+                        if (!input.exists())
+                        {
                             System.err.println("The input file does not exist");
                             return;
                         }
 
-                        if (!output.exists() && !output.createNewFile()) {
+                        if (!output.exists() && !output.createNewFile())
+                        {
                             System.err.println("Failed to create input file");
                             return;
                         }
@@ -91,13 +109,16 @@ public class Main {
 
                         Enumeration<? extends ZipEntry> entries = zipFile.entries();
 
-                        while (entries.hasMoreElements()) {
+                        while (entries.hasMoreElements())
+                        {
                             ZipEntry zipEntry = entries.nextElement();
 
                             byte[] entryData = ByteStreams.toByteArray(zipFile.getInputStream(zipEntry));
 
-                            if (zipEntry.getName().endsWith(".class")) {
-                                try {
+                            if (zipEntry.getName().endsWith(".class"))
+                            {
+                                try
+                                {
                                     ClassReader reader = new ClassReader(entryData);
 
                                     ClassWriter writer = new ClassWriter(0);
@@ -107,7 +128,9 @@ public class Main {
 
                                     entryData = writer.toByteArray();
                                     System.out.println(watermark + " -> " + zipEntry.getName());
-                                } catch (ClassTooLargeException | MethodTooLargeException e) {
+                                }
+                                catch (ClassTooLargeException | MethodTooLargeException e)
+                                {
                                     System.err.println("ERROR in " + zipEntry.getName());
                                     e.printStackTrace();
                                 }
@@ -118,10 +141,13 @@ public class Main {
                             outStream.closeEntry();
                         }
                         outStream.close();
-                    } else if (optionSet.has(extract)) {
+                    }
+                    else if (optionSet.has(extract))
+                    {
                         File input = inputOption.value(optionSet);
 
-                        if (!input.exists()) {
+                        if (!input.exists())
+                        {
                             System.err.println("The input file does not exist");
                             return;
                         }
@@ -129,13 +155,16 @@ public class Main {
                         ZipFile zipFile = new ZipFile(input);
                         Enumeration<? extends ZipEntry> entries = zipFile.entries();
 
-                        while (entries.hasMoreElements()) {
+                        while (entries.hasMoreElements())
+                        {
                             ZipEntry zipEntry = entries.nextElement();
 
                             byte[] entryData = ByteStreams.toByteArray(zipFile.getInputStream(zipEntry));
 
-                            if (zipEntry.getName().endsWith(".class")) {
-                                try {
+                            if (zipEntry.getName().endsWith(".class"))
+                            {
+                                try
+                                {
                                     ClassReader reader = new ClassReader(entryData);
 
                                     ClassVisitor clazzNode = new ClassNode();
@@ -145,30 +174,39 @@ public class Main {
 
                                     char[] chars = new char[reader.getMaxStringLength()];
 
-                                    for (int i = 0; i < reader.getItemCount(); i++) {
+                                    for (int i = 0; i < reader.getItemCount(); i++)
+                                    {
                                         int getItem = reader.getItem(i);
                                         String UTF = reader.readUTF8(getItem, chars);
 
-                                        if (UTF != null && UTF.startsWith(config.getMagicBytes())) {
-                                            if (UTF.length() > 6) {
+                                        if (UTF != null && UTF.startsWith(config.getMagicBytes()))
+                                        {
+                                            if (UTF.length() > 6)
+                                            {
                                                 String watermark = Encryption.decrypt(UTF.substring(config.getMagicBytes().length()), config.getKey());
                                                 System.out.println("Found watermark in " + zipEntry.getName() + ": \"" + watermark + "\"");
                                             }
                                         }
                                     }
-                                } catch (ClassTooLargeException | MethodTooLargeException e) {
+                                }
+                                catch (ClassTooLargeException | MethodTooLargeException e)
+                                {
                                     System.err.println("ERROR in " + zipEntry.getName());
                                     e.printStackTrace();
                                 }
                             }
                         }
                     }
-                } catch (JsonIOException | JsonSyntaxException | IOException e) {
+                }
+                catch (JsonIOException | JsonSyntaxException | IOException e)
+                {
                     System.err.println("ERROR: ");
                     e.printStackTrace();
                 }
             }
-        } catch (Exception e) {
+        }
+        catch (Exception e)
+        {
             System.err.println("ERROR: " + e.getLocalizedMessage());
             System.err.println("Try --help for help.");
         }

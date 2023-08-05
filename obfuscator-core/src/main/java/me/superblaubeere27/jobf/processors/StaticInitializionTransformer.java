@@ -16,58 +16,78 @@ import me.superblaubeere27.jobf.JObfImpl;
 import me.superblaubeere27.jobf.ProcessorCallback;
 import me.superblaubeere27.jobf.utils.NodeUtils;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.tree.*;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FieldInsnNode;
+import org.objectweb.asm.tree.FieldNode;
+import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.LdcInsnNode;
+import org.objectweb.asm.tree.MethodNode;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
-public class StaticInitializionTransformer implements IClassTransformer {
-    private static Random random = new Random();
-    private JObfImpl inst;
+public class StaticInitializionTransformer implements IClassTransformer
+{
+    private static final Random random = new Random();
+    private final JObfImpl inst;
 
-    public StaticInitializionTransformer(JObfImpl inst) {
+    public StaticInitializionTransformer(JObfImpl inst)
+    {
         this.inst = inst;
     }
 
     @Override
-    public void process(ProcessorCallback callback, ClassNode node) {
+    public void process(ProcessorCallback callback, ClassNode node)
+    {
         HashMap<FieldNode, Object> objs = new HashMap<>();
-        for (FieldNode field : node.fields) {
-            if (field.value != null) {
-                if ((field.access & Opcodes.ACC_STATIC) != 0 && (field.value instanceof String || field.value instanceof Integer)) {
+        for (FieldNode field : node.fields)
+        {
+            if (field.value != null)
+            {
+                if ((field.access & Opcodes.ACC_STATIC) != 0 && (field.value instanceof String || field.value instanceof Integer))
+                {
                     objs.put(field, field.value);
                     field.value = null;
                 }
             }
         }
         InsnList toAdd = new InsnList();
-        for (Map.Entry<FieldNode, Object> fieldNodeObjectEntry : objs.entrySet()) {
-            if (fieldNodeObjectEntry.getValue() instanceof String) {
+        for (Map.Entry<FieldNode, Object> fieldNodeObjectEntry : objs.entrySet())
+        {
+            if (fieldNodeObjectEntry.getValue() instanceof String)
+            {
                 toAdd.add(new LdcInsnNode(fieldNodeObjectEntry.getValue()));
             }
-            if (fieldNodeObjectEntry.getValue() instanceof Integer) {
+            if (fieldNodeObjectEntry.getValue() instanceof Integer)
+            {
                 toAdd.add(NodeUtils.generateIntPush((Integer) fieldNodeObjectEntry.getValue()));
             }
             toAdd.add(new FieldInsnNode(Opcodes.PUTSTATIC, node.name, fieldNodeObjectEntry.getKey().name, fieldNodeObjectEntry.getKey().desc));
         }
         MethodNode clInit = NodeUtils.getMethod(node, "<clinit>");
-        if (clInit == null) {
+        if (clInit == null)
+        {
             clInit = new MethodNode(Opcodes.ACC_STATIC, "<clinit>", "()V", null, new String[0]);
             node.methods.add(clInit);
         }
 
-        if (clInit.instructions == null || clInit.instructions.getFirst() == null) {
+        if (clInit.instructions == null || clInit.instructions.getFirst() == null)
+        {
             clInit.instructions = toAdd;
             clInit.instructions.add(new InsnNode(Opcodes.RETURN));
-        } else {
+        }
+        else
+        {
             clInit.instructions.insertBefore(clInit.instructions.getFirst(), toAdd);
         }
-        inst.setWorkDone();
+        this.inst.setWorkDone();
     }
 
     @Override
-    public ObfuscationTransformer getType() {
+    public ObfuscationTransformer getType()
+    {
         return null;
     }
 

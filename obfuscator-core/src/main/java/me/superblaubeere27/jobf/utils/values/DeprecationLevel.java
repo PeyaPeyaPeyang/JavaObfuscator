@@ -10,6 +10,9 @@
 
 package me.superblaubeere27.jobf.utils.values;
 
-public enum DeprecationLevel {
-    GOOD, OK, BAD
+public enum DeprecationLevel
+{
+    GOOD,
+    OK,
+    BAD
 }

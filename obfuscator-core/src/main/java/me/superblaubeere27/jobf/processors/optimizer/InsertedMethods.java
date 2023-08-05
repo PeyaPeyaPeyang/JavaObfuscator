@@ -10,15 +10,18 @@
 
 package me.superblaubeere27.jobf.processors.optimizer;
 
-public class InsertedMethods {
+public class InsertedMethods
+{
 
-    public static boolean startsWith(String str, int len, int hashCode) {
+    public static boolean startsWith(String str, int len, int hashCode)
+    {
         if (str.length() < len) return false;
 
         return str.substring(0, len).hashCode() == hashCode;
     }
 
-    static boolean endsWith(String str, int len, int hashCode) {
+    static boolean endsWith(String str, int len, int hashCode)
+    {
         if (str.length() < len) return false;
 
         return str.substring(str.length() - len).hashCode() == hashCode;

@@ -10,13 +10,6 @@
 
 package me.superblaubeere27.jobf.processors;
 
-import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-
 import lombok.extern.slf4j.Slf4j;
 import me.superblaubeere27.annotations.ObfuscationTransformer;
 import me.superblaubeere27.jobf.IClassTransformer;
@@ -39,22 +32,32 @@ import org.objectweb.asm.tree.analysis.Frame;
 import org.objectweb.asm.tree.analysis.SourceInterpreter;
 import org.objectweb.asm.tree.analysis.SourceValue;
 
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+
 @Slf4j(topic = "obfuscator")
-public class InlineTransformer implements IClassTransformer {
-    private static Random random = new Random();
-    private static List<String> exceptions = new ArrayList<>();
+public class InlineTransformer implements IClassTransformer
+{
+    private static final Random random = new Random();
+    private static final List<String> exceptions = new ArrayList<>();
 
-    private EnabledValue enabled = new EnabledValue("Inlining", "Doesn't work, please don't use this", DeprecationLevel.BAD, false);
+    private final EnabledValue enabled = new EnabledValue("Inlining", "Doesn't work, please don't use this", DeprecationLevel.BAD, false);
 
-    private JObfImpl inst;
+    private final JObfImpl inst;
 
-    public InlineTransformer(JObfImpl inst) {
+    public InlineTransformer(JObfImpl inst)
+    {
         this.inst = inst;
     }
 
     @Override
-    public void process(ProcessorCallback callback, ClassNode node) {
-        if (!enabled.getObject()) return;
+    public void process(ProcessorCallback callback, ClassNode node)
+    {
+        if (!this.enabled.getObject()) return;
 
         int maxPasses = 3;
 
@@ -63,18 +66,23 @@ public class InlineTransformer implements IClassTransformer {
 
         boolean found = false;
 
-        do {
+        do
+        {
             ok = false;
-            for (MethodNode method : node.methods) {
+            for (MethodNode method : node.methods)
+            {
                 int maxStackSize = method.maxStack;
                 int maxLocals = method.maxLocals;
                 method.maxStack = 1337;
                 method.maxLocals = 1337;
 
                 Frame<SourceValue>[] frames;
-                try {
+                try
+                {
                     frames = new Analyzer<>(new SourceInterpreter()).analyze(node.name, method);
-                } catch (AnalyzerException e) {
+                }
+                catch (AnalyzerException e)
+                {
                     throw new RuntimeException(e);
                 }
 
@@ -83,8 +91,10 @@ public class InlineTransformer implements IClassTransformer {
 
                 HashMap<AbstractInsnNode, InsnList> replacements = new HashMap<>();
 
-                for (AbstractInsnNode abstractInsnNode : method.instructions.toArray()) {
-                    if (abstractInsnNode instanceof MethodInsnNode) {
+                for (AbstractInsnNode abstractInsnNode : method.instructions.toArray())
+                {
+                    if (abstractInsnNode instanceof MethodInsnNode)
+                    {
                         MethodInsnNode insnNode = (MethodInsnNode) abstractInsnNode;
 
                         ClassNode lookupClass = Utils.lookupClass(insnNode.owner);
@@ -113,23 +123,26 @@ public class InlineTransformer implements IClassTransformer {
                         found = true;
                     }
                 }
-                for (Map.Entry<AbstractInsnNode, InsnList> abstractInsnNodeInsnListEntry : replacements.entrySet()) {
+                for (Map.Entry<AbstractInsnNode, InsnList> abstractInsnNodeInsnListEntry : replacements.entrySet())
+                {
                     method.instructions.insert(abstractInsnNodeInsnListEntry.getKey(), abstractInsnNodeInsnListEntry.getValue());
                     method.instructions.remove(abstractInsnNodeInsnListEntry.getKey());
                 }
             }
             index++;
-        } while (ok && index <= maxPasses);
+        }
+        while (ok && index <= maxPasses);
 
         if (found) callback.setForceComputeFrames();
 
 //        System.out.println("Inlined " + inlined + " methods.");
 
-        inst.setWorkDone();
+        this.inst.setWorkDone();
     }
 
     @Override
-    public ObfuscationTransformer getType() {
+    public ObfuscationTransformer getType()
+    {
         return ObfuscationTransformer.INLINING;
     }
 

@@ -23,29 +23,35 @@ import org.objectweb.asm.tree.MethodNode;
 
 import java.util.Random;
 
-public class HideMembers implements IClassTransformer {
+public class HideMembers implements IClassTransformer
+{
     private static final String PROCESSOR_NAME = "HideMembers";
-    private static Random random = new Random();
-    private JObfImpl inst;
-    private EnabledValue enabled = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.GOOD, true);
+    private static final Random random = new Random();
+    private final JObfImpl inst;
+    private final EnabledValue enabled = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.GOOD, true);
 
-    public HideMembers(JObfImpl inst) {
+    public HideMembers(JObfImpl inst)
+    {
         this.inst = inst;
     }
 
     @Override
-    public void process(ProcessorCallback callback, ClassNode node) {
-        if (!enabled.getObject()) return;
+    public void process(ProcessorCallback callback, ClassNode node)
+    {
+        if (!this.enabled.getObject()) return;
 
-        if ((node.access & Opcodes.ACC_INTERFACE) == 0) {
-            for (MethodNode method : node.methods) {
+        if ((node.access & Opcodes.ACC_INTERFACE) == 0)
+        {
+            for (MethodNode method : node.methods)
+            {
 //            if ((method.access & Opcodes.ACC_BRIDGE) == 0 && (method.access & Opcodes.ACC_STATIC) == 0 && !method.name.startsWith("<")) {
 //                method.access |= Opcodes.ACC_BRIDGE;
 //            }
 //            if ((method.access & Opcodes.ACC_SYNTHETIC) == 0) {
                 if (method.name.startsWith("<"))
                     continue;
-                if ((method.access & Opcodes.ACC_NATIVE) == 0) {
+                if ((method.access & Opcodes.ACC_NATIVE) == 0)
+                {
                     continue;
                 }
                 method.access = method.access | Opcodes.ACC_BRIDGE;
@@ -53,18 +59,20 @@ public class HideMembers implements IClassTransformer {
 //            }
             }
         }
-        for (FieldNode field : node.fields) {
+        for (FieldNode field : node.fields)
+        {
 //            if ((field.access & Opcodes.ACC_FINAL) == 0)
             field.access = field.access | Opcodes.ACC_SYNTHETIC;
         }
 //        if ((node.access & Opcodes.ACC_FINAL) == 0) {
 //            node.access = node.access | Opcodes.ACC_SYNTHETIC;
 //        }
-        inst.setWorkDone();
+        this.inst.setWorkDone();
     }
 
     @Override
-    public ObfuscationTransformer getType() {
+    public ObfuscationTransformer getType()
+    {
         return ObfuscationTransformer.HIDE_MEMBERS;
     }
 

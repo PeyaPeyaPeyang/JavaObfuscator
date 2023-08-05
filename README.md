@@ -1,8 +1,11 @@
 # Obfuscator [![Build Status](https://travis-ci.org/superblaubeere27/obfuscator.svg?branch=master)](https://travis-ci.org/superblaubeere27/obfuscator) [![Join the chat at https://gitter.im/superblaubeere27/obfuscator](https://badges.gitter.im/superblaubeere27/obfuscator.svg)](https://gitter.im/superblaubeere27/obfuscator?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![Donate](https://img.shields.io/badge/patreon-donate-green.svg)](http://patreon.com/superblaubeere27)
 
-If you are interested in stronger obfuscation methods, feel free to take a look at my new project [masxinlingvonta](https://github.com/superblaubeere27/masxinlingvonta) that further obfuscates java bytecode by compiling it to native code.
+If you are interested in stronger obfuscation methods, feel free to take a look at my new
+project [masxinlingvonta](https://github.com/superblaubeere27/masxinlingvonta) that further obfuscates java bytecode by
+compiling it to native code.
 
 A Java bytecode obfuscator supporting
+
 * Flow Obfuscation
 * Line Number Removal
 * Number Obfuscation
@@ -15,13 +18,15 @@ A Java bytecode obfuscator supporting
 * Reference Proxy
 * Member Shuffling & Hiding
 
-Feel free to join my discord server: [![Discord Chat](https://img.shields.io/discord/468320443682521089.svg)](https://discord.gg/zQmAChK)  
-
+Feel free to join my discord
+server: [![Discord Chat](https://img.shields.io/discord/468320443682521089.svg)](https://discord.gg/zQmAChK)
 
 ## Obfuscated code
+
 Luyten + Procyon
 
 Without
+
 ```Java
 
 public class HelloWorld {
@@ -39,6 +44,7 @@ public class HelloWorld {
 ```
 
 Obfuscated (short version for full code visit https://pastebin.com/RFHtgPtX)
+
 ```Java
 
 public class HelloWorld {
@@ -185,13 +191,15 @@ public class HelloWorld {
 
 ### Excluding Classes
 
-In some situations you need to prevent certain classes from being obfuscated, such as dependencies packaged with your jar or mixins in a forge mod.
+In some situations you need to prevent certain classes from being obfuscated, such as dependencies packaged with your
+jar or mixins in a forge mod.
 
 You will need to exclude in two places.
 
 ##### Scripting Tab
 
 Here is an example script that will obfuscate and remap all classes except the org.json dependency and mixins.
+
 ```javascript
 function isRemappingEnabledForClass(node) {
     var flag1 = !node.name.startsWith("org/json");
@@ -207,14 +215,15 @@ function isObfuscatorEnabledForClass(node) {
 
 ##### Name Obfuscation
 
-If you also want to exclude these classes from name obfuscation you will need to go to Transformers -> Name Obfuscation and add these exclusions there.
+If you also want to exclude these classes from name obfuscation you will need to go to Transformers -> Name Obfuscation
+and add these exclusions there.
 
 To Exclude the same classes as we did above, we would need to add the following to Excluded classes, methods and fields.
+
 ```regexp
 org.json.**
 com.client.mixin.**
 ```
-
 
 If your classes are still being obfuscated after applyinng both of these exclusions please open an issue.
 
@@ -237,7 +246,8 @@ If your classes are still being obfuscated after applyinng both of these exclusi
 
 - Make any edits
 - Package the project to make sure that the project is still functional:
-  - `java -Dmaven.multiModuleProjectDirectory=D:\Computing\obfuscator\obfuscator-core "-Dmaven.home=C:\Program Files\JetBrains\IntelliJ IDEA 2019.1.3\plugins\maven\lib\maven3" "-Dclassworlds.conf=C:\Program Files\JetBrains\IntelliJ IDEA 2019.1.3\plugins\maven\lib\maven3\bin\m2.conf" "-javaagent:C:\Program Files\JetBrains\IntelliJ IDEA 2019.1.3\lib\idea_rt.jar=18889:C:\Program Files\JetBrains\IntelliJ IDEA 2019.1.3\bin" -Dfile.encoding=UTF-8 -classpath "C:\Program Files\JetBrains\IntelliJ IDEA 2019.1.3\plugins\maven\lib\maven3\boot\plexus-classworlds-2.5.2.jar" org.codehaus.classworlds.Launcher -Didea.version2019.1.3 package` (Change any paths to be relevant to your system)
+  - `java -Dmaven.multiModuleProjectDirectory=D:\Computing\obfuscator\obfuscator-core "-Dmaven.home=C:\Program Files\JetBrains\IntelliJ IDEA 2019.1.3\plugins\maven\lib\maven3" "-Dclassworlds.conf=C:\Program Files\JetBrains\IntelliJ IDEA 2019.1.3\plugins\maven\lib\maven3\bin\m2.conf" "-javaagent:C:\Program Files\JetBrains\IntelliJ IDEA 2019.1.3\lib\idea_rt.jar=18889:C:\Program Files\JetBrains\IntelliJ IDEA 2019.1.3\bin" -Dfile.encoding=UTF-8 -classpath "C:\Program Files\JetBrains\IntelliJ IDEA 2019.1.3\plugins\maven\lib\maven3\boot\plexus-classworlds-2.5.2.jar" org.codehaus.classworlds.Launcher -Didea.version2019.1.3 package` (
+    Change any paths to be relevant to your system)
 
 ##### 3. Commit
 
@@ -252,6 +262,7 @@ If your classes are still being obfuscated after applyinng both of these exclusi
 - Make sure all your changes are included then submit the Pull Request.
 
 ## Credits
+
 - MCInjector (FFixer base)
 - FFixer (Obfuscator base)
 - SmokeObfuscator (Some ideas)

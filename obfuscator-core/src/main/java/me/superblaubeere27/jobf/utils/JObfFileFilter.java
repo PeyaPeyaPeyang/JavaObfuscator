@@ -11,16 +11,20 @@
 package me.superblaubeere27.jobf.utils;
 
 import javax.swing.filechooser.FileFilter;
+
 import java.io.File;
 
-public class JObfFileFilter extends FileFilter {
+public class JObfFileFilter extends FileFilter
+{
     @Override
-    public boolean accept(File f) {
+    public boolean accept(File f)
+    {
         return true;
     }
 
     @Override
-    public String getDescription() {
+    public String getDescription()
+    {
         return "JObf files (*.jocfg)";
     }
 }

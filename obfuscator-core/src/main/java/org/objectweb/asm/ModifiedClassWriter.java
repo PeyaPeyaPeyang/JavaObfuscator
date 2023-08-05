@@ -9,7 +9,6 @@
  */
 package org.objectweb.asm;
 
-
 import me.superblaubeere27.jobf.ObfuscatorClassLoader;
 
 /**
@@ -21,18 +20,22 @@ import me.superblaubeere27.jobf.ObfuscatorClassLoader;
  * @author Eric Bruneton
  * @see <a href="https://docs.oracle.com/javase/specs/jvms/se9/html/jvms-4.html">JVMS 4</a>
  */
-public class ModifiedClassWriter extends ClassWriter {
+public class ModifiedClassWriter extends ClassWriter
+{
 
-    public ModifiedClassWriter(int flags) {
+    public ModifiedClassWriter(int flags)
+    {
         super(flags);
     }
 
-    public ModifiedClassWriter(ClassReader classReader, int flags) {
+    public ModifiedClassWriter(ClassReader classReader, int flags)
+    {
         super(classReader, flags);
     }
 
     @Override
-    protected ClassLoader getClassLoader() {
+    protected ClassLoader getClassLoader()
+    {
         return ObfuscatorClassLoader.INSTANCE;
     }
 }

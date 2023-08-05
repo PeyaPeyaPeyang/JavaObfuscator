@@ -21,30 +21,39 @@ import org.objectweb.asm.tree.MethodInsnNode;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-public class NodeUtilsTest {
+public class NodeUtilsTest
+{
     @Test
-    public void test_getPackage() {
+    public void test_getPackage()
+    {
         assertEquals(NameUtils.getPackage("className"), "");
         assertEquals(NameUtils.getPackage("package1/className"), "package1");
         assertEquals(NameUtils.getPackage("package1/package2/className"), "package1/package2");
 
-        try {
+        try
+        {
             NameUtils.getPackage("/className");
             fail();
-        } catch (Exception ignored) {
+        }
+        catch (Exception ignored)
+        {
         }
     }
 
     @Test
-    public void test_getWrapperMethod() {
+    public void test_getWrapperMethod()
+    {
         AbstractInsnNode wrapperMethod = NodeUtils.getWrapperMethod(Type.INT_TYPE);
 
-        if (wrapperMethod instanceof MethodInsnNode) {
+        if (wrapperMethod instanceof MethodInsnNode)
+        {
             MethodInsnNode method = (MethodInsnNode) wrapperMethod;
             assertEquals("valueOf", method.name);
             assertEquals(method.desc, "(I)Ljava/lang/Integer;");
             assertEquals(method.owner, "java/lang/Integer");
-        } else {
+        }
+        else
+        {
             fail();
         }
 

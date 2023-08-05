@@ -14,15 +14,27 @@ import me.superblaubeere27.jobf.utils.NodeUtils;
 import me.superblaubeere27.jobf.utils.Utils;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.*;
-import org.objectweb.asm.tree.analysis.*;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.JumpInsnNode;
+import org.objectweb.asm.tree.LabelNode;
+import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.analysis.Analyzer;
+import org.objectweb.asm.tree.analysis.AnalyzerException;
+import org.objectweb.asm.tree.analysis.Frame;
+import org.objectweb.asm.tree.analysis.SourceInterpreter;
+import org.objectweb.asm.tree.analysis.SourceValue;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class JumpReplacer {
+public class JumpReplacer
+{
 
-    public static void process(ClassNode node, MethodNode methodNode) {
+    public static void process(ClassNode node, MethodNode methodNode)
+    {
         // Labels in this list will be replaced
         List<LabelNode> labels = new ArrayList<>();
         // Those labels will be removed from the good labels list
@@ -30,17 +42,23 @@ public class JumpReplacer {
 
         Frame<SourceValue>[] frames;
 
-        try {
+        try
+        {
             frames = new Analyzer<>(new SourceInterpreter()).analyze(node.name, methodNode);
-        } catch (AnalyzerException e) {
+        }
+        catch (AnalyzerException e)
+        {
             throw new RuntimeException(e);
         }
 
-        for (AbstractInsnNode insnNode : methodNode.instructions.toArray()) {
-            if (insnNode instanceof JumpInsnNode) {
+        for (AbstractInsnNode insnNode : methodNode.instructions.toArray())
+        {
+            if (insnNode instanceof JumpInsnNode)
+            {
                 JumpInsnNode jumpInsnNode = (JumpInsnNode) insnNode;
 
-                if (jumpInsnNode.getOpcode() == Opcodes.GOTO) {
+                if (jumpInsnNode.getOpcode() == Opcodes.GOTO)
+                {
                     labels.add(jumpInsnNode.label);
                 }
             }
@@ -54,12 +72,14 @@ public class JumpReplacer {
 
         List<ReplacedLabelPair> replaced = new ArrayList<>();
 
-        for (LabelNode label : labels) {
+        for (LabelNode label : labels)
+        {
             if (alreadyAssigned.contains(label)) continue;
 
             LabelNode secondLabel = null;
 
-            for (LabelNode labelNode : labels) {
+            for (LabelNode labelNode : labels)
+            {
                 if (alreadyAssigned.contains(labelNode)) continue;
 
                 secondLabel = labelNode;
@@ -67,7 +87,8 @@ public class JumpReplacer {
             }
 
 
-            if (secondLabel != null) {
+            if (secondLabel != null)
+            {
                 replaced.add(new ReplacedLabelPair(label, secondLabel));
                 alreadyAssigned.add(label);
                 alreadyAssigned.add(secondLabel);
@@ -76,18 +97,21 @@ public class JumpReplacer {
 
         InsnList insnList = new InsnList();
 
-        if (replaced.size() > 1) {
+        if (replaced.size() > 1)
+        {
             Type returnType = Type.getReturnType(methodNode.desc);
 
             //if (returnType.getSize() != 0) insnList.add(NodeUtils.nullValueForType(returnType));
             //insnList.add(new InsnNode(returnType.getOpcode(Opcodes.IRETURN)));
 
-            for (ReplacedLabelPair replacedLabelPair : replaced) {
+            for (ReplacedLabelPair replacedLabelPair : replaced)
+            {
                 replacedLabelPair.firstNumber = Utils.random(-10, 10);
 
                 int notFirstNumber;
 
-                do notFirstNumber = Utils.random(-10, 10); while (notFirstNumber == replacedLabelPair.firstNumber);
+                do notFirstNumber = Utils.random(-10, 10);
+                while (notFirstNumber == replacedLabelPair.firstNumber);
 
                 insnList.add(replacedLabelPair.replacement);
                 insnList.add(new InsnNode(Opcodes.DUP));
@@ -107,19 +131,26 @@ public class JumpReplacer {
         }
 
 
-        for (AbstractInsnNode insnNode : methodNode.instructions.toArray()) {
-            if (insnNode instanceof JumpInsnNode) {
+        for (AbstractInsnNode insnNode : methodNode.instructions.toArray())
+        {
+            if (insnNode instanceof JumpInsnNode)
+            {
                 JumpInsnNode jumpInsnNode = (JumpInsnNode) insnNode;
 
                 int number = 0;
                 LabelNode label = null;
 
-                for (ReplacedLabelPair replacedLabelPair : replaced) {
-                    if (replacedLabelPair.first == jumpInsnNode.label) {
+                for (ReplacedLabelPair replacedLabelPair : replaced)
+                {
+                    if (replacedLabelPair.first == jumpInsnNode.label)
+                    {
                         number = replacedLabelPair.firstNumber;
                         label = replacedLabelPair.replacement;
-                    } else if (replacedLabelPair.second == jumpInsnNode.label) {
-                        do number = Utils.random(-10, 10); while (replacedLabelPair.firstNumber == number);
+                    }
+                    else if (replacedLabelPair.second == jumpInsnNode.label)
+                    {
+                        do number = Utils.random(-10, 10);
+                        while (replacedLabelPair.firstNumber == number);
 
                         label = replacedLabelPair.replacement;
                     }
@@ -127,7 +158,8 @@ public class JumpReplacer {
 
                 if (label == null) continue;
 
-                if (insnNode.getOpcode() == Opcodes.GOTO) {
+                if (insnNode.getOpcode() == Opcodes.GOTO)
+                {
                     InsnList replacement = new InsnList();
 
                     replacement.add(NodeUtils.generateIntPush(number));
@@ -145,13 +177,15 @@ public class JumpReplacer {
 
     }
 
-    static class ReplacedLabelPair {
+    static class ReplacedLabelPair
+    {
         private int firstNumber;
-        private LabelNode first;
-        private LabelNode second;
-        private LabelNode replacement;
+        private final LabelNode first;
+        private final LabelNode second;
+        private final LabelNode replacement;
 
-        ReplacedLabelPair(LabelNode first, LabelNode second) {
+        ReplacedLabelPair(LabelNode first, LabelNode second)
+        {
             this.first = first;
             this.second = second;
 

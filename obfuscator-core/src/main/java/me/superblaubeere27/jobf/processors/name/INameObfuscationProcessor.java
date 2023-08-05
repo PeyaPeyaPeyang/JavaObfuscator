@@ -15,6 +15,7 @@ import org.objectweb.asm.tree.ClassNode;
 
 import java.util.HashMap;
 
-public interface INameObfuscationProcessor {
+public interface INameObfuscationProcessor
+{
     void transformPost(JObfImpl inst, HashMap<String, ClassNode> nodes);
 }

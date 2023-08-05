@@ -10,18 +10,24 @@
 
 package me.superblaubeere27.jobf.utils.values;
 
-public abstract class Value<T> {
-    private String owner;
-    private String name;
-    private String description;
-    private T object;
-    private DeprecationLevel deprecation;
+import lombok.Getter;
 
-    public Value(String owner, String name, DeprecationLevel deprecation, T object) {
+@Getter
+public abstract class Value<T>
+{
+    private final String owner;
+    private final String name;
+    private final String description;
+    private T object;
+    private final DeprecationLevel deprecation;
+
+    public Value(String owner, String name, DeprecationLevel deprecation, T object)
+    {
         this(owner, name, "", deprecation, object);
     }
 
-    public Value(String owner, String name, String description, DeprecationLevel deprecation, T object) {
+    public Value(String owner, String name, String description, DeprecationLevel deprecation, T object)
+    {
         this.owner = owner;
         this.name = name;
         this.description = description;
@@ -29,32 +35,14 @@ public abstract class Value<T> {
         this.object = object;
     }
 
-    public String getOwner() {
-        return owner;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public T getObject() {
-        return object;
-    }
-
-    public void setObject(T object) {
+    public void setObject(T object)
+    {
         this.object = object;
     }
 
-    public DeprecationLevel getDeprecation() {
-        return deprecation;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
     @Override
-    public String toString() {
-        return String.format("%s::%s = %s", owner, name, object);
+    public String toString()
+    {
+        return String.format("%s::%s = %s", this.owner, this.name, this.object);
     }
 }

@@ -10,37 +10,8 @@
 
 package me.superblaubeere27.jobf;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
-import java.util.zip.CRC32;
-import java.util.zip.Deflater;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
-import java.util.zip.ZipInputStream;
-import java.util.zip.ZipOutputStream;
-
 import com.google.common.io.ByteStreams;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import me.superblaubeere27.jobf.processors.CrasherTransformer;
 import me.superblaubeere27.jobf.processors.HWIDProtection;
@@ -75,50 +46,79 @@ import org.objectweb.asm.ModifiedClassWriter;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FrameNode;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+import java.util.zip.CRC32;
+import java.util.zip.Deflater;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
+
 @Slf4j(topic = "obfuscator")
-public class JObfImpl {
+public class JObfImpl
+{
     public static final JObfImpl INSTANCE = new JObfImpl();
     public static List<IClassTransformer> processors;
+    @Getter
     public static HashMap<String, ClassNode> classes = new HashMap<>();
     public static HashMap<String, byte[]> files = new HashMap<>();
     private static List<IPreClassTransformer> preProcessors;
+    private final List<INameObfuscationProcessor> nameObfuscationProcessors = new ArrayList<>();
+    private final JObfSettings settings = new JObfSettings();
     public JObfScript script;
     private boolean mainClassChanged;
-    private final List<INameObfuscationProcessor> nameObfuscationProcessors = new ArrayList<>();
+    @Getter
     private String mainClass;
+    @Getter
     private Map<String, ClassWrapper> classPath = new HashMap<>();
     private Map<String, ClassTree> hierarchy = new HashMap<>();
     private Set<ClassWrapper> libraryClassnodes = new HashSet<>();
     private List<File> libraryFiles;
     private int computeMode;
     private boolean invokeDynamic;
-    private final JObfSettings settings = new JObfSettings();
     private int threadCount = Math.max(1, Runtime.getRuntime().availableProcessors());
 
-
-    public JObfImpl() {
+    public JObfImpl()
+    {
         processors = new ArrayList<>();
 
-        ValueManager.registerClass(settings);
+        ValueManager.registerClass(this.settings);
 
         addProcessors();
     }
 
-    public static HashMap<String, ClassNode> getClasses() {
-        return classes;
-    }
-
-    public String getMainClass() {
-        return mainClass;
-    }
-
-    private void setMainClass(String mainClass) {
+    private void setMainClass(String mainClass)
+    {
         this.mainClass = mainClass;
     }
 
-    public ClassTree getTree(String ref) {
-        if (!hierarchy.containsKey(ref)) {
-            ClassWrapper wrapper = classPath.get(ref);
+    public ClassTree getTree(String ref)
+    {
+        if (!this.hierarchy.containsKey(ref))
+        {
+            ClassWrapper wrapper = this.classPath.get(ref);
 
             if (wrapper == null)
                 return null;
@@ -126,56 +126,70 @@ public class JObfImpl {
             buildHierarchy(wrapper, null, false);
         }
 
-        return hierarchy.get(ref);
+        return this.hierarchy.get(ref);
     }
 
-    public void buildHierarchy(ClassWrapper classWrapper, ClassWrapper sub, boolean acceptMissingClass) {
-        if (hierarchy.get(classWrapper.classNode.name) == null) {
+    public void buildHierarchy(ClassWrapper classWrapper, ClassWrapper sub, boolean acceptMissingClass)
+    {
+        if (this.hierarchy.get(classWrapper.classNode.name) == null)
+        {
             ClassTree tree = new ClassTree(classWrapper);
-            if (classWrapper.classNode.superName != null) {
+            if (classWrapper.classNode.superName != null)
+            {
                 tree.parentClasses.add(classWrapper.classNode.superName);
-                ClassWrapper superClass = classPath.get(classWrapper.classNode.superName);
+                ClassWrapper superClass = this.classPath.get(classWrapper.classNode.superName);
 
                 if (superClass == null && !acceptMissingClass)
                     throw new MissingClassException(classWrapper.classNode.superName + " (referenced in " + classWrapper.classNode.name + ") is missing in the classPath.");
-                else if (superClass == null) {
+                else if (superClass == null)
+                {
                     tree.missingSuperClass = true;
 
                     log.warn("Missing class: " + classWrapper.classNode.superName + " (No methods of subclasses will be remapped)");
-                } else {
+                }
+                else
+                {
                     buildHierarchy(superClass, classWrapper, acceptMissingClass);
 
                     // Inherit the missingSuperClass state
-                    if (hierarchy.get(classWrapper.classNode.superName).missingSuperClass) {
+                    if (this.hierarchy.get(classWrapper.classNode.superName).missingSuperClass)
+                    {
                         tree.missingSuperClass = true;
                     }
                 }
             }
-            if (classWrapper.classNode.interfaces != null && !classWrapper.classNode.interfaces.isEmpty()) {
-                for (String s : classWrapper.classNode.interfaces) {
+            if (classWrapper.classNode.interfaces != null && !classWrapper.classNode.interfaces.isEmpty())
+            {
+                for (String s : classWrapper.classNode.interfaces)
+                {
                     tree.parentClasses.add(s);
-                    ClassWrapper interfaceClass = classPath.get(s);
+                    ClassWrapper interfaceClass = this.classPath.get(s);
 
                     if (interfaceClass == null && !acceptMissingClass)
                         throw new MissingClassException(s + " (referenced in " + classWrapper.classNode.name + ") is missing in the classPath.");
-                    else if (interfaceClass == null) {
+                    else if (interfaceClass == null)
+                    {
                         tree.missingSuperClass = true;
 
                         log.warn("Missing interface class: " + s + " (No methods of subclasses will be remapped)");
-                    } else {
+                    }
+                    else
+                    {
                         buildHierarchy(interfaceClass, classWrapper, acceptMissingClass);
 
                         // Inherit the missingSuperClass state
-                        if (hierarchy.get(s).missingSuperClass) {
+                        if (this.hierarchy.get(s).missingSuperClass)
+                        {
                             tree.missingSuperClass = true;
                         }
                     }
                 }
             }
-            hierarchy.put(classWrapper.classNode.name, tree);
+            this.hierarchy.put(classWrapper.classNode.name, tree);
         }
-        if (sub != null) {
-            hierarchy.get(classWrapper.classNode.name).subClasses.add(sub.classNode.name);
+        if (sub != null)
+        {
+            this.hierarchy.get(classWrapper.classNode.name).subClasses.add(sub.classNode.name);
         }
     }
 
@@ -199,7 +213,8 @@ public class JObfImpl {
 //
 //        return map;
 //    }
-    private List<byte[]> loadClasspathFile(File file) throws IOException {
+    private List<byte[]> loadClasspathFile(File file) throws IOException
+    {
         ZipFile zipIn = new ZipFile(file);
         Enumeration<? extends ZipEntry> entries = zipIn.entries();
 
@@ -207,9 +222,11 @@ public class JObfImpl {
 
         List<byte[]> byteList = new ArrayList<>(zipIn.size());
 
-        while (entries.hasMoreElements()) {
+        while (entries.hasMoreElements())
+        {
             ZipEntry ent = entries.nextElement();
-            if (ent.getName().endsWith(".class") && (!isJmod || !ent.getName().endsWith("module-info.class") && ent.getName().startsWith("classes/"))) {
+            if (ent.getName().endsWith(".class") && (!isJmod || !ent.getName().endsWith("module-info.class") && ent.getName().startsWith("classes/")))
+            {
                 byteList.add(ByteStreams.toByteArray(zipIn.getInputStream(ent)));
             }
         }
@@ -218,24 +235,33 @@ public class JObfImpl {
         return byteList;
     }
 
-    private void loadClasspath() throws IOException {
-        if (libraryFiles != null) {
+    private void loadClasspath() throws IOException
+    {
+        if (this.libraryFiles != null)
+        {
             int i = 0;
 
             LinkedList<byte[]> byteList = new LinkedList<>();
 
-            for (File file : libraryFiles) {
-                if (file.isFile()) {
-                    log.info("Loading " + file.getAbsolutePath() + " (" + (i++ * 100 / libraryFiles.size()) + "%)");
+            for (File file : this.libraryFiles)
+            {
+                if (file.isFile())
+                {
+                    log.info("Loading " + file.getAbsolutePath() + " (" + (i++ * 100 / this.libraryFiles.size()) + "%)");
                     byteList.addAll(loadClasspathFile(file));
 //                    classPath.putAll(loadClasspathFile(file));
-                } else {
+                }
+                else
+                {
                     Files.walk(file.toPath()).map(Path::toFile).filter(f -> f.getName().endsWith(".jar") || f.getName().endsWith(".zip") || f.getName().endsWith(".jmod")).forEach(f -> {
                         log.info("Loading " + f.getName() + " (from " + file.getAbsolutePath() + ") to memory");
-                        try {
+                        try
+                        {
                             byteList.addAll(loadClasspathFile(f));
 //                            classPath.putAll(loadClasspathFile(f));
-                        } catch (IOException e) {
+                        }
+                        catch (IOException e)
+                        {
                             e.printStackTrace();
                         }
                     });
@@ -248,10 +274,12 @@ public class JObfImpl {
             ScheduledRunnable runnable = () -> {
                 Map<String, ClassWrapper> map = new HashMap<>();
 
-                while (true) {
+                while (true)
+                {
                     byte[] bytes;
 
-                    synchronized (byteList) {
+                    synchronized (byteList)
+                    {
                         bytes = byteList.poll();
                     }
 
@@ -263,8 +291,9 @@ public class JObfImpl {
                     map.put(node.name, new ClassWrapper(node, true, bytes));
                 }
 
-                synchronized (classPath) {
-                    classPath.putAll(map);
+                synchronized (this.classPath)
+                {
+                    this.classPath.putAll(map);
                 }
 
                 return true;
@@ -272,27 +301,26 @@ public class JObfImpl {
 
             Scheduler scheduler = new Scheduler(runnable);
 
-            scheduler.run(threadCount);
+            scheduler.run(this.threadCount);
             scheduler.waitFor();
 
         }
 
-        libraryClassnodes.addAll(classPath.values());
+        this.libraryClassnodes.addAll(this.classPath.values());
     }
 
-    public Map<String, ClassWrapper> getClassPath() {
-        return classPath;
+    public boolean isLibrary(ClassNode classNode)
+    {
+        return this.libraryClassnodes.stream().anyMatch(e -> e.classNode.name.equals(classNode.name));
     }
 
-    public boolean isLibrary(ClassNode classNode) {
-        return libraryClassnodes.stream().anyMatch(e -> e.classNode.name.equals(classNode.name));
-    }
-
-    public boolean isLoadedCode(ClassNode classNode) {
+    public boolean isLoadedCode(ClassNode classNode)
+    {
         return classes.containsKey(classNode.name);
     }
 
-    private void addProcessors() {
+    private void addProcessors()
+    {
         processors.add(new StaticInitializionTransformer(this));
 
         processors.add(new HWIDProtection(this));
@@ -308,75 +336,91 @@ public class JObfImpl {
         processors.add(new ShuffleMembersTransformer(this));
 
 
-        nameObfuscationProcessors.add(new NameObfuscation());
-        nameObfuscationProcessors.add(new InnerClassRemover());
+        this.nameObfuscationProcessors.add(new NameObfuscation());
+        this.nameObfuscationProcessors.add(new InnerClassRemover());
         processors.add(new CrasherTransformer(this));
         processors.add(new ReferenceProxy(this));
 
         preProcessors = new ArrayList<>();
 
-        for (IClassTransformer processor : processors) {
+        for (IClassTransformer processor : processors)
+        {
             ValueManager.registerClass(processor);
         }
-        for (IPreClassTransformer processor : preProcessors) {
+        for (IPreClassTransformer processor : preProcessors)
+        {
             ValueManager.registerClass(processor);
         }
-        for (INameObfuscationProcessor processor : nameObfuscationProcessors) {
+        for (INameObfuscationProcessor processor : this.nameObfuscationProcessors)
+        {
             ValueManager.registerClass(processor);
         }
     }
 
-    public void setScript(JObfScript script) {
+    public void setScript(JObfScript script)
+    {
         this.script = script;
     }
 
-    public void processJar(Configuration config) throws IOException {
+    public void processJar(Configuration config) throws IOException
+    {
         ZipInputStream inJar = null;
         ZipOutputStream outJar = null;
 
-        boolean stored = settings.getUseStore().getObject();
+        boolean stored = this.settings.getUseStore().getObject();
 
-        libraryFiles = new ArrayList<>();
+        this.libraryFiles = new ArrayList<>();
 
         classes = new HashMap<>();
-        libraryClassnodes = new HashSet<>();
-        classPath = new HashMap<>();
+        this.libraryClassnodes = new HashSet<>();
+        this.classPath = new HashMap<>();
         files = new HashMap<>();
-        hierarchy = new HashMap<>();
+        this.hierarchy = new HashMap<>();
 
-        NameUtils.applySettings(settings);
+        NameUtils.applySettings(this.settings);
         NameUtils.setup();
 
-        try {
-            script = StringUtils.isBlank(config.getScript()) ? null : new JObfScript(config.getScript());
-        } catch (Exception e) {
+        try
+        {
+            this.script = StringUtils.isBlank(config.getScript()) ? null: new JObfScript(config.getScript());
+        }
+        catch (Exception e)
+        {
             log.error("Failed to load script", e);
             e.printStackTrace();
             return;
         }
 
-        for (String s : config.getLibraries()) libraryFiles.add(new File(s));
+        for (String s : config.getLibraries()) this.libraryFiles.add(new File(s));
 
         long startTime = System.currentTimeMillis();
 
-        try {
+        try
+        {
             log.info("Loading classpath...");
             loadClasspath();
-            try {
+            try
+            {
                 inJar = new ZipInputStream(new BufferedInputStream(new FileInputStream(config.getInput())));
-            } catch (FileNotFoundException e) {
+            }
+            catch (FileNotFoundException e)
+            {
                 throw new FileNotFoundException("Could not open input file: " + e.getMessage());
             }
 
-            try {
-                OutputStream out = (config.getOutput() == null ? new ByteArrayOutputStream() : new FileOutputStream(config.getOutput()));
+            try
+            {
+                OutputStream out = (config.getOutput() == null ? new ByteArrayOutputStream(): new FileOutputStream(config.getOutput()));
                 outJar = new ZipOutputStream(new BufferedOutputStream(out));
-                outJar.setMethod(stored ? ZipOutputStream.STORED : ZipOutputStream.DEFLATED);
+                outJar.setMethod(stored ? ZipOutputStream.STORED: ZipOutputStream.DEFLATED);
 
-                if (stored) {
+                if (stored)
+                {
                     outJar.setLevel(Deflater.NO_COMPRESSION);
                 }
-            } catch (FileNotFoundException e) {
+            }
+            catch (FileNotFoundException e)
+            {
                 throw new FileNotFoundException("Could not open output file: " + e.getMessage());
             }
             setMainClass(null);
@@ -389,14 +433,17 @@ public class JObfImpl {
 
             HashMap<String, byte[]> classDataMap = new HashMap<>();
 
-            while (true) {
+            while (true)
+            {
                 ZipEntry entry = inJar.getNextEntry();
 
-                if (entry == null) {
+                if (entry == null)
+                {
                     break;
                 }
 
-                if (entry.isDirectory()) {
+                if (entry.isDirectory())
+                {
                     outJar.putNextEntry(entry);
                     continue;
                 }
@@ -405,19 +452,24 @@ public class JObfImpl {
                 ByteArrayOutputStream entryBuffer = new ByteArrayOutputStream();
 
                 int len;
-                do {
+                do
+                {
                     len = inJar.read(data);
-                    if (len > 0) {
+                    if (len > 0)
+                    {
                         entryBuffer.write(data, 0, len);
                     }
-                } while (len != -1);
+                }
+                while (len != -1);
 
                 byte[] entryData = entryBuffer.toByteArray();
 
                 String entryName = entry.getName();
 
-                if (entryName.endsWith(".class")) {
-                    try {
+                if (entryName.endsWith(".class"))
+                {
+                    try
+                    {
                         ClassReader cr = new ClassReader(entryData);
                         ClassNode cn = new ClassNode();
 
@@ -427,14 +479,19 @@ public class JObfImpl {
                         cr.accept(cn, 0);
                         classes.put(entryName, cn);
                         classDataMap.put(entryName, entryData);
-                    } catch (Exception e) {
+                    }
+                    catch (Exception e)
+                    {
                         log.warn("Failed to read class " + entryName);
                         e.printStackTrace();
                         files.put(entryName, entryData);
                     }
 
-                } else {
-                    if (entryName.equals("META-INF/MANIFEST.MF")) {
+                }
+                else
+                {
+                    if (entryName.equals("META-INF/MANIFEST.MF"))
+                    {
                         setMainClass(Utils.getMainClass(new String(entryData, StandardCharsets.UTF_8)));
                     }
 
@@ -442,25 +499,30 @@ public class JObfImpl {
                 }
             }
 
-            for (Map.Entry<String, ClassNode> stringClassNodeEntry : classes.entrySet()) {
-                classPath.put(stringClassNodeEntry.getKey().replace(".class", ""), new ClassWrapper(stringClassNodeEntry.getValue(), false, classDataMap.get(stringClassNodeEntry.getKey())));
+            for (Map.Entry<String, ClassNode> stringClassNodeEntry : classes.entrySet())
+            {
+                this.classPath.put(stringClassNodeEntry.getKey().replace(".class", ""), new ClassWrapper(stringClassNodeEntry.getValue(), false, classDataMap.get(stringClassNodeEntry.getKey())));
             }
-            for (ClassNode value : classes.values()) {
-                libraryClassnodes.add(new ClassWrapper(value, false, null));
+            for (ClassNode value : classes.values())
+            {
+                this.libraryClassnodes.add(new ClassWrapper(value, false, null));
             }
 
 //            if (nameobf) {
-            for (INameObfuscationProcessor nameObfuscationProcessor : nameObfuscationProcessors) {
+            for (INameObfuscationProcessor nameObfuscationProcessor : this.nameObfuscationProcessors)
+            {
                 nameObfuscationProcessor.transformPost(this, classes);
             }
-            for (IPreClassTransformer preProcessor : preProcessors) {
+            for (IPreClassTransformer preProcessor : preProcessors)
+            {
                 preProcessor.process(classes.values());
             }
 //            }
 
             AtomicInteger processed = new AtomicInteger();
 
-            if (Packager.INSTANCE.isEnabled()) {
+            if (Packager.INSTANCE.isEnabled())
+            {
                 Packager.INSTANCE.init();
             }
 
@@ -468,7 +530,7 @@ public class JObfImpl {
 
             startTime = System.currentTimeMillis();
 
-            log.info("Transforming with " + threadCount + " threads...");
+            log.info("Transforming with " + this.threadCount + " threads...");
 
             final LinkedList<Map.Entry<String, ClassNode>> classQueue = new LinkedList<>(classes.entrySet());
 
@@ -476,16 +538,20 @@ public class JObfImpl {
 
             List<Thread> threads = new ArrayList<>();
 
-            for (int i = 0; i < threadCount; i++) {
+            for (int i = 0; i < this.threadCount; i++)
+            {
 //                ZipOutputStream finalOutJar = outJar;
 
 
                 Thread t = new Thread(() -> {
-                    try {
-                        while (true) {
+                    try
+                    {
+                        while (true)
+                        {
                             Map.Entry<String, ClassNode> stringClassNodeEntry;
 
-                            synchronized (classQueue) {
+                            synchronized (classQueue)
+                            {
                                 stringClassNodeEntry = classQueue.poll();
                             }
 
@@ -497,23 +563,32 @@ public class JObfImpl {
                             byte[] entryData;
                             ClassNode cn = stringClassNodeEntry.getValue();
 
-                            try {
-                                try {
+                            try
+                            {
+                                try
+                                {
 
-                                    computeMode = ModifiedClassWriter.COMPUTE_MAXS;
+                                    this.computeMode = ModifiedClassWriter.COMPUTE_MAXS;
 
 
-                                    if (script == null || script.isObfuscatorEnabled(cn)) {
+                                    if (this.script == null || this.script.isObfuscatorEnabled(cn))
+                                    {
                                         log.info(String.format("[%s] (%s/%s), Processing %s", Thread.currentThread().getName(), processed, classes.size(), entryName));
 
-                                        for (IClassTransformer proc : processors) {
-                                            try {
+                                        for (IClassTransformer proc : processors)
+                                        {
+                                            try
+                                            {
                                                 proc.process(callback, cn);
-                                            } catch (Exception e) {
+                                            }
+                                            catch (Exception e)
+                                            {
                                                 e.printStackTrace();
                                             }
                                         }
-                                    } else {
+                                    }
+                                    else
+                                    {
                                         log.info(String.format("[%s] (%s/%s), Skipping %s", Thread.currentThread().getName(), processed, classes.size(), entryName));
                                     }
 
@@ -521,8 +596,8 @@ public class JObfImpl {
                                         cn.methods.forEach(method -> Arrays.stream(method.instructions.toArray()).filter(abstractInsnNode -> abstractInsnNode instanceof FrameNode).forEach(abstractInsnNode -> method.instructions.remove(abstractInsnNode)));
 
 
-                                    int mode = computeMode
-                                            | (callback.isForceComputeFrames() ? ModifiedClassWriter.COMPUTE_FRAMES : 0);
+                                    int mode = this.computeMode
+                                            | (callback.isForceComputeFrames() ? ModifiedClassWriter.COMPUTE_FRAMES: 0);
 
                                     log.info(String.format("[%s] (%s/%s), Writing (computeMode = %s) %s", Thread.currentThread().getName(), processed, classes.size(), mode, entryName));
 
@@ -534,7 +609,9 @@ public class JObfImpl {
                                     cn.accept(writer);
 
                                     entryData = writer.toByteArray();
-                                } catch (Throwable e) {
+                                }
+                                catch (Throwable e)
+                                {
                                     System.err.println("Error while writing " + entryName);
                                     e.printStackTrace();
 //                                    if (e instanceof) {
@@ -548,12 +625,16 @@ public class JObfImpl {
 
                                     entryData = writer.toByteArray();
                                 }
-                                try {
-                                    if (Packager.INSTANCE.isEnabled()) {
+                                try
+                                {
+                                    if (Packager.INSTANCE.isEnabled())
+                                    {
                                         entryName = Packager.INSTANCE.encryptName(entryName.replace(".class", ""));
                                         entryData = Packager.INSTANCE.encryptClass(entryData);
                                     }
-                                } catch (Exception e) {
+                                }
+                                catch (Exception e)
+                                {
                                     e.printStackTrace();
                                 }
 
@@ -564,11 +645,14 @@ public class JObfImpl {
 //                                    finalOutJar.write(entryData);
 //                                }
 
-                                synchronized (toWrite) {
+                                synchronized (toWrite)
+                                {
                                     toWrite.put(entryName, entryData);
                                 }
                                 //                    JObfImpl.log.log(Level.FINE, String.format("Processed %s (+%.2f KB)", entryName, (entryData.length - entryBuffer.size()) / 1024.0));
-                            } catch (Exception e) {
+                            }
+                            catch (Exception e)
+                            {
                                 e.printStackTrace();
                             }
 
@@ -576,8 +660,11 @@ public class JObfImpl {
 
                             processed.getAndIncrement();
                         }
-                    } finally {
-                        synchronized (threads) {
+                    }
+                    finally
+                    {
+                        synchronized (threads)
+                        {
                             threads.remove(Thread.currentThread());
                         }
                     }
@@ -588,14 +675,17 @@ public class JObfImpl {
 
                 t.start();
 
-                synchronized (threads) {
+                synchronized (threads)
+                {
                     threads.add(t);
                 }
             }
 
 
-            while (true) {
-                synchronized (threads) {
+            while (true)
+            {
+                synchronized (threads)
+                {
                     if (threads.isEmpty()) break;
 
                     threads.stream().filter(thread -> thread == null || !thread.isAlive()).collect(Collectors.toList()).forEach(threads::remove);
@@ -610,7 +700,8 @@ public class JObfImpl {
 
             log.info("Writing classes...");
 
-            for (Map.Entry<String, byte[]> stringEntry : toWrite.entrySet()) {
+            for (Map.Entry<String, byte[]> stringEntry : toWrite.entrySet())
+            {
                 writeEntry(outJar, stringEntry.getKey(), stringEntry.getValue(), stored);
             }
 
@@ -620,16 +711,21 @@ public class JObfImpl {
 
             log.info("Writing resources...");
 
-            for (Map.Entry<String, byte[]> stringEntry : files.entrySet()) {
+            for (Map.Entry<String, byte[]> stringEntry : files.entrySet())
+            {
                 String entryName = stringEntry.getKey();
                 byte[] entryData = stringEntry.getValue();
 
-                if (entryName.equals("META-INF/MANIFEST.MF")) {
-                    if (Packager.INSTANCE.isEnabled()) {
+                if (entryName.equals("META-INF/MANIFEST.MF"))
+                {
+                    if (Packager.INSTANCE.isEnabled())
+                    {
                         entryData = Utils.replaceMainClass(new String(entryData, StandardCharsets.UTF_8), Packager.INSTANCE.getDecryptionClassName()).getBytes(StandardCharsets.UTF_8);
-                    } else if (mainClassChanged) {
-                        entryData = Utils.replaceMainClass(new String(entryData, StandardCharsets.UTF_8), mainClass).getBytes(StandardCharsets.UTF_8);
-                        log.info("Replaced Main-Class with " + mainClass);
+                    }
+                    else if (this.mainClassChanged)
+                    {
+                        entryData = Utils.replaceMainClass(new String(entryData, StandardCharsets.UTF_8), this.mainClass).getBytes(StandardCharsets.UTF_8);
+                        log.info("Replaced Main-Class with " + this.mainClass);
                     }
 
                     log.info("Processed MANIFEST.MF");
@@ -644,51 +740,66 @@ public class JObfImpl {
 
             startTime = System.currentTimeMillis();
 
-            if (Packager.INSTANCE.isEnabled()) {
+            if (Packager.INSTANCE.isEnabled())
+            {
                 log.info("Packaging...");
                 writeEntry(outJar, Packager.INSTANCE.getDecryptionClassName() + ".class", Packager.INSTANCE.generateEncryptionClass(), stored);
                 outJar.closeEntry();
                 log.info("... Finished after " + Utils.formatTime(System.currentTimeMillis() - startTime));
             }
-        } catch (InterruptedException ignored) {
-        } finally {
-            classPath.clear();
+        }
+        catch (InterruptedException ignored)
+        {
+        }
+        finally
+        {
+            this.classPath.clear();
             classes.clear();
-            libraryFiles.clear();
-            libraryClassnodes.clear();
+            this.libraryFiles.clear();
+            this.libraryClassnodes.clear();
             files.clear();
-            hierarchy.clear();
+            this.hierarchy.clear();
 
             NameUtils.cleanUp();
 
             System.gc();
 
-            if (outJar != null) {
-                try {
+            if (outJar != null)
+            {
+                try
+                {
                     log.info("Finishing...");
                     outJar.flush();
                     outJar.close();
                     log.info(">>> Processing completed. If you found a bug / if the output is invalid please open an issue at https://github.com/superblaubeere27/obfuscator/issues");
-                } catch (Exception e) {
+                }
+                catch (Exception e)
+                {
                     // ignore
                 }
             }
 
-            if (inJar != null) {
-                try {
+            if (inJar != null)
+            {
+                try
+                {
                     inJar.close();
-                } catch (IOException e) {
+                }
+                catch (IOException e)
+                {
                     // ignore
                 }
             }
         }
     }
 
-    public void writeEntry(ZipOutputStream outJar, String name, byte[] value, boolean stored) throws IOException {
+    public void writeEntry(ZipOutputStream outJar, String name, byte[] value, boolean stored) throws IOException
+    {
         ZipEntry newEntry = new ZipEntry(name);
 
 
-        if (stored) {
+        if (stored)
+        {
             CRC32 crc = new CRC32();
             crc.update(value);
 
@@ -701,12 +812,13 @@ public class JObfImpl {
         outJar.write(value);
     }
 
-    public void setWorkDone() {
+    public void setWorkDone()
+    {
         boolean workDone = true;
     }
 
-
-    public void setThreadCount(int threadCount) {
+    public void setThreadCount(int threadCount)
+    {
         this.threadCount = threadCount;
     }
 

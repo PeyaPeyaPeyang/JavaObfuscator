@@ -16,7 +16,7 @@
     </appender>
 
     <!-- Form -->
-    <appender name="FORM" class="me.superblaubeere27.jobf.ui.Appender" />
+    <appender name="FORM" class="me.superblaubeere27.jobf.ui.Appender"/>
 
 
     <!--
@@ -29,8 +29,8 @@
     application has different requirements.
      -->
     <appender name="ASYNC" class="ch.qos.logback.classic.AsyncAppender">
-        <appender-ref ref="FORM" />
-        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="FORM"/>
+        <appender-ref ref="CONSOLE"/>
         <queueSize>1000</queueSize>
     </appender>
 
@@ -47,10 +47,10 @@
     -->
 
     <!-- Turn on debug logging connection pool. -->
-    <logger name="me.superblaubeere27" level="DEBUG" />
+    <logger name="me.superblaubeere27" level="DEBUG"/>
 
     <root level="${logging.level}">
-        <appender-ref ref="ASYNC" />
+        <appender-ref ref="ASYNC"/>
     </root>
 
 </configuration>

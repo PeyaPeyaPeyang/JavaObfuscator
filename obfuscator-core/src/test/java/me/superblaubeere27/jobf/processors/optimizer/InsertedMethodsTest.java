@@ -15,17 +15,20 @@ import org.junit.Test;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-public class InsertedMethodsTest {
+public class InsertedMethodsTest
+{
 
     @Test
-    public void testStartsWith() {
+    public void testStartsWith()
+    {
         assertTrue(InsertedMethods.startsWith("ich hasse Menschen", "ich hasse ".length(), "ich hasse ".hashCode()));
         assertTrue(InsertedMethods.startsWith("ich hasse ", "ich hasse ".length(), "ich hasse ".hashCode()));
         assertFalse(InsertedMethods.startsWith("cancer", "aids".length(), "aids".hashCode()));
     }
 
     @Test
-    public void testEndsWith() {
+    public void testEndsWith()
+    {
         assertTrue(InsertedMethods.endsWith("ich hasse Menschen", "Menschen".length(), "Menschen".hashCode()));
         assertTrue(InsertedMethods.endsWith("hasse", "hasse".length(), "hasse".hashCode()));
         assertFalse(InsertedMethods.endsWith("cancer", "aidsfgd".length(), "aidsfgd".hashCode()));

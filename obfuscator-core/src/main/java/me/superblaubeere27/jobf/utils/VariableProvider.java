@@ -17,47 +17,56 @@ import org.objectweb.asm.tree.VarInsnNode;
 
 import java.lang.reflect.Modifier;
 
-public class VariableProvider {
-    private int max = 0;
+public class VariableProvider
+{
+    private int max;
     private int argumentSize;
 
-    private VariableProvider() {
+    private VariableProvider()
+    {
 
     }
 
-    public VariableProvider(MethodNode method) {
+    public VariableProvider(MethodNode method)
+    {
         this();
 
         if (!Modifier.isStatic(method.access)) registerExisting(0, Type.getType("Ljava/lang/Object;"));
 
-        for (Type argumentType : Type.getArgumentTypes(method.desc)) {
-            registerExisting(argumentType.getSize() + max - 1, argumentType);
+        for (Type argumentType : Type.getArgumentTypes(method.desc))
+        {
+            registerExisting(argumentType.getSize() + this.max - 1, argumentType);
         }
 
-        argumentSize = max;
+        this.argumentSize = this.max;
 
-        for (AbstractInsnNode abstractInsnNode : method.instructions.toArray()) {
-            if (abstractInsnNode instanceof VarInsnNode) {
+        for (AbstractInsnNode abstractInsnNode : method.instructions.toArray())
+        {
+            if (abstractInsnNode instanceof VarInsnNode)
+            {
                 registerExisting(((VarInsnNode) abstractInsnNode).var, Utils.getType((VarInsnNode) abstractInsnNode));
             }
         }
     }
 
-    private void registerExisting(int var, Type type) {
-        if (var >= max) max = var + type.getSize();
+    private void registerExisting(int var, Type type)
+    {
+        if (var >= this.max) this.max = var + type.getSize();
     }
 
-    public boolean isUnallocated(int var) {
-        return var >= max;
+    public boolean isUnallocated(int var)
+    {
+        return var >= this.max;
     }
 
-    public boolean isArgument(int var) {
-        return var < argumentSize;
+    public boolean isArgument(int var)
+    {
+        return var < this.argumentSize;
     }
 
-
-    public int allocateVar() {
-        return max++;
+    public int allocateVar()
+    {
+        return this.max++;
     }
 
 }

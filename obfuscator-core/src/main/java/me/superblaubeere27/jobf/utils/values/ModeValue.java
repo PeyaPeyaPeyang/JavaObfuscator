@@ -12,27 +12,30 @@ package me.superblaubeere27.jobf.utils.values;
 
 import joptsimple.internal.Strings;
 
-public class ModeValue extends Value<Integer> {
-    private String[] possibleValues;
+public class ModeValue extends Value<Integer>
+{
+    private final String[] possibleValues;
 
-    public ModeValue(String owner, String name, DeprecationLevel deprecated, Integer object, String[] possibleValues) {
+    public ModeValue(String owner, String name, DeprecationLevel deprecated, Integer object, String[] possibleValues)
+    {
         super(owner, name, deprecated, object);
         this.possibleValues = possibleValues;
     }
 
-    public ModeValue(String owner, String name, String description, DeprecationLevel deprecated, Integer object, String[] possibleValues) {
+    public ModeValue(String owner, String name, String description, DeprecationLevel deprecated, Integer object, String[] possibleValues)
+    {
         super(owner, name, description, deprecated, object);
         this.possibleValues = possibleValues;
     }
 
-
-    private String[] getPossibleValues() {
-        return possibleValues;
+    private String[] getPossibleValues()
+    {
+        return this.possibleValues;
     }
 
-
     @Override
-    public String toString() {
+    public String toString()
+    {
         return String.format("%s::%s<%s> = %s", getOwner(), getName(), Strings.join(getPossibleValues(), ", "), getObject());
     }
 }

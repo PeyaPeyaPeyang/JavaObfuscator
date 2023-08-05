@@ -13,44 +13,56 @@ package me.superblaubeere27.jobf.utils.scheduler;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Scheduler {
+public class Scheduler
+{
     private final List<Thread> runningThreads = new ArrayList<>();
-    private ScheduledRunnable runnable;
+    private final ScheduledRunnable runnable;
 
-    public Scheduler(ScheduledRunnable runnable) {
+    public Scheduler(ScheduledRunnable runnable)
+    {
         this.runnable = runnable;
     }
 
-
-    public void run(int threads) {
-        for (int i = 0; i < threads; i++) {
-            runningThreads.add(new Thread(() -> {
-                while (true) {
-                    if (runnable.runTick()) break;
+    public void run(int threads)
+    {
+        for (int i = 0; i < threads; i++)
+        {
+            this.runningThreads.add(new Thread(() -> {
+                while (true)
+                {
+                    if (this.runnable.runTick()) break;
                 }
 
-                synchronized (runningThreads) {
-                    runningThreads.remove(Thread.currentThread());
+                synchronized (this.runningThreads)
+                {
+                    this.runningThreads.remove(Thread.currentThread());
                 }
             }, "Thread-" + i));
         }
 
-        synchronized (runningThreads) {
-            runningThreads.forEach(Thread::start);
+        synchronized (this.runningThreads)
+        {
+            this.runningThreads.forEach(Thread::start);
         }
     }
 
-    public void waitFor() {
-        while (true) {
-            synchronized (runningThreads) {
-                runningThreads.removeIf(thread -> !thread.isAlive());
+    public void waitFor()
+    {
+        while (true)
+        {
+            synchronized (this.runningThreads)
+            {
+                this.runningThreads.removeIf(thread -> !thread.isAlive());
 
-                if (runningThreads.size() == 0) break;
+                if (this.runningThreads.size() == 0) break;
             }
 
-            try {
+            try
+            {
                 Thread.sleep(100);
-            } catch (InterruptedException e) {
+            }
+            catch (InterruptedException e)
+            {
                 break;
             }
         }

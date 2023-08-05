@@ -10,7 +10,8 @@
 
 package me.superblaubeere27.annotations;
 
-public enum ObfuscationTransformer {
+public enum ObfuscationTransformer
+{
     FLOW_OBFUSCATION,
     LINE_NUMBER_REMOVER,
     NUMBER_OBFUSCATION,

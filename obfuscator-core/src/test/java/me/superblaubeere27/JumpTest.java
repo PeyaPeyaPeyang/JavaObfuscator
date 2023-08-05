@@ -18,18 +18,27 @@ import org.junit.Test;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.ModifiedClassWriter;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.tree.*;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.LabelNode;
+import org.objectweb.asm.tree.LdcInsnNode;
+import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.TypeInsnNode;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-public class JumpTest {
-    private Class<?> generatedClass = null;
+public class JumpTest
+{
+    private Class<?> generatedClass;
 
     @Before
-    public void generateClass() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, ClassNotFoundException, IOException {
+    public void generateClass() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, ClassNotFoundException, IOException
+    {
         Class.forName(JObfImpl.class.getCanonicalName());
         InsnList methodInsns = new InsnList();
 
@@ -41,8 +50,10 @@ public class JumpTest {
 
         MethodNode methodNode = new MethodNode(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, "test", "()V", null, new String[0]);
 
-        for (int i1 = 0; i1 < 10; i1++) {
-            for (int i = 0; i <= 13; i++) {
+        for (int i1 = 0; i1 < 10; i1++)
+        {
+            for (int i = 0; i <= 13; i++)
+            {
                 LabelNode end = new LabelNode(new Label());
                 methodInsns.add(FlowObfuscator.generateIfGoto(i, end));
                 methodInsns.add(new TypeInsnNode(Opcodes.NEW, "java/lang/RuntimeException"));
@@ -78,12 +89,13 @@ public class JumpTest {
         Method defineClass = classLoaderClass.getDeclaredMethod("defineClass", byte[].class, int.class, int.class);
         defineClass.setAccessible(true);
 
-        generatedClass = (Class) defineClass.invoke(getClass().getClassLoader(), bytes, 0, bytes.length);
+        this.generatedClass = (Class) defineClass.invoke(getClass().getClassLoader(), bytes, 0, bytes.length);
     }
 
     @Test
-    public void testFlowJumps() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        generatedClass.getMethod("test").invoke(null);
+    public void testFlowJumps() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException
+    {
+        this.generatedClass.getMethod("test").invoke(null);
     }
 
 }

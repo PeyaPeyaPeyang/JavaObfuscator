@@ -27,41 +27,50 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-public class InnerClassRemover implements INameObfuscationProcessor, IClassTransformer {
+public class InnerClassRemover implements INameObfuscationProcessor, IClassTransformer
+{
     private static final String PROCESSOR_NAME = "InnerClassRemover";
-    private static Pattern innerClasses = Pattern.compile(".*[A-Za-z0-9]+\\$[0-9]+");
-    private EnabledValue enabled = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.GOOD, true);
-    private BooleanValue remap = new BooleanValue(PROCESSOR_NAME, "Remap", DeprecationLevel.OK, false);
-    private BooleanValue removeMetadata = new BooleanValue(PROCESSOR_NAME, "Remove Metadata", DeprecationLevel.GOOD, true);
+    private static final Pattern innerClasses = Pattern.compile(".*[A-Za-z0-9]+\\$[0-9]+");
+    private final EnabledValue enabled = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.GOOD, true);
+    private final BooleanValue remap = new BooleanValue(PROCESSOR_NAME, "Remap", DeprecationLevel.OK, false);
+    private final BooleanValue removeMetadata = new BooleanValue(PROCESSOR_NAME, "Remove Metadata", DeprecationLevel.GOOD, true);
 
     @Override
-    public void transformPost(JObfImpl inst, HashMap<String, ClassNode> nodes) {
-        if (!enabled.getObject() || !remap.getObject()) return;
+    public void transformPost(JObfImpl inst, HashMap<String, ClassNode> nodes)
+    {
+        if (!this.enabled.getObject() || !this.remap.getObject()) return;
 
         final List<ClassNode> classNodes = new ArrayList<>(JObfImpl.classes.values());
 
         final Map<String, ClassNode> updatedClasses = new HashMap<>();
         final CustomRemapper remapper = new CustomRemapper();
 
-        for (ClassNode classNode : classNodes) {
-            if (innerClasses.matcher(classNode.name).matches()) {
+        for (ClassNode classNode : classNodes)
+        {
+            if (innerClasses.matcher(classNode.name).matches())
+            {
                 String newName;
 
-                if (classNode.name.contains("/")) {
+                if (classNode.name.contains("/"))
+                {
                     String packageName = classNode.name.substring(0, classNode.name.lastIndexOf('/'));
                     newName = packageName + "/" + NameUtils.generateClassName(packageName);
-                } else newName = NameUtils.generateClassName();
+                }
+                else newName = NameUtils.generateClassName();
 
                 String mappedName;
 
 
-                do {
+                do
+                {
                     mappedName = newName;
-                } while (!remapper.map(classNode.name, mappedName));
+                }
+                while (!remapper.map(classNode.name, mappedName));
             }
         }
 
-        for (final ClassNode classNode : classNodes) {
+        for (final ClassNode classNode : classNodes)
+        {
             JObfImpl.classes.remove(classNode.name + ".class");
 
             ClassNode newNode = new ClassNode();
@@ -78,8 +87,9 @@ public class InnerClassRemover implements INameObfuscationProcessor, IClassTrans
     }
 
     @Override
-    public void process(ProcessorCallback callback, ClassNode node) {
-        if (!enabled.getObject() || !removeMetadata.getObject()) return;
+    public void process(ProcessorCallback callback, ClassNode node)
+    {
+        if (!this.enabled.getObject() || !this.removeMetadata.getObject()) return;
 
         node.outerClass = null;
         node.innerClasses.clear();
@@ -89,7 +99,8 @@ public class InnerClassRemover implements INameObfuscationProcessor, IClassTrans
     }
 
     @Override
-    public ObfuscationTransformer getType() {
+    public ObfuscationTransformer getType()
+    {
         return ObfuscationTransformer.INNER_CLASS_REMOVER;
     }
 }

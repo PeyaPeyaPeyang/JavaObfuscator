@@ -10,12 +10,19 @@
 
 package me.superblaubeere27.jobf.utils.script;
 
-import javax.script.*;
+import javax.script.Invocable;
+import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
 
-public class JObfScriptManager {
+public class JObfScriptManager
+{
 
-    public static void main(String[] args) {
-        try {
+    public static void main(String[] args)
+    {
+        try
+        {
             ScriptEngine jsEngine = new ScriptEngineManager().getEngineByName("nashorn");
             ScriptContext context = jsEngine.getContext();
             jsEngine.eval("function isNameObfEnabled(className) {\n" +
@@ -26,13 +33,18 @@ public class JObfScriptManager {
                     "    return false;\n" +
                     "}");
             Invocable inv = (Invocable) jsEngine;
-            try {
+            try
+            {
                 System.out.println(inv.invokeFunction("isNameObfEnabled", "avg"));
                 System.out.println(inv.invokeFunction("isNameObfEnabled", "xxx"));
-            } catch (NoSuchMethodException e) {
+            }
+            catch (NoSuchMethodException e)
+            {
                 e.printStackTrace();
             }
-        } catch (ScriptException e) {
+        }
+        catch (ScriptException e)
+        {
             e.printStackTrace();
         }
     }

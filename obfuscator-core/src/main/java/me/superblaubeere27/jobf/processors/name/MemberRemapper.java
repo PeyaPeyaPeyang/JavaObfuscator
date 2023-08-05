@@ -19,15 +19,18 @@ import java.util.Map;
  *
  * @author ItzSomebody
  */
-public class MemberRemapper extends SimpleRemapper {
+public class MemberRemapper extends SimpleRemapper
+{
 
-    MemberRemapper(final Map<String, String> mappings) {
+    MemberRemapper(final Map<String, String> mappings)
+    {
         super(mappings);
     }
 
     @Override
-    public String mapFieldName(String owner, String name, String desc) {
+    public String mapFieldName(String owner, String name, String desc)
+    {
         String remappedName = map(owner + '.' + name + '.' + desc);
-        return (remappedName != null) ? remappedName : name;
+        return (remappedName != null) ? remappedName: name;
     }
 }

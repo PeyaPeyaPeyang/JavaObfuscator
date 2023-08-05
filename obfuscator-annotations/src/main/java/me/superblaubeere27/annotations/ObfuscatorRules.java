@@ -10,6 +10,7 @@
 
 package me.superblaubeere27.annotations;
 
-public @interface ObfuscatorRules {
+public @interface ObfuscatorRules
+{
     Rule[] value();
 }

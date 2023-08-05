@@ -14,7 +14,16 @@ import me.superblaubeere27.jobf.JObf;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.*;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FieldInsnNode;
+import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.IntInsnNode;
+import org.objectweb.asm.tree.LdcInsnNode;
+import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.VarInsnNode;
 import org.objectweb.asm.util.Printer;
 import org.objectweb.asm.util.Textifier;
 import org.objectweb.asm.util.TraceMethodVisitor;
@@ -26,14 +35,24 @@ import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.function.Predicate;
 
-import static org.objectweb.asm.Opcodes.*;
+import static org.objectweb.asm.Opcodes.ACONST_NULL;
+import static org.objectweb.asm.Opcodes.BIPUSH;
+import static org.objectweb.asm.Opcodes.DCONST_0;
+import static org.objectweb.asm.Opcodes.FCONST_0;
+import static org.objectweb.asm.Opcodes.ICONST_0;
+import static org.objectweb.asm.Opcodes.ICONST_5;
+import static org.objectweb.asm.Opcodes.ICONST_M1;
+import static org.objectweb.asm.Opcodes.LCONST_0;
+import static org.objectweb.asm.Opcodes.SIPUSH;
 
-public class NodeUtils {
+public class NodeUtils
+{
     private static final Printer printer = new Textifier();
     private static final TraceMethodVisitor methodPrinter = new TraceMethodVisitor(printer);
-    private static HashMap<Type, String> TYPE_TO_WRAPPER = new HashMap<>();
+    private static final HashMap<Type, String> TYPE_TO_WRAPPER = new HashMap<>();
 
-    static {
+    static
+    {
         TYPE_TO_WRAPPER.put(Type.INT_TYPE, "java/lang/Integer");
         TYPE_TO_WRAPPER.put(Type.VOID_TYPE, "java/lang/Void");
         TYPE_TO_WRAPPER.put(Type.BOOLEAN_TYPE, "java/lang/Boolean");
@@ -45,7 +64,8 @@ public class NodeUtils {
         TYPE_TO_WRAPPER.put(Type.DOUBLE_TYPE, "java/lang/Double");
     }
 
-    public static String prettyprint(AbstractInsnNode insnNode) {
+    public static String prettyprint(AbstractInsnNode insnNode)
+    {
         insnNode.accept(methodPrinter);
         StringWriter sw = new StringWriter();
         printer.print(new PrintWriter(sw));
@@ -53,7 +73,8 @@ public class NodeUtils {
         return sw.toString().trim();
     }
 
-    public static String prettyprint(InsnList insnNode) {
+    public static String prettyprint(InsnList insnNode)
+    {
         insnNode.accept(methodPrinter);
         StringWriter sw = new StringWriter();
         printer.print(new PrintWriter(sw));
@@ -61,7 +82,8 @@ public class NodeUtils {
         return sw.toString().trim();
     }
 
-    public static String prettyprint(MethodNode insnNode) {
+    public static String prettyprint(MethodNode insnNode)
+    {
         insnNode.accept(methodPrinter);
         StringWriter sw = new StringWriter();
         printer.print(new PrintWriter(sw));
@@ -69,25 +91,31 @@ public class NodeUtils {
         return sw.toString().trim();
     }
 
-    public static AbstractInsnNode getWrapperMethod(Type type) {
-        if (type.getSort() != Type.VOID && TYPE_TO_WRAPPER.containsKey(type)) {
-            return new MethodInsnNode(Opcodes.INVOKESTATIC, TYPE_TO_WRAPPER.get(type), "valueOf", "(" + type.toString() + ")L" + TYPE_TO_WRAPPER.get(type) + ";", false);
+    public static AbstractInsnNode getWrapperMethod(Type type)
+    {
+        if (type.getSort() != Type.VOID && TYPE_TO_WRAPPER.containsKey(type))
+        {
+            return new MethodInsnNode(Opcodes.INVOKESTATIC, TYPE_TO_WRAPPER.get(type), "valueOf", "(" + type + ")L" + TYPE_TO_WRAPPER.get(type) + ";", false);
         }
 
         return new InsnNode(Opcodes.NOP);
     }
 
-    public static AbstractInsnNode getTypeNode(Type type) {
-        if (TYPE_TO_WRAPPER.containsKey(type)) {
+    public static AbstractInsnNode getTypeNode(Type type)
+    {
+        if (TYPE_TO_WRAPPER.containsKey(type))
+        {
             return new FieldInsnNode(Opcodes.GETSTATIC, TYPE_TO_WRAPPER.get(type), "TYPE", "Ljava/lang/Class;");
         }
         return new LdcInsnNode(type);
     }
 
-    public static AbstractInsnNode getUnWrapMethod(Type type) {
-        if (TYPE_TO_WRAPPER.containsKey(type)) {
+    public static AbstractInsnNode getUnWrapMethod(Type type)
+    {
+        if (TYPE_TO_WRAPPER.containsKey(type))
+        {
             String internalName = Utils.getInternalName(type);
-            return new MethodInsnNode(Opcodes.INVOKESTATIC, TYPE_TO_WRAPPER.get(type), internalName + "Value", "(L" + TYPE_TO_WRAPPER.get(type) + ";)" + type.toString(), false);
+            return new MethodInsnNode(Opcodes.INVOKESTATIC, TYPE_TO_WRAPPER.get(type), internalName + "Value", "(L" + TYPE_TO_WRAPPER.get(type) + ";)" + type, false);
         }
 
         return new InsnNode(Opcodes.NOP);
@@ -95,72 +123,93 @@ public class NodeUtils {
 
     //mv.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false);
 
-    public static boolean isIntegerNumber(AbstractInsnNode ain) {
-        if (ain.getOpcode() == BIPUSH || ain.getOpcode() == SIPUSH) {
+    public static boolean isIntegerNumber(AbstractInsnNode ain)
+    {
+        if (ain.getOpcode() == BIPUSH || ain.getOpcode() == SIPUSH)
+        {
             return true;
         }
-        if (ain.getOpcode() >= ICONST_M1 && ain.getOpcode() <= ICONST_5) {
+        if (ain.getOpcode() >= ICONST_M1 && ain.getOpcode() <= ICONST_5)
+        {
             return true;
         }
-        if (ain instanceof LdcInsnNode) {
+        if (ain instanceof LdcInsnNode)
+        {
             LdcInsnNode ldc = (LdcInsnNode) ain;
             return ldc.cst instanceof Integer;
         }
         return false;
     }
 
-    public static AbstractInsnNode generateIntPush(int i) {
-        if (i <= 5 && i >= -1) {
+    public static AbstractInsnNode generateIntPush(int i)
+    {
+        if (i <= 5 && i >= -1)
+        {
             return new InsnNode(i + 3); //iconst_i
         }
-        if (i >= -128 && i <= 127) {
+        if (i >= -128 && i <= 127)
+        {
             return new IntInsnNode(BIPUSH, i);
         }
 
-        if (i >= -32768 && i <= 32767) {
+        if (i >= -32768 && i <= 32767)
+        {
             return new IntInsnNode(SIPUSH, i);
         }
         return new LdcInsnNode(i);
     }
 
-    public static int getIntValue(AbstractInsnNode node) {
-        if (node.getOpcode() >= ICONST_M1 && node.getOpcode() <= ICONST_5) {
+    public static int getIntValue(AbstractInsnNode node)
+    {
+        if (node.getOpcode() >= ICONST_M1 && node.getOpcode() <= ICONST_5)
+        {
             return node.getOpcode() - 3;
         }
-        if (node.getOpcode() == SIPUSH || node.getOpcode() == BIPUSH) {
+        if (node.getOpcode() == SIPUSH || node.getOpcode() == BIPUSH)
+        {
             return ((IntInsnNode) node).operand;
         }
-        if (node instanceof LdcInsnNode && ((LdcInsnNode) node).cst instanceof Integer) {
+        if (node instanceof LdcInsnNode && ((LdcInsnNode) node).cst instanceof Integer)
+        {
             return (int) ((LdcInsnNode) node).cst;
         }
 
         throw new IllegalArgumentException(node + " isn't an integer node");
     }
 
-    public static MethodInsnNode toCallNode(final MethodNode method, final ClassNode classNode) {
-        return new MethodInsnNode(Modifier.isStatic(method.access) ? Opcodes.INVOKESTATIC : Opcodes.INVOKEVIRTUAL, classNode.name, method.name, method.desc, false);
+    public static MethodInsnNode toCallNode(final MethodNode method, final ClassNode classNode)
+    {
+        return new MethodInsnNode(Modifier.isStatic(method.access) ? Opcodes.INVOKESTATIC: Opcodes.INVOKEVIRTUAL, classNode.name, method.name, method.desc, false);
     }
 
-    public static InsnList removeFromOpcode(InsnList insnList, int code) {
+    public static InsnList removeFromOpcode(InsnList insnList, int code)
+    {
         for (AbstractInsnNode node :
-                insnList.toArray().clone()) {
-            if (node.getOpcode() == code) {
+                insnList.toArray().clone())
+        {
+            if (node.getOpcode() == code)
+            {
                 insnList.remove(node);
             }
         }
         return insnList;
     }
 
-    public static boolean isConditionalGoto(AbstractInsnNode abstractInsnNode) {
+    public static boolean isConditionalGoto(AbstractInsnNode abstractInsnNode)
+    {
         return abstractInsnNode.getOpcode() >= Opcodes.IFEQ && abstractInsnNode.getOpcode() <= Opcodes.IF_ACMPNE;
     }
 
-    public static int getFreeSlot(MethodNode method) {
+    public static int getFreeSlot(MethodNode method)
+    {
         int max = 0;
         for (AbstractInsnNode ain :
-                method.instructions.toArray()) {
-            if (ain instanceof VarInsnNode) {
-                if (((VarInsnNode) ain).var > max) {
+                method.instructions.toArray())
+        {
+            if (ain instanceof VarInsnNode)
+            {
+                if (((VarInsnNode) ain).var > max)
+                {
                     max = ((VarInsnNode) ain).var;
                 }
             }
@@ -168,14 +217,16 @@ public class NodeUtils {
         return max + 1;
     }
 
-    public static MethodNode getMethod(final ClassNode classNode, final String name) {
+    public static MethodNode getMethod(final ClassNode classNode, final String name)
+    {
         for (final MethodNode method : classNode.methods)
             if (method.name.equals(name))
                 return method;
         return null;
     }
 
-    public static ClassNode toNode(final String className) throws IOException {
+    public static ClassNode toNode(final String className) throws IOException
+    {
         final ClassReader classReader = new ClassReader(JObf.class.getResourceAsStream("/" + className.replace('.', '/') + ".class"));
         final ClassNode classNode = new ClassNode();
 
@@ -184,10 +235,12 @@ public class NodeUtils {
         return classNode;
     }
 
-    public static int getInvertedJump(int opcode) {
+    public static int getInvertedJump(int opcode)
+    {
         int i = -1;
 
-        switch (opcode) {
+        switch (opcode)
+        {
             case Opcodes.IFEQ:
                 i = Opcodes.IFNE;
                 break;
@@ -204,39 +257,49 @@ public class NodeUtils {
         return i;
     }
 
-    public static boolean isMethodValid(MethodNode method) {
+    public static boolean isMethodValid(MethodNode method)
+    {
         return !Modifier.isNative(method.access) && !Modifier.isAbstract(method.access) && method.instructions.size() != 0;
     }
 
-    public static boolean isClassValid(ClassNode node) {
+    public static boolean isClassValid(ClassNode node)
+    {
         return (node.access & Opcodes.ACC_ENUM) == 0 && (node.access & Opcodes.ACC_INTERFACE) == 0;
     }
 
-    public static AbstractInsnNode methodCall(ClassNode classNode, MethodNode methodNode) {
+    public static AbstractInsnNode methodCall(ClassNode classNode, MethodNode methodNode)
+    {
         int opcode = Opcodes.INVOKEVIRTUAL;
 
-        if (Modifier.isInterface(classNode.access)) {
+        if (Modifier.isInterface(classNode.access))
+        {
             opcode = Opcodes.INVOKEINTERFACE;
         }
-        if (Modifier.isStatic(methodNode.access)) {
+        if (Modifier.isStatic(methodNode.access))
+        {
             opcode = Opcodes.INVOKESTATIC;
         }
-        if (methodNode.name.startsWith("<")) {
+        if (methodNode.name.startsWith("<"))
+        {
             opcode = Opcodes.INVOKESPECIAL;
         }
 
         return new MethodInsnNode(opcode, classNode.name, methodNode.name, methodNode.desc, false);
     }
 
-    public static void insertOn(InsnList instructions, Predicate<AbstractInsnNode> predicate, InsnList toAdd) {
-        for (AbstractInsnNode abstractInsnNode : instructions.toArray()) {
-            if (predicate.test(abstractInsnNode)) {
+    public static void insertOn(InsnList instructions, Predicate<AbstractInsnNode> predicate, InsnList toAdd)
+    {
+        for (AbstractInsnNode abstractInsnNode : instructions.toArray())
+        {
+            if (predicate.test(abstractInsnNode))
+            {
                 instructions.insertBefore(abstractInsnNode, toAdd);
             }
         }
     }
 
-    public static InsnList nullPush() {
+    public static InsnList nullPush()
+    {
         InsnList insns = new InsnList();
 
         insns.add(new InsnNode(Opcodes.ACONST_NULL));
@@ -244,7 +307,8 @@ public class NodeUtils {
         return insns;
     }
 
-    public static InsnList notNullPush() {
+    public static InsnList notNullPush()
+    {
         throw new RuntimeException("Not implemented");
 //        InsnList insns = new InsnList();
 
@@ -256,7 +320,8 @@ public class NodeUtils {
 //        return insns;
     }
 
-    public static InsnList debugString(String s) {
+    public static InsnList debugString(String s)
+    {
         InsnList insns = new InsnList();
         insns.add(new LdcInsnNode(s));
         insns.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/String", "length", "()I", false));
@@ -264,8 +329,10 @@ public class NodeUtils {
         return insns;
     }
 
-    public static AbstractInsnNode nullValueForType(Type returnType) {
-        switch (returnType.getSort()) {
+    public static AbstractInsnNode nullValueForType(Type returnType)
+    {
+        switch (returnType.getSort())
+        {
             case Type.BOOLEAN:
             case Type.BYTE:
             case Type.CHAR:

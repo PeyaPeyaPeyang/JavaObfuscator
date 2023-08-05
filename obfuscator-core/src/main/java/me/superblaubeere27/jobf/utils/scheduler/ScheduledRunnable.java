@@ -10,7 +10,8 @@
 
 package me.superblaubeere27.jobf.utils.scheduler;
 
-public interface ScheduledRunnable {
+public interface ScheduledRunnable
+{
 
     /**
      * @return Returns true if the thread is ready to exit

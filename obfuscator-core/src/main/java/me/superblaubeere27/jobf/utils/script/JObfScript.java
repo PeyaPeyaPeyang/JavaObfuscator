@@ -10,47 +10,63 @@
 
 package me.superblaubeere27.jobf.utils.script;
 
-import org.objectweb.asm.tree.ClassNode;
-
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
+import org.objectweb.asm.tree.ClassNode;
 
-public class JObfScript {
+public class JObfScript
+{
 
-    private ScriptEngine jsEngine;
+    private final ScriptEngine jsEngine;
 
-    public JObfScript(String script) {
-        try {
-            jsEngine = new ScriptEngineManager().getEngineByName("nashorn");
-            jsEngine.eval(script);
-        } catch (Exception e) {
+    public JObfScript(String script)
+    {
+        try
+        {
+            this.jsEngine = new ScriptEngineManager().getEngineByName("nashorn");
+            this.jsEngine.eval(script);
+        }
+        catch (Exception e)
+        {
             throw new IllegalStateException("Failed to compile Script", e);
         }
     }
 
-    public boolean remapClass(ClassNode node) {
-        try {
-            Invocable invocable = (Invocable) jsEngine;
+    public boolean remapClass(ClassNode node)
+    {
+        try
+        {
+            Invocable invocable = (Invocable) this.jsEngine;
 
             return (boolean) invocable.invokeFunction("isRemappingEnabledForClass", node);
-        } catch (NoSuchMethodException e) {
+        }
+        catch (NoSuchMethodException e)
+        {
             return true;
-        } catch (ScriptException e) {
+        }
+        catch (ScriptException e)
+        {
             e.printStackTrace();
             return true;
         }
     }
 
-    public boolean isObfuscatorEnabled(ClassNode node) {
-        try {
-            Invocable invocable = (Invocable) jsEngine;
+    public boolean isObfuscatorEnabled(ClassNode node)
+    {
+        try
+        {
+            Invocable invocable = (Invocable) this.jsEngine;
 
             return (boolean) invocable.invokeFunction("isObfuscatorEnabledForClass", node);
-        } catch (NoSuchMethodException e) {
+        }
+        catch (NoSuchMethodException e)
+        {
             return true;
-        } catch (ScriptException e) {
+        }
+        catch (ScriptException e)
+        {
             e.printStackTrace();
             return true;
         }

@@ -17,53 +17,63 @@ import org.objectweb.asm.tree.ClassNode;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 
-public class NameUtils {
+public class NameUtils
+{
     /**
      * By ItzSomebody
      */
-    private final static char[] DICT_SPACES = new char[]{
+    private static final char[] DICT_SPACES = {
             '\u2000', '\u2001', '\u2002', '\u2003', '\u2004', '\u2005', '\u2006', '\u2007', '\u2008', '\u2009', '\u200A', '\u200B', '\u200C', '\u200D', '\u200E', '\u200F'
     };
-    private static HashMap<String, Integer> packageMap = new HashMap<>();
-    private static Map<String, HashMap<String, Integer>> USED_METHODNAMES = new HashMap<>();
-    private static Map<String, Integer> USED_FIELDNAMES = new HashMap<>();
+    private static final HashMap<String, Integer> packageMap = new HashMap<>();
+    private static final Map<String, HashMap<String, Integer>> USED_METHODNAMES = new HashMap<>();
+    private static final Map<String, Integer> USED_FIELDNAMES = new HashMap<>();
     //    private static boolean iL = true;
     private static int localVars = Short.MAX_VALUE;
-    private static Random random = new Random();
-    private static int METHODS = 0;
-    private static int FIELDS = 0;
-    private static boolean usingCustomDictionary = false;
+    private static final Random random = new Random();
+    private static int METHODS;
+    private static int FIELDS;
+    private static boolean usingCustomDictionary;
     private static List<String> classNames = new ArrayList<>();
     private static List<String> names = new ArrayList<>();
     private static String chars = "Il";
 
     @SuppressWarnings("SameParameterValue")
-    private static int randInt(int min, int max) {
+    private static int randInt(int min, int max)
+    {
         return random.nextInt(max - min) + min;
     }
 
-    public static void setup() {
+    public static void setup()
+    {
         USED_METHODNAMES.clear();
         USED_FIELDNAMES.clear();
         packageMap.clear();
     }
 
-    public static String generateSpaceString(int length) {
+    public static String generateSpaceString(int length)
+    {
         StringBuilder stringBuilder = new StringBuilder();
-        for (int i = 0; i < length; i++) {
+        for (int i = 0; i < length; i++)
+        {
             stringBuilder.append(" ");
         }
         return stringBuilder.toString();
     }
 
-    public static String generateClassName() {
+    public static String generateClassName()
+    {
         return generateClassName("");
     }
 
-
-    public static String generateClassName(String packageName) {
+    public static String generateClassName(String packageName)
+    {
         if (!packageMap.containsKey(packageName))
             packageMap.put(packageName, 0);
 
@@ -74,8 +84,10 @@ public class NameUtils {
 //        return ClassNameGenerator.className(Utils.random(2, 5));
     }
 
-    private static String getName(List<String> dictionary, int id) {
-        if (usingCustomDictionary && id < dictionary.size()) {
+    private static String getName(List<String> dictionary, int id)
+    {
+        if (usingCustomDictionary && id < dictionary.size())
+        {
             return dictionary.get(id);
         }
 
@@ -89,16 +101,18 @@ public class NameUtils {
      * Generates a {@link String} consisting only of DICT_SPACES.
      * Stole this idea from NeonObf and Smoke.
      */
-    public static String crazyString(int len) {
+    public static String crazyString(int len)
+    {
         char[] buildString = new char[len];
-        for (int i = 0; i < len; i++) {
+        for (int i = 0; i < len; i++)
+        {
             buildString[i] = DICT_SPACES[random.nextInt(DICT_SPACES.length)];
         }
         return new String(buildString);
     }
 
-
-    public static String generateMethodName(final String className, String desc) {
+    public static String generateMethodName(final String className, String desc)
+    {
 //        if (!USED_METHODNAMES.containsKey(className)) {
 //            USED_METHODNAMES.put(className, new HashMap<>());
 //        }
@@ -123,11 +137,13 @@ public class NameUtils {
         return getName(names, METHODS++);
     }
 
-    public static String generateMethodName(final ClassNode classNode, String desc) {
+    public static String generateMethodName(final ClassNode classNode, String desc)
+    {
         return generateMethodName(classNode.name, desc);
     }
 
-    public static String generateFieldName(final String className) {
+    public static String generateFieldName(final String className)
+    {
 //        if (!USED_FIELDNAMES.containsKey(className)) {
 //            USED_FIELDNAMES.put(className, 0);
 //        }
@@ -139,50 +155,60 @@ public class NameUtils {
         return getName(names, FIELDS++);
     }
 
-    public static String generateFieldName(final ClassNode classNode) {
+    public static String generateFieldName(final ClassNode classNode)
+    {
         return generateFieldName(classNode.name);
     }
 
-    public static String generateLocalVariableName(final String className, final String methodName) {
+    public static String generateLocalVariableName(final String className, final String methodName)
+    {
         return generateLocalVariableName();
     }
 
-    public static String generateLocalVariableName() {
-        if (localVars == 0) {
+    public static String generateLocalVariableName()
+    {
+        if (localVars == 0)
+        {
             localVars = Short.MAX_VALUE;
         }
         return Utils.convertToBase(localVars--, chars);
     }
 
-
-    public static String unicodeString(int length) {
+    public static String unicodeString(int length)
+    {
         StringBuilder stringBuilder = new StringBuilder();
-        for (int i = 0; i < length; i++) {
+        for (int i = 0; i < length; i++)
+        {
             stringBuilder.append((char) randInt(128, 250));
         }
         return stringBuilder.toString();
     }
 
-    public static void mapClass(String old, String newName) {
-        if (USED_METHODNAMES.containsKey(old)) {
+    public static void mapClass(String old, String newName)
+    {
+        if (USED_METHODNAMES.containsKey(old))
+        {
             USED_METHODNAMES.put(newName, USED_METHODNAMES.get(old));
         }
-        if (USED_FIELDNAMES.containsKey(old)) {
+        if (USED_FIELDNAMES.containsKey(old))
+        {
             USED_FIELDNAMES.put(newName, USED_FIELDNAMES.get(old));
         }
     }
 
-    public static String getPackage(String in) {
+    public static String getPackage(String in)
+    {
         int lin = in.lastIndexOf('/');
 
         if (lin == 0) throw new IllegalArgumentException("Illegal class name");
 
-        return lin == -1 ? "" : in.substring(0, lin);
+        return lin == -1 ? "": in.substring(0, lin);
     }
 
-
-    public static void applySettings(JObfSettings settings) {
-        if (settings.getGeneratorChars().getObject().length() == 0) {
+    public static void applySettings(JObfSettings settings)
+    {
+        if (settings.getGeneratorChars().getObject().length() == 0)
+        {
             settings.getGeneratorChars().setObject("Il");
             throw new IllegalStateException("The generator chars are empty. Changing them to 'Il'");
         }
@@ -191,17 +217,22 @@ public class NameUtils {
 
         usingCustomDictionary = settings.getUseCustomDictionary().getObject();
 
-        try {
-            if (usingCustomDictionary) {
+        try
+        {
+            if (usingCustomDictionary)
+            {
                 classNames = Files.readLines(new File(settings.getClassNameDictionary().getObject()), StandardCharsets.UTF_8);
                 names = Files.readLines(new File(settings.getNameDictionary().getObject()), StandardCharsets.UTF_8);
             }
-        } catch (IOException e) {
+        }
+        catch (IOException e)
+        {
             throw new RuntimeException("Failed to load names: " + e.getLocalizedMessage(), e);
         }
     }
 
-    public static void cleanUp() {
+    public static void cleanUp()
+    {
         classNames.clear();
         classNames = new ArrayList<>();
 

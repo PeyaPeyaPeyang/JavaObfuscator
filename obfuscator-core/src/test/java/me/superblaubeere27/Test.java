@@ -10,23 +10,32 @@
 
 package me.superblaubeere27;
 
-import java.lang.invoke.*;
+import java.lang.invoke.CallSite;
+import java.lang.invoke.ConstantCallSite;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 
-public class Test {
-    private static String[] references;
-    private static Class[] types;
+public class Test
+{
+    private static final String[] references;
+    private static final Class[] types;
 
-    static {
+    static
+    {
         references = new String[]{"Test:a:0:   "};
         types = new Class[]{String[].class};
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args)
+    {
         System.out.println();
     }
 
-    private static CallSite bootstrap(final MethodHandles.Lookup lookup, final String s, final MethodType methodType) throws NoSuchMethodException, IllegalAccessException {
-        try {
+    private static CallSite bootstrap(final MethodHandles.Lookup lookup, final String s, final MethodType methodType) throws NoSuchMethodException, IllegalAccessException
+    {
+        try
+        {
             final String[] split = Test.references[Integer.parseInt(s)].split(":");
             final Class<?> classIn = Class.forName(split[0]);
             final String name = split[1];
@@ -34,30 +43,45 @@ public class Test {
 
             int length = split[3].length();
 
-            if (length <= 2) {
+            if (length <= 2)
+            {
                 final MethodType methodDesc = MethodType.fromMethodDescriptorString(split[2], Test.class.getClassLoader());
 
-                if (length == 2) {
+                if (length == 2)
+                {
                     methodHandle = lookup.findVirtual(classIn, name, methodDesc);
-                } else {
+                }
+                else
+                {
                     methodHandle = lookup.findStatic(classIn, name, methodDesc);
                 }
-            } else {
+            }
+            else
+            {
                 Class typeLookup = types[Integer.parseInt(split[2])];
 
-                if (length == 3) {
+                if (length == 3)
+                {
                     methodHandle = lookup.findGetter(classIn, name, typeLookup);
-                } else if (length == 4) {
+                }
+                else if (length == 4)
+                {
                     methodHandle = lookup.findStaticGetter(classIn, name, typeLookup);
-                } else if (length == 5) {
+                }
+                else if (length == 5)
+                {
                     methodHandle = lookup.findSetter(classIn, name, typeLookup);
-                } else {
+                }
+                else
+                {
                     methodHandle = lookup.findStaticSetter(classIn, name, typeLookup);
                 }
             }
 
             return new ConstantCallSite(methodHandle);
-        } catch (Exception ex) {
+        }
+        catch (Exception ex)
+        {
             ex.printStackTrace();
             return null;
         }

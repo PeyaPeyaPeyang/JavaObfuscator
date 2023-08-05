@@ -20,7 +20,8 @@ import java.util.Set;
  *
  * @author ItzSomebody
  */
-public class ClassTree {
+public class ClassTree
+{
     /**
      * Attached ClassWrapper.
      */
@@ -47,7 +48,8 @@ public class ClassTree {
      *
      * @param classWrapper the ClassWraper attached to this ClassTree.
      */
-    public ClassTree(ClassWrapper classWrapper) {
+    public ClassTree(ClassWrapper classWrapper)
+    {
         this.classWrapper = classWrapper;
     }
 }

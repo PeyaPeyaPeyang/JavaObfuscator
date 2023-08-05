@@ -10,12 +10,15 @@
 
 package me.superblaubeere27.jobf.utils.values;
 
-public class FilePathValue extends StringValue {
-    public FilePathValue(String owner, String name, DeprecationLevel deprecated, String object) {
+public class FilePathValue extends StringValue
+{
+    public FilePathValue(String owner, String name, DeprecationLevel deprecated, String object)
+    {
         super(owner, name, deprecated, object);
     }
 
-    public FilePathValue(String owner, String name, String description, DeprecationLevel deprecation, String object) {
+    public FilePathValue(String owner, String name, String description, DeprecationLevel deprecation, String object)
+    {
         super(owner, name, description, deprecation, object, 1);
     }
 }

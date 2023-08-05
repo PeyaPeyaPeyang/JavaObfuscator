@@ -10,25 +10,28 @@
 
 package me.superblaubeere27.jobf.utils.values;
 
-public class StringValue extends Value<String> {
-    private int textFieldLines;
+import lombok.Getter;
 
-    public StringValue(String owner, String name, DeprecationLevel deprecated, String object) {
+@Getter
+public class StringValue extends Value<String>
+{
+    private final int textFieldLines;
+
+    public StringValue(String owner, String name, DeprecationLevel deprecated, String object)
+    {
         super(owner, name, deprecated, object);
         this.textFieldLines = 1;
     }
 
-    public StringValue(String owner, String name, String description, DeprecationLevel deprecation, String object, int textFieldLines) {
+    public StringValue(String owner, String name, String description, DeprecationLevel deprecation, String object, int textFieldLines)
+    {
         super(owner, name, description, deprecation, object);
         this.textFieldLines = textFieldLines;
     }
 
-    public int getTextFieldLines() {
-        return textFieldLines;
-    }
-
     @Override
-    public String toString() {
+    public String toString()
+    {
         return String.format("%s::%s = \"%s\"", getOwner(), getName(), getObject());
     }
 }

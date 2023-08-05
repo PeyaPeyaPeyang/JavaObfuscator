@@ -29,15 +29,21 @@ import java.util.Enumeration;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
-public class ObfuscatorTest {
-    private static File obfuscatedFile = null;
+public class ObfuscatorTest
+{
+    private static File obfuscatedFile;
     private static File input;
 
     @BeforeClass
-    public static void obfuscate() {
-        try {
+    public static void obfuscate()
+    {
+        try
+        {
             input = File.createTempFile("obf_", ".jar");
 //            Files.copy(new URL("https://github.com/SB27Team/JavaFeatureTest/raw/master/JavaFeatureTest.jar").openStream(), input.toPath());
             ByteStreams.copy(new URL("https://github.com/SB27Team/JavaFeatureTest/raw/master/JavaFeatureTest.jar").openStream(), new FileOutputStream(input));
@@ -49,29 +55,36 @@ public class ObfuscatorTest {
             configuration.setOutput((obfuscatedFile = File.createTempFile("obf_", ".jar")).getAbsolutePath());
 
             JObfImpl.INSTANCE.processJar(configuration);
-        } catch (IOException e) {
+        }
+        catch (IOException e)
+        {
             e.printStackTrace();
         }
     }
 
     @AfterClass
-    public static void removeFile() {
-        if (obfuscatedFile != null && obfuscatedFile.exists()) {
+    public static void removeFile()
+    {
+        if (obfuscatedFile != null && obfuscatedFile.exists())
+        {
             obfuscatedFile.delete();
         }
-        if (input != null && input.exists()) {
+        if (input != null && input.exists())
+        {
             input.delete();
         }
     }
 
     @Test
-    public void verifyFile() {
+    public void verifyFile()
+    {
         assertNotNull(obfuscatedFile);
         assertTrue("File doesn't exist", obfuscatedFile.exists());
     }
 
     @Test
-    public void testObfuscatedJar() throws IOException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    public void testObfuscatedJar() throws IOException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException
+    {
         int rightValue = 704643072;
         JarFile jarFile = new JarFile(obfuscatedFile);
         Enumeration<JarEntry> e = jarFile.entries();
@@ -80,20 +93,24 @@ public class ObfuscatorTest {
         URLClassLoader cl = URLClassLoader.newInstance(urls);
         Class<?> c = null;
 
-        while (e.hasMoreElements()) {
+        while (e.hasMoreElements())
+        {
             JarEntry je = e.nextElement();
-            if (je.isDirectory() || !je.getName().endsWith(".class")) {
+            if (je.isDirectory() || !je.getName().endsWith(".class"))
+            {
                 continue;
             }
             // -6 because of .class
             String className = je.getName().substring(0, je.getName().length() - 6);
             className = className.replace('/', '.');
-            if (className.equals("JFT")) {
+            if (className.equals("JFT"))
+            {
                 c = cl.loadClass(className);
             }
         }
 
-        if (c == null) {
+        if (c == null)
+        {
             fail("JFT.class wasn't found");
         }
 

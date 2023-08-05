@@ -24,21 +24,25 @@ import org.objectweb.asm.tree.MethodNode;
 import java.util.Collections;
 import java.util.Random;
 
-public class ShuffleMembersTransformer implements IClassTransformer {
+public class ShuffleMembersTransformer implements IClassTransformer
+{
     private static final String PROCESSOR_NAME = "ShuffleMembers";
-    private static Random random = new Random();
-    private JObfImpl inst;
-    private EnabledValue enabled = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.GOOD, true);
+    private static final Random random = new Random();
+    private final JObfImpl inst;
+    private final EnabledValue enabled = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.GOOD, true);
 
-    public ShuffleMembersTransformer(JObfImpl inst) {
+    public ShuffleMembersTransformer(JObfImpl inst)
+    {
         this.inst = inst;
     }
 
     @Override
-    public void process(ProcessorCallback callback, ClassNode node) {
-        if (!enabled.getObject()) return;
+    public void process(ProcessorCallback callback, ClassNode node)
+    {
+        if (!this.enabled.getObject()) return;
 
-        if ((node.access & Opcodes.ACC_ENUM) != 0) {
+        if ((node.access & Opcodes.ACC_ENUM) != 0)
+        {
             return;
         }
 
@@ -51,8 +55,10 @@ public class ShuffleMembersTransformer implements IClassTransformer {
         if (node.visibleAnnotations != null) Collections.shuffle(node.visibleAnnotations, random);
         if (node.invisibleTypeAnnotations != null) Collections.shuffle(node.invisibleTypeAnnotations, random);
 
-        for (Object o : node.methods.toArray()) {
-            if (o instanceof MethodNode) {
+        for (Object o : node.methods.toArray())
+        {
+            if (o instanceof MethodNode)
+            {
                 MethodNode method = (MethodNode) o;
                 if (method.invisibleAnnotations != null) Collections.shuffle(method.invisibleAnnotations, random);
                 if (method.invisibleLocalVariableAnnotations != null)
@@ -65,14 +71,17 @@ public class ShuffleMembersTransformer implements IClassTransformer {
                 if (method.visibleTypeAnnotations != null) Collections.shuffle(method.visibleTypeAnnotations, random);
 
                 Collections.shuffle(method.exceptions, random);
-                if (method.localVariables != null) {
+                if (method.localVariables != null)
+                {
                     Collections.shuffle(method.localVariables, random);
                 }
                 if (method.parameters != null) Collections.shuffle(method.parameters, random);
             }
         }
-        for (Object o : node.methods.toArray()) {
-            if (o instanceof FieldNode) {
+        for (Object o : node.methods.toArray())
+        {
+            if (o instanceof FieldNode)
+            {
                 FieldNode method = (FieldNode) o;
                 if (method.invisibleAnnotations != null) Collections.shuffle(method.invisibleAnnotations, random);
                 if (method.invisibleTypeAnnotations != null)
@@ -81,11 +90,12 @@ public class ShuffleMembersTransformer implements IClassTransformer {
                 if (method.visibleTypeAnnotations != null) Collections.shuffle(method.visibleTypeAnnotations, random);
             }
         }
-        inst.setWorkDone();
+        this.inst.setWorkDone();
     }
 
     @Override
-    public ObfuscationTransformer getType() {
+    public ObfuscationTransformer getType()
+    {
         return ObfuscationTransformer.SHUFFLE_MEMBERS;
     }
 

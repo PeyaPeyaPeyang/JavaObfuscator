@@ -15,13 +15,16 @@ import java.util.Comparator;
 /**
  * @author Markus Jarderot (https://stackoverflow.com/questions/198431/how-do-you-compare-two-version-strings-in-java)
  */
-public class VersionComparator implements Comparator {
+public class VersionComparator implements Comparator
+{
 
-    public boolean equals(Object o1, Object o2) {
+    public boolean equals(Object o1, Object o2)
+    {
         return compare(o1, o2) == 0;
     }
 
-    public int compare(Object o1, Object o2) {
+    public int compare(Object o1, Object o2)
+    {
         String version1 = (String) o1;
         String version2 = (String) o2;
 
@@ -31,12 +34,16 @@ public class VersionComparator implements Comparator {
         int number1, number2;
         String suffix1, suffix2;
 
-        while (tokenizer1.MoveNext()) {
-            if (!tokenizer2.MoveNext()) {
-                do {
+        while (tokenizer1.MoveNext())
+        {
+            if (!tokenizer2.MoveNext())
+            {
+                do
+                {
                     number1 = tokenizer1.getNumber();
                     suffix1 = tokenizer1.getSuffix();
-                    if (number1 != 0 || suffix1.length() != 0) {
+                    if (number1 != 0 || suffix1.length() != 0)
+                    {
                         // Version one is longer than number two, and non-zero
                         return 1;
                     }
@@ -52,11 +59,13 @@ public class VersionComparator implements Comparator {
             number2 = tokenizer2.getNumber();
             suffix2 = tokenizer2.getSuffix();
 
-            if (number1 < number2) {
+            if (number1 < number2)
+            {
                 // Number one is less than number two
                 return -1;
             }
-            if (number1 > number2) {
+            if (number1 > number2)
+            {
                 // Number one is greater than number two
                 return 1;
             }
@@ -73,11 +82,14 @@ public class VersionComparator implements Comparator {
             if (result != 0) return result;
 
         }
-        if (tokenizer2.MoveNext()) {
-            do {
+        if (tokenizer2.MoveNext())
+        {
+            do
+            {
                 number2 = tokenizer2.getNumber();
                 suffix2 = tokenizer2.getSuffix();
-                if (number2 != 0 || suffix2.length() != 0) {
+                if (number2 != 0 || suffix2.length() != 0)
+                {
                     // Version one is longer than version two, and non-zero
                     return -1;
                 }

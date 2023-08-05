@@ -22,7 +22,17 @@ import me.superblaubeere27.jobf.utils.values.DeprecationLevel;
 import me.superblaubeere27.jobf.utils.values.EnabledValue;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.tree.*;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FrameNode;
+import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.JumpInsnNode;
+import org.objectweb.asm.tree.LabelNode;
+import org.objectweb.asm.tree.LdcInsnNode;
+import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.VarInsnNode;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -33,114 +43,136 @@ import static me.superblaubeere27.jobf.processors.flowObfuscation.LocalVariableM
 import static me.superblaubeere27.jobf.processors.flowObfuscation.ReturnMangler.mangleReturn;
 import static me.superblaubeere27.jobf.processors.flowObfuscation.SwitchMangler.mangleSwitches;
 
-public class FlowObfuscator implements IClassTransformer {
+public class FlowObfuscator implements IClassTransformer
+{
     private static final String PROCESSOR_NAME = "FlowObfuscator";
-    private static Random random = new Random();
-    private JObfImpl inst;
-    private EnabledValue enabled = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.GOOD, true);
-    private BooleanValue mangleComparisions = new BooleanValue(PROCESSOR_NAME, "Mangle Comparisons", "Replaces long, float and double comparisons with method calls", DeprecationLevel.GOOD, true);
-    private BooleanValue replaceGoto = new BooleanValue(PROCESSOR_NAME, "Replace GOTO", "Replaces unconditional jumps with conditionals", DeprecationLevel.GOOD, true);
-    private BooleanValue replaceIf = new BooleanValue(PROCESSOR_NAME, "Replace If", "Replaces comparisions with method calls", DeprecationLevel.GOOD, true);
-    private BooleanValue badPop = new BooleanValue(PROCESSOR_NAME, "Bad POP", DeprecationLevel.GOOD, true);
-    private BooleanValue badConcat = new BooleanValue(PROCESSOR_NAME, "Bad Concat", "Breaks string concatenations", DeprecationLevel.GOOD, true);
-    private BooleanValue mangleSwitchesEnabled = new BooleanValue(PROCESSOR_NAME, "Mangle Switches", "Replaces switch statements with if-else statements", DeprecationLevel.OK, false);
-    private BooleanValue mangleReturn = new BooleanValue(PROCESSOR_NAME, "Mangle Return", "!! Needs COMPUTE_FRAMES (See documentation) !!", DeprecationLevel.BAD, false);
-    private BooleanValue mangleLocals = new BooleanValue(PROCESSOR_NAME, "Mangle Local Variables", "!! Needs COMPUTE_FRAMES (See documentation) !!", DeprecationLevel.BAD, false);
+    private static final Random random = new Random();
+    private final JObfImpl inst;
+    private final EnabledValue enabled = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.GOOD, true);
+    private final BooleanValue mangleComparisions = new BooleanValue(PROCESSOR_NAME, "Mangle Comparisons", "Replaces long, float and double comparisons with method calls", DeprecationLevel.GOOD, true);
+    private final BooleanValue replaceGoto = new BooleanValue(PROCESSOR_NAME, "Replace GOTO", "Replaces unconditional jumps with conditionals", DeprecationLevel.GOOD, true);
+    private final BooleanValue replaceIf = new BooleanValue(PROCESSOR_NAME, "Replace If", "Replaces comparisions with method calls", DeprecationLevel.GOOD, true);
+    private final BooleanValue badPop = new BooleanValue(PROCESSOR_NAME, "Bad POP", DeprecationLevel.GOOD, true);
+    private final BooleanValue badConcat = new BooleanValue(PROCESSOR_NAME, "Bad Concat", "Breaks string concatenations", DeprecationLevel.GOOD, true);
+    private final BooleanValue mangleSwitchesEnabled = new BooleanValue(PROCESSOR_NAME, "Mangle Switches", "Replaces switch statements with if-else statements", DeprecationLevel.OK, false);
+    private final BooleanValue mangleReturn = new BooleanValue(PROCESSOR_NAME, "Mangle Return", "!! Needs COMPUTE_FRAMES (See documentation) !!", DeprecationLevel.BAD, false);
+    private final BooleanValue mangleLocals = new BooleanValue(PROCESSOR_NAME, "Mangle Local Variables", "!! Needs COMPUTE_FRAMES (See documentation) !!", DeprecationLevel.BAD, false);
 
-    public FlowObfuscator(JObfImpl inst) {
+    public FlowObfuscator(JObfImpl inst)
+    {
         this.inst = inst;
     }
 
-
-    public static InsnList generateIfGoto(int i, LabelNode label) {
+    public static InsnList generateIfGoto(int i, LabelNode label)
+    {
         InsnList insnList = new InsnList();
 
-        switch (i) {
-            case 0: {
+        switch (i)
+        {
+            case 0:
+            {
                 int first;
                 int second;
 
-                do {
+                do
+                {
                     first = random.nextInt(6) - 1;
                     second = random.nextInt(6) - 1;
-                } while (second == first);
+                }
+                while (second == first);
 
                 insnList.add(NodeUtils.generateIntPush(first));
                 insnList.add(NodeUtils.generateIntPush(second));
                 insnList.add(new JumpInsnNode(Opcodes.IF_ICMPNE, label));
                 break;
             }
-            case 1: {
+            case 1:
+            {
                 int first;
                 int second;
 
-                do {
+                do
+                {
                     first = random.nextInt(6) - 1;
                     second = random.nextInt(6) - 1;
-                } while (second != first);
+                }
+                while (second != first);
 
                 insnList.add(NodeUtils.generateIntPush(first));
                 insnList.add(NodeUtils.generateIntPush(second));
                 insnList.add(new JumpInsnNode(Opcodes.IF_ICMPEQ, label));
                 break;
             }
-            case 2: {
+            case 2:
+            {
                 int first;
                 int second;
 
-                do {
+                do
+                {
                     first = random.nextInt(6) - 1;
                     second = random.nextInt(6) - 1;
-                } while (first >= second);
+                }
+                while (first >= second);
 
                 insnList.add(NodeUtils.generateIntPush(first));
                 insnList.add(NodeUtils.generateIntPush(second));
                 insnList.add(new JumpInsnNode(Opcodes.IF_ICMPLT, label));
                 break;
             }
-            case 3: {
+            case 3:
+            {
                 int first;
                 int second;
 
-                do {
+                do
+                {
                     first = random.nextInt(6) - 1;
                     second = random.nextInt(6) - 1;
-                } while (first < second);
+                }
+                while (first < second);
 
                 insnList.add(NodeUtils.generateIntPush(first));
                 insnList.add(NodeUtils.generateIntPush(second));
                 insnList.add(new JumpInsnNode(Opcodes.IF_ICMPGE, label));
                 break;
             }
-            case 4: {
+            case 4:
+            {
                 int first;
                 int second;
 
-                do {
+                do
+                {
                     first = random.nextInt(6) - 1;
                     second = random.nextInt(6) - 1;
-                } while (first <= second);
+                }
+                while (first <= second);
 
                 insnList.add(NodeUtils.generateIntPush(first));
                 insnList.add(NodeUtils.generateIntPush(second));
                 insnList.add(new JumpInsnNode(Opcodes.IF_ICMPGT, label));
                 break;
             }
-            case 5: {
+            case 5:
+            {
                 int first;
                 int second;
 
-                do {
+                do
+                {
                     first = random.nextInt(6) - 1;
                     second = random.nextInt(6) - 1;
-                } while (first > second);
+                }
+                while (first > second);
 
                 insnList.add(NodeUtils.generateIntPush(first));
                 insnList.add(NodeUtils.generateIntPush(second));
                 insnList.add(new JumpInsnNode(Opcodes.IF_ICMPLE, label));
                 break;
             }
-            case 6: {
+            case 6:
+            {
                 int first;
 
                 first = random.nextInt(5) + 1;
@@ -149,7 +181,8 @@ public class FlowObfuscator implements IClassTransformer {
                 insnList.add(new JumpInsnNode(Opcodes.IFNE, label));
                 break;
             }
-            case 7: {
+            case 7:
+            {
                 int first = 0;
 
 
@@ -157,7 +190,8 @@ public class FlowObfuscator implements IClassTransformer {
                 insnList.add(new JumpInsnNode(Opcodes.IFEQ, label));
                 break;
             }
-            case 8: {
+            case 8:
+            {
                 int second;
 
                 second = random.nextInt(5);
@@ -166,7 +200,8 @@ public class FlowObfuscator implements IClassTransformer {
                 insnList.add(new JumpInsnNode(Opcodes.IFGE, label));
                 break;
             }
-            case 9: {
+            case 9:
+            {
                 int second;
 
                 second = random.nextInt(5) + 1;
@@ -175,7 +210,8 @@ public class FlowObfuscator implements IClassTransformer {
                 insnList.add(new JumpInsnNode(Opcodes.IFGT, label));
                 break;
             }
-            case 10: {
+            case 10:
+            {
                 int second;
 
                 second = -random.nextInt(5);
@@ -184,7 +220,8 @@ public class FlowObfuscator implements IClassTransformer {
                 insnList.add(new JumpInsnNode(Opcodes.IFLE, label));
                 break;
             }
-            case 11: {
+            case 11:
+            {
                 int second;
 
                 second = -random.nextInt(5) - 1;
@@ -193,7 +230,8 @@ public class FlowObfuscator implements IClassTransformer {
                 insnList.add(new JumpInsnNode(Opcodes.IFLT, label));
                 break;
             }
-            default: {
+            default:
+            {
                 insnList.add(new InsnNode(Opcodes.ACONST_NULL));
                 insnList.add(new JumpInsnNode(Opcodes.IFNULL, label));
                 break;
@@ -207,17 +245,21 @@ public class FlowObfuscator implements IClassTransformer {
         return insnList;
     }
 
-    private static InsnList ifGoto(LabelNode label, MethodNode methodNode, Type returnType) {
+    private static InsnList ifGoto(LabelNode label, MethodNode methodNode, Type returnType)
+    {
         InsnList insnList;
 
         int i = random.nextInt(14);
 
         insnList = generateIfGoto(i, label);
 
-        if (methodNode.name.equals("<init>")) {
+        if (methodNode.name.equals("<init>"))
+        {
             insnList.add(new InsnNode(Opcodes.ACONST_NULL));
             insnList.add(new InsnNode(Opcodes.ATHROW));
-        } else {
+        }
+        else
+        {
             if (returnType.getSize() != 0) insnList.add(NodeUtils.nullValueForType(returnType));
             insnList.add(new InsnNode(returnType.getOpcode(Opcodes.IRETURN)));
         }
@@ -228,8 +270,10 @@ public class FlowObfuscator implements IClassTransformer {
         return insnList;
     }
 
-    private static MethodNode ifWrapper(int opcode) {
-        if (opcode >= Opcodes.IFEQ && opcode <= Opcodes.IFLE) {
+    private static MethodNode ifWrapper(int opcode)
+    {
+        if (opcode >= Opcodes.IFEQ && opcode <= Opcodes.IFLE)
+        {
             MethodNode method = new MethodNode(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC, "", "(I)Z", null, new String[0]);
             LabelNode label1 = new LabelNode();
             LabelNode label2 = new LabelNode();
@@ -245,7 +289,8 @@ public class FlowObfuscator implements IClassTransformer {
             method.instructions.add(new InsnNode(Opcodes.IRETURN));
             return method;
         }
-        if (opcode >= Opcodes.IFNULL && opcode <= Opcodes.IFNONNULL) {
+        if (opcode >= Opcodes.IFNULL && opcode <= Opcodes.IFNONNULL)
+        {
             MethodNode method = new MethodNode(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC, "", "(Ljava/lang/Object;)Z", null, new String[0]);
             LabelNode label1 = new LabelNode();
             LabelNode label2 = new LabelNode();
@@ -261,7 +306,8 @@ public class FlowObfuscator implements IClassTransformer {
             method.instructions.add(new InsnNode(Opcodes.IRETURN));
             return method;
         }
-        if (opcode >= Opcodes.IF_ACMPEQ && opcode <= Opcodes.IF_ACMPNE) {
+        if (opcode >= Opcodes.IF_ACMPEQ && opcode <= Opcodes.IF_ACMPNE)
+        {
             MethodNode method = new MethodNode(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC, "", "(Ljava/lang/Object;Ljava/lang/Object;)Z", null, new String[0]);
             LabelNode label1 = new LabelNode();
             LabelNode label2 = new LabelNode();
@@ -278,7 +324,8 @@ public class FlowObfuscator implements IClassTransformer {
             method.instructions.add(new InsnNode(Opcodes.IRETURN));
             return method;
         }
-        if (opcode >= Opcodes.IF_ICMPEQ && opcode <= Opcodes.IF_ICMPLE) {
+        if (opcode >= Opcodes.IF_ICMPEQ && opcode <= Opcodes.IF_ICMPLE)
+        {
             MethodNode method = new MethodNode(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC, "", "(II)Z", null, new String[0]);
             LabelNode label1 = new LabelNode();
             LabelNode label2 = new LabelNode();
@@ -299,64 +346,76 @@ public class FlowObfuscator implements IClassTransformer {
     }
 
     @Override
-    public void process(ProcessorCallback callback, ClassNode node) {
-        if (!enabled.getObject()) return;
+    public void process(ProcessorCallback callback, ClassNode node)
+    {
+        if (!this.enabled.getObject()) return;
 
         HashMap<Integer, MethodNode> jumpMethodMap = new HashMap<>();
 
         List<MethodNode> toAdd = new ArrayList<>();
 
-        for (MethodNode method : node.methods) {
-            if (mangleLocals.getObject()) mangleLocalVariables(callback, node, method);
-            if (mangleReturn.getObject()) mangleReturn(callback, method);
-            if (mangleSwitchesEnabled.getObject()) mangleSwitches(method);
-            if (mangleComparisions.getObject())
+        for (MethodNode method : node.methods)
+        {
+            if (this.mangleLocals.getObject()) mangleLocalVariables(callback, node, method);
+            if (this.mangleReturn.getObject()) mangleReturn(callback, method);
+            if (this.mangleSwitchesEnabled.getObject()) mangleSwitches(method);
+            if (this.mangleComparisions.getObject())
                 toAdd.addAll(FloatingPointComparisionMangler.mangleComparisions(node, method));
             //JumpReplacer.process(node, method);
 
 
-            for (AbstractInsnNode abstractInsnNode : method.instructions.toArray()) {
-                if (badPop.getObject() && abstractInsnNode instanceof JumpInsnNode && abstractInsnNode.getOpcode() == Opcodes.GOTO) {
+            for (AbstractInsnNode abstractInsnNode : method.instructions.toArray())
+            {
+                if (this.badPop.getObject() && abstractInsnNode instanceof JumpInsnNode && abstractInsnNode.getOpcode() == Opcodes.GOTO)
+                {
                     method.instructions.insertBefore(abstractInsnNode, new LdcInsnNode(""));
                     method.instructions.insertBefore(abstractInsnNode, new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/String", "length", "()I", false));
                     method.instructions.insertBefore(abstractInsnNode, new InsnNode(Opcodes.POP));
                 }
-                if (badPop.getObject() && abstractInsnNode.getOpcode() == Opcodes.POP) {
+                if (this.badPop.getObject() && abstractInsnNode.getOpcode() == Opcodes.POP)
+                {
                     method.instructions.insertBefore(abstractInsnNode, new LdcInsnNode(""));
                     method.instructions.insertBefore(abstractInsnNode, new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/String", "length", "()I", false));
                     method.instructions.insert(abstractInsnNode, new InsnNode(Opcodes.POP2));
                     method.instructions.remove(abstractInsnNode);
                 }
-                if (replaceGoto.getObject() && abstractInsnNode instanceof JumpInsnNode && abstractInsnNode.getOpcode() == Opcodes.GOTO) {
+                if (this.replaceGoto.getObject() && abstractInsnNode instanceof JumpInsnNode && abstractInsnNode.getOpcode() == Opcodes.GOTO)
+                {
                     JumpInsnNode insnNode = (JumpInsnNode) abstractInsnNode;
                     final InsnList insnList = new InsnList();
                     insnList.add(ifGoto(insnNode.label, method, Type.getReturnType(method.desc)));
                     method.instructions.insert(insnNode, insnList);
                     method.instructions.remove(insnNode);
                 }
-                if (abstractInsnNode instanceof MethodInsnNode && badConcat.getObject()) {
+                if (abstractInsnNode instanceof MethodInsnNode && this.badConcat.getObject())
+                {
                     MethodInsnNode insnNode = (MethodInsnNode) abstractInsnNode;
 
-                    if (insnNode.owner.equals("java/lang/StringBuilder") && insnNode.name.equals("toString")) {
+                    if (insnNode.owner.equals("java/lang/StringBuilder") && insnNode.name.equals("toString"))
+                    {
                         method.instructions.insert(insnNode, new MethodInsnNode(Opcodes.INVOKESTATIC, "java/lang/String", "valueOf", "(Ljava/lang/Object;)Ljava/lang/String;", false));
                         method.instructions.remove(insnNode);
                     }
                 }
-                if (replaceIf.getObject() && abstractInsnNode instanceof JumpInsnNode && (abstractInsnNode.getOpcode() >= Opcodes.IFEQ && abstractInsnNode.getOpcode() <= Opcodes.IF_ACMPNE || abstractInsnNode.getOpcode() >= Opcodes.IFNULL && abstractInsnNode.getOpcode() <= Opcodes.IFNONNULL)) {
+                if (this.replaceIf.getObject() && abstractInsnNode instanceof JumpInsnNode && (abstractInsnNode.getOpcode() >= Opcodes.IFEQ && abstractInsnNode.getOpcode() <= Opcodes.IF_ACMPNE || abstractInsnNode.getOpcode() >= Opcodes.IFNULL && abstractInsnNode.getOpcode() <= Opcodes.IFNONNULL))
+                {
                     JumpInsnNode insnNode = (JumpInsnNode) abstractInsnNode;
 
                     MethodNode wrapper = jumpMethodMap.get(insnNode.getOpcode());
 
-                    if (wrapper == null) {
+                    if (wrapper == null)
+                    {
                         wrapper = ifWrapper(insnNode.getOpcode());
 
-                        if (wrapper != null) {
+                        if (wrapper != null)
+                        {
                             wrapper.name = NameUtils.generateMethodName(node, wrapper.desc);
                             jumpMethodMap.put(insnNode.getOpcode(), wrapper);
                         }
                     }
 
-                    if (wrapper != null) {
+                    if (wrapper != null)
+                    {
                         final InsnList insnList = new InsnList();
                         insnList.add(NodeUtils.methodCall(node, wrapper));
                         insnList.add(new JumpInsnNode(Opcodes.IFEQ, insnNode.label));
@@ -376,11 +435,12 @@ public class FlowObfuscator implements IClassTransformer {
         node.methods.addAll(jumpMethodMap.values());
         node.methods.addAll(toAdd);
 
-        inst.setWorkDone();
+        this.inst.setWorkDone();
     }
 
     @Override
-    public ObfuscationTransformer getType() {
+    public ObfuscationTransformer getType()
+    {
         return ObfuscationTransformer.FLOW_OBFUSCATION;
     }
 }

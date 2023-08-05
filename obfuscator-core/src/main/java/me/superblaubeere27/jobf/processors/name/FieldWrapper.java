@@ -17,7 +17,8 @@ import org.objectweb.asm.tree.FieldNode;
  *
  * @author ItzSomebody.
  */
-public class FieldWrapper {
+public class FieldWrapper
+{
     /**
      * Owner of this represented field.
      */
@@ -44,7 +45,8 @@ public class FieldWrapper {
      * @param originalName        the original name of the field represented.
      * @param originalDescription the original description of the field represented.
      */
-    FieldWrapper(FieldNode fieldNode, ClassWrapper owner, String originalName, String originalDescription) {
+    FieldWrapper(FieldNode fieldNode, ClassWrapper owner, String originalName, String originalDescription)
+    {
         this.fieldNode = fieldNode;
         this.owner = owner;
         this.originalName = originalName;

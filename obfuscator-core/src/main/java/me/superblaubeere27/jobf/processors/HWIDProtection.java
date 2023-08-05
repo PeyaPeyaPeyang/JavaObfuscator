@@ -23,23 +23,37 @@ import me.superblaubeere27.jobf.utils.values.StringValue;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.tree.*;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FrameNode;
+import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.IntInsnNode;
+import org.objectweb.asm.tree.JumpInsnNode;
+import org.objectweb.asm.tree.LabelNode;
+import org.objectweb.asm.tree.LdcInsnNode;
+import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.MultiANewArrayInsnNode;
+import org.objectweb.asm.tree.TypeInsnNode;
 
 import java.lang.reflect.Modifier;
 import java.util.Random;
 
-public class HWIDProtection implements IClassTransformer {
+public class HWIDProtection implements IClassTransformer
+{
     private static final String PROCESSOR_NAME = "HWIDPRotection";
-    private static Random random = new Random();
-    private JObfImpl inst;
-    private EnabledValue enabled = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.GOOD, false);
-    private StringValue hwidValue = new StringValue(PROCESSOR_NAME, "HWID", DeprecationLevel.GOOD, HWID.bytesToHex(HWID.generateHWID()));
+    private static final Random random = new Random();
+    private final JObfImpl inst;
+    private final EnabledValue enabled = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.GOOD, false);
+    private final StringValue hwidValue = new StringValue(PROCESSOR_NAME, "HWID", DeprecationLevel.GOOD, HWID.bytesToHex(HWID.generateHWID()));
 
-    public HWIDProtection(JObfImpl inst) {
+    public HWIDProtection(JObfImpl inst)
+    {
         this.inst = inst;
     }
 
-    private static String addHWIDGenerator(ClassNode cn) {
+    private static String addHWIDGenerator(ClassNode cn)
+    {
         MethodVisitor mv;
         String name;
         {
@@ -155,12 +169,14 @@ public class HWIDProtection implements IClassTransformer {
     }
 
     @Override
-    public void process(ProcessorCallback callback, ClassNode node) {
-        if (!enabled.getObject()) return;
+    public void process(ProcessorCallback callback, ClassNode node)
+    {
+        if (!this.enabled.getObject()) return;
 
-        byte[] hwid = HWID.hexStringToByteArray(hwidValue.getObject());
+        byte[] hwid = HWID.hexStringToByteArray(this.hwidValue.getObject());
 
-        if (Modifier.isInterface(node.access)) {
+        if (Modifier.isInterface(node.access))
+        {
             return;
         }
 
@@ -177,12 +193,14 @@ public class HWIDProtection implements IClassTransformer {
         toAdd.add(new IntInsnNode(Opcodes.NEWARRAY, Opcodes.T_BYTE));
         toAdd.add(new InsnNode(Opcodes.DUP));
 
-        for (int i = 0; i < hwid.length; i++) {
+        for (int i = 0; i < hwid.length; i++)
+        {
             toAdd.add(NodeUtils.generateIntPush(i));
             toAdd.add(NodeUtils.generateIntPush(hwid[i]));
             toAdd.add(new InsnNode(Opcodes.BASTORE));
 
-            if (i != hwid.length - 1) {
+            if (i != hwid.length - 1)
+            {
                 toAdd.add(new InsnNode(Opcodes.DUP));
             }
         }
@@ -217,22 +235,27 @@ public class HWIDProtection implements IClassTransformer {
         toAdd.add(new FrameNode(Opcodes.F_SAME, 0, null, 0, null));
 
         MethodNode clInit = NodeUtils.getMethod(node, "<clinit>");
-        if (clInit == null) {
+        if (clInit == null)
+        {
             clInit = new MethodNode(Opcodes.ACC_STATIC, "<clinit>", "()V", null, new String[0]);
             node.methods.add(clInit);
         }
 
-        if (clInit.instructions == null || clInit.instructions.getFirst() == null) {
+        if (clInit.instructions == null || clInit.instructions.getFirst() == null)
+        {
             clInit.instructions = toAdd;
             clInit.instructions.add(new InsnNode(Opcodes.RETURN));
-        } else {
+        }
+        else
+        {
             clInit.instructions.insertBefore(clInit.instructions.getFirst(), toAdd);
         }
-        inst.setWorkDone();
+        this.inst.setWorkDone();
     }
 
     @Override
-    public ObfuscationTransformer getType() {
+    public ObfuscationTransformer getType()
+    {
         return ObfuscationTransformer.HWID_PROTECTION;
     }
 }

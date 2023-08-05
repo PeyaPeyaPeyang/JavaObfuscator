@@ -13,7 +13,8 @@ package me.superblaubeere27.jobf.utils;
 /**
  * @author Markus Jarderot (https://stackoverflow.com/questions/198431/how-do-you-compare-two-version-strings-in-java)
  */
-public class VersionTokenizer {
+public class VersionTokenizer
+{
     private final String _versionString;
     private final int _length;
 
@@ -22,55 +23,62 @@ public class VersionTokenizer {
     private String _suffix;
     private boolean _hasValue;
 
-    public VersionTokenizer(String versionString) {
+    public VersionTokenizer(String versionString)
+    {
         if (versionString == null)
             throw new IllegalArgumentException("versionString is null");
 
-        _versionString = versionString;
-        _length = versionString.length();
+        this._versionString = versionString;
+        this._length = versionString.length();
     }
 
-    public int getNumber() {
-        return _number;
+    public int getNumber()
+    {
+        return this._number;
     }
 
-    public String getSuffix() {
-        return _suffix;
+    public String getSuffix()
+    {
+        return this._suffix;
     }
 
-    public boolean hasValue() {
-        return _hasValue;
+    public boolean hasValue()
+    {
+        return this._hasValue;
     }
 
-    public boolean MoveNext() {
-        _number = 0;
-        _suffix = "";
-        _hasValue = false;
+    public boolean MoveNext()
+    {
+        this._number = 0;
+        this._suffix = "";
+        this._hasValue = false;
 
         // No more characters
-        if (_position >= _length)
+        if (this._position >= this._length)
             return false;
 
-        _hasValue = true;
+        this._hasValue = true;
 
-        while (_position < _length) {
-            char c = _versionString.charAt(_position);
+        while (this._position < this._length)
+        {
+            char c = this._versionString.charAt(this._position);
             if (c < '0' || c > '9') break;
-            _number = _number * 10 + (c - '0');
-            _position++;
+            this._number = this._number * 10 + (c - '0');
+            this._position++;
         }
 
-        int suffixStart = _position;
+        int suffixStart = this._position;
 
-        while (_position < _length) {
-            char c = _versionString.charAt(_position);
+        while (this._position < this._length)
+        {
+            char c = this._versionString.charAt(this._position);
             if (c == '.') break;
-            _position++;
+            this._position++;
         }
 
-        _suffix = _versionString.substring(suffixStart, _position);
+        this._suffix = this._versionString.substring(suffixStart, this._position);
 
-        if (_position < _length) _position++;
+        if (this._position < this._length) this._position++;
 
         return true;
     }

@@ -17,7 +17,8 @@ import org.objectweb.asm.tree.MethodNode;
  *
  * @author ItzSomebody
  */
-public class MethodWrapper {
+public class MethodWrapper
+{
     /**
      * Owner of the method this MethodWrapper represents.
      */
@@ -44,7 +45,8 @@ public class MethodWrapper {
      * @param originalName        the original method name.
      * @param originalDescription the original method description.
      */
-    MethodWrapper(MethodNode methodNode, ClassWrapper owner, String originalName, String originalDescription) {
+    MethodWrapper(MethodNode methodNode, ClassWrapper owner, String originalName, String originalDescription)
+    {
         this.methodNode = methodNode;
         this.owner = owner;
         this.originalName = originalName;

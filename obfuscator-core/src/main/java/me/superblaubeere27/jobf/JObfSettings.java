@@ -10,38 +10,22 @@
 
 package me.superblaubeere27.jobf;
 
+import lombok.Getter;
 import me.superblaubeere27.jobf.utils.values.BooleanValue;
 import me.superblaubeere27.jobf.utils.values.DeprecationLevel;
 import me.superblaubeere27.jobf.utils.values.FilePathValue;
 import me.superblaubeere27.jobf.utils.values.StringValue;
 
-public class JObfSettings {
+@Getter
+public class JObfSettings
+{
     private static final String PROCESSOR_NAME = "General Settings";
 
-    private StringValue generatorChars = new StringValue(PROCESSOR_NAME, "Generator characters", DeprecationLevel.GOOD, "Il");
-    private BooleanValue useCustomDictionary = new BooleanValue(PROCESSOR_NAME, "Custom dictionary", DeprecationLevel.GOOD, false);
-    private FilePathValue classNameDictionary = new FilePathValue(PROCESSOR_NAME, "Class Name dictionary", DeprecationLevel.GOOD, "");
-    private FilePathValue nameDictionary = new FilePathValue(PROCESSOR_NAME, "Name dictionary", DeprecationLevel.GOOD, "");
-    private BooleanValue useStore = new BooleanValue(PROCESSOR_NAME, "Use STORE instead of DEFLATE (For e.g. SpringBoot)", DeprecationLevel.GOOD, false);
+    private final StringValue generatorChars = new StringValue(PROCESSOR_NAME, "Generator characters", DeprecationLevel.GOOD, "Il");
+    private final BooleanValue useCustomDictionary = new BooleanValue(PROCESSOR_NAME, "Custom dictionary", DeprecationLevel.GOOD, false);
+    private final FilePathValue classNameDictionary = new FilePathValue(PROCESSOR_NAME, "Class Name dictionary", DeprecationLevel.GOOD, "");
+    private final FilePathValue nameDictionary = new FilePathValue(PROCESSOR_NAME, "Name dictionary", DeprecationLevel.GOOD, "");
+    private final BooleanValue useStore = new BooleanValue(PROCESSOR_NAME, "Use STORE instead of DEFLATE (For e.g. SpringBoot)", DeprecationLevel.GOOD, false);
 
-    public BooleanValue getUseCustomDictionary() {
-        return useCustomDictionary;
-    }
-
-    public FilePathValue getClassNameDictionary() {
-        return classNameDictionary;
-    }
-
-    public FilePathValue getNameDictionary() {
-        return nameDictionary;
-    }
-
-    public StringValue getGeneratorChars() {
-        return generatorChars;
-    }
-
-    public BooleanValue getUseStore() {
-        return useStore;
-    }
 }
 
