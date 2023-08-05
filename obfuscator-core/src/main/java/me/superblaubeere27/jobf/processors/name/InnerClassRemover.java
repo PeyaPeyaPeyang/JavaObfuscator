@@ -18,9 +18,11 @@ import me.superblaubeere27.jobf.utils.NameUtils;
 import me.superblaubeere27.jobf.utils.values.BooleanValue;
 import me.superblaubeere27.jobf.utils.values.DeprecationLevel;
 import me.superblaubeere27.jobf.utils.values.EnabledValue;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.ClassRemapper;
 import org.objectweb.asm.tree.ClassNode;
 
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -35,10 +37,16 @@ public class InnerClassRemover implements INameObfuscationProcessor, IClassTrans
     private final BooleanValue remap = new BooleanValue(PROCESSOR_NAME, "Remap", DeprecationLevel.OK, false);
     private final BooleanValue removeMetadata = new BooleanValue(PROCESSOR_NAME, "Remove Metadata", DeprecationLevel.GOOD, true);
 
+    private static boolean isInnerClass(String name)
+    {
+        return innerClasses.matcher(name).matches();
+    }
+
     @Override
     public void transformPost(JObfImpl inst, HashMap<String, ClassNode> nodes)
     {
-        if (!this.enabled.getObject() || !this.remap.getObject()) return;
+        if (!(this.enabled.getObject() && this.remap.getObject()))
+            return;
 
         final List<ClassNode> classNodes = new ArrayList<>(JObfImpl.classes.values());
 
@@ -46,28 +54,7 @@ public class InnerClassRemover implements INameObfuscationProcessor, IClassTrans
         final CustomRemapper remapper = new CustomRemapper();
 
         for (ClassNode classNode : classNodes)
-        {
-            if (innerClasses.matcher(classNode.name).matches())
-            {
-                String newName;
-
-                if (classNode.name.contains("/"))
-                {
-                    String packageName = classNode.name.substring(0, classNode.name.lastIndexOf('/'));
-                    newName = packageName + "/" + NameUtils.generateClassName(packageName);
-                }
-                else newName = NameUtils.generateClassName();
-
-                String mappedName;
-
-
-                do
-                {
-                    mappedName = newName;
-                }
-                while (!remapper.map(classNode.name, mappedName));
-            }
-        }
+            generateAndRegisterRandomName(classNode, remapper);
 
         for (final ClassNode classNode : classNodes)
         {
@@ -77,13 +64,49 @@ public class InnerClassRemover implements INameObfuscationProcessor, IClassTrans
             ClassRemapper classRemapper = new ClassRemapper(newNode, remapper);
             classNode.accept(classRemapper);
 
-//            if (!classNode.name.equals(newNode.name))
-//                Fume.fume.obfuscator.classTransforms.put(classNode.name, newNode.name);
+            normalizeModifiers(newNode);
 
             updatedClasses.put(newNode.name + ".class", newNode);
         }
 
-        updatedClasses.forEach((s, classNode) -> JObfImpl.classes.put(s, classNode));
+        JObfImpl.classes.putAll(updatedClasses);
+    }
+
+    private static void normalizeModifiers(ClassNode classNode)
+    {
+        if (Modifier.isPrivate(classNode.access) || Modifier.isProtected(classNode.access))
+        {
+            classNode.access &= ~Opcodes.ACC_PRIVATE;
+            classNode.access &= ~Opcodes.ACC_PROTECTED;
+            classNode.access |= Opcodes.ACC_PUBLIC;
+        }
+
+        if (Modifier.isStatic(classNode.access))
+            classNode.access &= ~Opcodes.ACC_STATIC;  // Inner は static にできない
+    }
+
+    private static boolean generateAndRegisterRandomName(ClassNode classNode, CustomRemapper remapper)
+    {
+        if (!isInnerClass(classNode.name))
+            return false;
+
+        String newName;
+
+        if (classNode.name.contains("/"))
+        {
+            String packageName = classNode.name.substring(0, classNode.name.lastIndexOf('/'));
+            newName = packageName + "/" + NameUtils.generateClassName(packageName);
+        }
+        else newName = NameUtils.generateClassName();
+
+        String mappedName;
+        do
+        {
+            mappedName = newName;  // コンパイラによる最適化を防ぐために、mappedNameを使う
+        }
+        while (!remapper.map(classNode.name, mappedName));  // 他スレッドの割り込みを待つ。
+
+        return true;
     }
 
     @Override

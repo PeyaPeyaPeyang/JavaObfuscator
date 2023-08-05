@@ -205,9 +205,7 @@ class CustomRemapper extends Remapper
         Objects.requireNonNull(newName);
 
         if (this.mapReversed.containsKey(newName))
-        {
             return false;
-        }
 
         this.map.put(old, newName);
         this.mapReversed.put(newName, old);
