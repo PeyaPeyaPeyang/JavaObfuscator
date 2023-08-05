@@ -47,7 +47,6 @@ import me.superblaubeere27.jobf.utils.values.Configuration;
 import me.superblaubeere27.jobf.utils.values.FilePathValue;
 import me.superblaubeere27.jobf.utils.values.StringValue;
 import me.superblaubeere27.jobf.utils.values.Value;
-import me.superblaubeere27.jobf.utils.values.ValueManager;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rsyntaxtextarea.Theme;
 import org.fife.ui.rtextarea.RTextScrollPane;
@@ -71,8 +70,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.ResourceBundle;
 
 public class GUI extends JFrame
@@ -296,16 +295,7 @@ public class GUI extends JFrame
     private void initValues()
     {
         this.processorOptions.removeAll();
-        HashMap<String, ArrayList<Value<?>>> ownerValueMap = new HashMap<>();
-
-        for (Value<?> value : ValueManager.getValues())
-        {
-            if (!ownerValueMap.containsKey(value.getOwner()))
-            {
-                ownerValueMap.put(value.getOwner(), new ArrayList<>());
-            }
-            ownerValueMap.get(value.getOwner()).add(value);
-        }
+        Map<String, ArrayList<Value<?>>> ownerValueMap = ConfigManager.buildValueMap();
 
 //        for (Map.Entry<String, ArrayList<Value<?>>> stringArrayListEntry : ownerValueMap.entrySet()) {
         ownerValueMap.entrySet().stream().sorted(Comparator.comparingInt(entry -> -entry.getValue().size())).forEach(entry -> {

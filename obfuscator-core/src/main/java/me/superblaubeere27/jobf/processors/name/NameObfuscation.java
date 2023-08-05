@@ -76,9 +76,6 @@ public class NameObfuscation implements INameObfuscationProcessor
         if (!this.shouldPackage.getObject())
             return "";
 
-        if (this.packageNames == null)
-            setupPackages();
-
         String retVal;
         if (this.packageNames.size() == 1 && this.packageNames.get(0).equalsIgnoreCase("common"))
             retVal = CommonPackageTrees.getRandomPackage();
@@ -139,6 +136,7 @@ public class NameObfuscation implements INameObfuscationProcessor
             log.info("Generating mappings...");
 
             NameUtils.setup();
+            this.setupPackages();
 
             processClasses(classWrappers, mappings);
 
