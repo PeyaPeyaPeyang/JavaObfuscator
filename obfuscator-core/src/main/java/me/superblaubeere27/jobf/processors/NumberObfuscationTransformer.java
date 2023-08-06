@@ -326,7 +326,6 @@ public class NumberObfuscationTransformer implements IClassTransformer
             else
                 clInit.instructions.insertBefore(clInit.instructions.getFirst(), new MethodInsnNode(Opcodes.INVOKESTATIC, node.name, generateIntegers.name, generateIntegers.desc, false));
         }
-        this.inst.setWorkDone();
     }
 
     @Override
@@ -334,6 +333,4 @@ public class NumberObfuscationTransformer implements IClassTransformer
     {
         return ObfuscationTransformer.INLINING;
     }
-
-
 }

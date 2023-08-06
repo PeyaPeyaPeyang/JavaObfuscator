@@ -143,7 +143,6 @@ public class LineNumberRemover implements IClassTransformer
             node.sourceFile = V_NEW_SOURCE_FILE_NAME.get().isEmpty() ? null: V_NEW_SOURCE_FILE_NAME.get();
         }
 
-        this.inst.setWorkDone();
     }
 
     @Override

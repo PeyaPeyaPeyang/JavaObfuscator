@@ -754,8 +754,4 @@ public class JarObfuscator
         outJar.putNextEntry(newEntry);
         outJar.write(value);
     }
-
-    public void setWorkDone()
-    {
-    }
 }

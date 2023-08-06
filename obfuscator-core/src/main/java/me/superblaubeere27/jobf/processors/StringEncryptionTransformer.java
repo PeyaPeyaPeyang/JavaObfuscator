@@ -350,7 +350,6 @@ public class StringEncryptionTransformer implements IClassTransformer
             }
         }
 
-        this.inst.setWorkDone();
     }
 
     @Override

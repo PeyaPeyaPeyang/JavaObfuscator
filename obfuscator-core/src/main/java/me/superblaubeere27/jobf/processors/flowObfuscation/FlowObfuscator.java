@@ -442,7 +442,6 @@ public class FlowObfuscator implements IClassTransformer
         node.methods.addAll(jumpMethodMap.values());
         node.methods.addAll(toAdd);
 
-        this.inst.setWorkDone();
     }
 
     @Override

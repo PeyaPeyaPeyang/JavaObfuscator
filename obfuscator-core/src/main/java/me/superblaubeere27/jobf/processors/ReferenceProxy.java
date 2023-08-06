@@ -96,7 +96,6 @@ public class ReferenceProxy implements IClassTransformer
 //        for (Map.Entry<String, MethodNode> stringMethodNodeEntry : nodes.entrySet()) {
 //            node.methods.add(stringMethodNodeEntry.getValue());
 //        }
-            this.inst.setWorkDone();
         }
         catch (Exception e)
         {

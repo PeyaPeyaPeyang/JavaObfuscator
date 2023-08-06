@@ -144,7 +144,6 @@ public class InlineTransformer implements IClassTransformer
 
 //        System.out.println("Inlined " + inlined + " methods.");
 
-        this.inst.setWorkDone();
     }
 
     @Override

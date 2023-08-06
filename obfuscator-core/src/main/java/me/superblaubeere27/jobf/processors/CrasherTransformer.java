@@ -85,7 +85,6 @@ public class CrasherTransformer implements IClassTransformer
             });
         }
 
-        this.inst.setWorkDone();
     }
 
     @Override

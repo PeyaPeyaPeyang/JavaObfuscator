@@ -96,7 +96,6 @@ public class ShuffleMembersTransformer implements IClassTransformer
                 if (method.visibleTypeAnnotations != null) Collections.shuffle(method.visibleTypeAnnotations, random);
             }
         }
-        this.inst.setWorkDone();
     }
 
     @Override

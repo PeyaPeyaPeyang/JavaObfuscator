@@ -74,7 +74,6 @@ public class HideMembers implements IClassTransformer
 //        if ((node.access & Opcodes.ACC_FINAL) == 0) {
 //            node.access = node.access | Opcodes.ACC_SYNTHETIC;
 //        }
-        this.inst.setWorkDone();
     }
 
     @Override

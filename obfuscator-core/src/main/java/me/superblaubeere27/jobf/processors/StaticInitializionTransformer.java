@@ -82,7 +82,6 @@ public class StaticInitializionTransformer implements IClassTransformer
         {
             clInit.instructions.insertBefore(clInit.instructions.getFirst(), toAdd);
         }
-        this.inst.setWorkDone();
     }
 
     @Override
