@@ -18,10 +18,10 @@ import tokyo.peya.obfuscator.annotations.ObfuscationTransformer;
 import tokyo.peya.obfuscator.processors.NumberObfuscationTransformer;
 import tokyo.peya.obfuscator.utils.NameUtils;
 import tokyo.peya.obfuscator.utils.NodeUtils;
-import tokyo.peya.obfuscator.utils.values.BooleanValue;
-import tokyo.peya.obfuscator.utils.values.DeprecationLevel;
-import tokyo.peya.obfuscator.utils.values.EnabledValue;
-import tokyo.peya.obfuscator.utils.values.ValueManager;
+import tokyo.peya.obfuscator.configuration.values.BooleanValue;
+import tokyo.peya.obfuscator.configuration.DeprecationLevel;
+import tokyo.peya.obfuscator.configuration.values.EnabledValue;
+import tokyo.peya.obfuscator.configuration.ValueManager;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -45,15 +45,15 @@ public class FlowObfuscator implements IClassTransformer
 {
     private static final String PROCESSOR_NAME = "FlowObfuscator";
     private static final Random random = new Random();
-    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.GOOD, true);
-    private static final BooleanValue V_MANGLE_COMPARISIONS = new BooleanValue(PROCESSOR_NAME, "Mangle Comparisons", "Replaces long, float and double comparisons with method calls", DeprecationLevel.GOOD, true);
-    private static final BooleanValue V_REPLACE_GOTO = new BooleanValue(PROCESSOR_NAME, "Replace GOTO", "Replaces unconditional jumps with conditionals", DeprecationLevel.GOOD, true);
-    private static final BooleanValue V_REPLACE_IF = new BooleanValue(PROCESSOR_NAME, "Replace If", "Replaces comparisions with method calls", DeprecationLevel.GOOD, true);
-    private static final BooleanValue V_BAD_POP = new BooleanValue(PROCESSOR_NAME, "Bad POP", DeprecationLevel.GOOD, true);
-    private static final BooleanValue V_BAD_CONCAT = new BooleanValue(PROCESSOR_NAME, "Bad Concat", "Breaks string concatenations", DeprecationLevel.GOOD, true);
-    private static final BooleanValue V_MANGLE_SWITCHES_ENABLED = new BooleanValue(PROCESSOR_NAME, "Mangle Switches", "Replaces switch statements with if-else statements", DeprecationLevel.OK, false);
-    private static final BooleanValue V_MANGLE_RETURN = new BooleanValue(PROCESSOR_NAME, "Mangle Return", "!! Needs COMPUTE_FRAMES (See documentation) !!", DeprecationLevel.BAD, false);
-    private static final BooleanValue V_MANGLE_LOCALS = new BooleanValue(PROCESSOR_NAME, "Mangle Local Variables", "!! Needs COMPUTE_FRAMES (See documentation) !!", DeprecationLevel.BAD, false);
+    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_MANGLE_COMPARISIONS = new BooleanValue(PROCESSOR_NAME, "Mangle Comparisons", "Replaces long, float and double comparisons with method calls", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_REPLACE_GOTO = new BooleanValue(PROCESSOR_NAME, "Replace GOTO", "Replaces unconditional jumps with conditionals", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_REPLACE_IF = new BooleanValue(PROCESSOR_NAME, "Replace If", "Replaces comparisions with method calls", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_BAD_POP = new BooleanValue(PROCESSOR_NAME, "Bad POP", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_BAD_CONCAT = new BooleanValue(PROCESSOR_NAME, "Bad Concat", "Breaks string concatenations", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_MANGLE_SWITCHES_ENABLED = new BooleanValue(PROCESSOR_NAME, "Mangle Switches", "Replaces switch statements with if-else statements", DeprecationLevel.SOME_DEPRECATION, false);
+    private static final BooleanValue V_MANGLE_RETURN = new BooleanValue(PROCESSOR_NAME, "Mangle Return", "!! Needs COMPUTE_FRAMES (See documentation) !!", DeprecationLevel.DEPRECATED, false);
+    private static final BooleanValue V_MANGLE_LOCALS = new BooleanValue(PROCESSOR_NAME, "Mangle Local Variables", "!! Needs COMPUTE_FRAMES (See documentation) !!", DeprecationLevel.DEPRECATED, false);
 
     static
     {

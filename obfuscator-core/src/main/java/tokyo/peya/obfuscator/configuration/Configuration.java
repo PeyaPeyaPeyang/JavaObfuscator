@@ -9,7 +9,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package tokyo.peya.obfuscator.utils.values;
+package tokyo.peya.obfuscator.configuration;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -31,7 +31,7 @@ public class Configuration
     private String script;
     private int nThreads;
 
-    static Configuration fromJsonObject(JsonObject obj)
+    public static Configuration fromJsonObject(JsonObject obj)
     {
         String input = "";
         String output = "";
@@ -58,7 +58,7 @@ public class Configuration
         return new Configuration(libraries, input, output, script, nThreads);
     }
 
-    void addToJsonObject(JsonObject jsonObject)
+    public void addToJsonObject(JsonObject jsonObject)
     {
         jsonObject.addProperty("input", this.input);
         jsonObject.addProperty("output", this.output);
@@ -67,26 +67,8 @@ public class Configuration
         JsonArray array = new JsonArray();
 
         for (String library : this.libraries)
-        {
             array.add(new JsonPrimitive(library));
-        }
 
         jsonObject.add("libraries", array);
     }
-
-    public void setInput(String input)
-    {
-        this.input = input;
-    }
-
-    public void setOutput(String output)
-    {
-        this.output = output;
-    }
-
-    public void setScript(String script)
-    {
-        this.script = script;
-    }
-
 }

@@ -19,7 +19,7 @@ import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileFilter;
 import tokyo.peya.obfuscator.JavaObfuscator;
 import tokyo.peya.obfuscator.processors.name.ClassWrapper;
-import tokyo.peya.obfuscator.utils.values.DeprecationLevel;
+import tokyo.peya.obfuscator.configuration.DeprecationLevel;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -291,11 +291,11 @@ public class Utils
     {
         switch (deprecationLevel)
         {
-            case GOOD:
+            case AVAILABLE:
                 return null;
-            case OK:
+            case SOME_DEPRECATION:
                 return new Color(255, 127, 80); // coral
-            case BAD:
+            case DEPRECATED:
                 return Color.red;
             default:
                 return null;

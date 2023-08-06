@@ -18,11 +18,11 @@ import tokyo.peya.obfuscator.ProcessorCallback;
 import tokyo.peya.obfuscator.processors.name.ClassWrapper;
 import tokyo.peya.obfuscator.utils.NameUtils;
 import tokyo.peya.obfuscator.utils.NodeUtils;
-import tokyo.peya.obfuscator.utils.values.BooleanValue;
-import tokyo.peya.obfuscator.utils.values.DeprecationLevel;
-import tokyo.peya.obfuscator.utils.values.EnabledValue;
-import tokyo.peya.obfuscator.utils.values.StringValue;
-import tokyo.peya.obfuscator.utils.values.ValueManager;
+import tokyo.peya.obfuscator.configuration.values.BooleanValue;
+import tokyo.peya.obfuscator.configuration.DeprecationLevel;
+import tokyo.peya.obfuscator.configuration.values.EnabledValue;
+import tokyo.peya.obfuscator.configuration.values.StringValue;
+import tokyo.peya.obfuscator.configuration.ValueManager;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.FieldVisitor;
@@ -44,9 +44,9 @@ public class Packager
     private static final Random RANDOM = new Random();
     private static final String PROCESSOR_NAME = "Packager";
 
-    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.OK, false);
-    private static final BooleanValue V_AUTO_FIND_MAIN_CLASS = new BooleanValue(PROCESSOR_NAME, "Use MainClass from the JAR manifest", DeprecationLevel.GOOD, true);
-    private static final StringValue V_MAIN_CLASS = new StringValue(PROCESSOR_NAME, "Main class", DeprecationLevel.GOOD, "org.example.Main");
+    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.SOME_DEPRECATION, false);
+    private static final BooleanValue V_AUTO_FIND_MAIN_CLASS = new BooleanValue(PROCESSOR_NAME, "Use MainClass from the JAR manifest", DeprecationLevel.AVAILABLE, true);
+    private static final StringValue V_MAIN_CLASS = new StringValue(PROCESSOR_NAME, "Main class", DeprecationLevel.AVAILABLE, "org.example.Main");
 
     static {
 

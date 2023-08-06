@@ -9,52 +9,11 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package tokyo.peya.obfuscator.utils.values;
+package tokyo.peya.obfuscator.configuration;
 
-import lombok.Getter;
-
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.List;
-
-public class ValueManager
+public enum DeprecationLevel
 {
-    @Getter
-    private static final List<Value<?>> values = new ArrayList<>();
-
-    private static void registerField(Field field, Object object)
-    {
-
-        try
-        {
-            field.setAccessible(true);
-
-            Object obj = field.get(object);
-
-            if (obj instanceof Value)
-            {
-                Value<?> value = (Value<?>) obj;
-                values.add(value);
-            }
-        }
-        catch (IllegalAccessException | NullPointerException ignored)
-        {
-        }
-    }
-
-    public static void registerClass(Object obj)
-    {
-        registerClass(obj.getClass(), obj);
-    }
-
-    public static void registerClass(Class<?> clazz)
-    {
-        registerClass(clazz, null);
-    }
-
-    private static void registerClass(Class<?> clazz, Object obj)
-    {
-        for (Field field : clazz.getDeclaredFields())
-            registerField(field, obj);
-    }
+    AVAILABLE,
+    SOME_DEPRECATION,
+    DEPRECATED
 }

@@ -9,11 +9,32 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package tokyo.peya.obfuscator.utils.values;
+package tokyo.peya.obfuscator.configuration.values;
 
-public enum DeprecationLevel
+import lombok.Getter;
+import tokyo.peya.obfuscator.configuration.DeprecationLevel;
+import tokyo.peya.obfuscator.configuration.Value;
+
+@Getter
+public class StringValue extends Value<String>
 {
-    GOOD,
-    OK,
-    BAD
+    private final int textFieldLines;
+
+    public StringValue(String owner, String name, DeprecationLevel deprecated, String object)
+    {
+        super(owner, name, deprecated, object);
+        this.textFieldLines = 1;
+    }
+
+    public StringValue(String owner, String name, String description, DeprecationLevel deprecation, String object, int textFieldLines)
+    {
+        super(owner, name, description, deprecation, object);
+        this.textFieldLines = textFieldLines;
+    }
+
+    @Override
+    public String toString()
+    {
+        return String.format("%s::%s = \"%s\"", getOwner(), getName(), get());
+    }
 }

@@ -15,9 +15,9 @@ import tokyo.peya.obfuscator.annotations.ObfuscationTransformer;
 import tokyo.peya.obfuscator.IClassTransformer;
 import tokyo.peya.obfuscator.JarObfuscator;
 import tokyo.peya.obfuscator.ProcessorCallback;
-import tokyo.peya.obfuscator.utils.values.DeprecationLevel;
-import tokyo.peya.obfuscator.utils.values.EnabledValue;
-import tokyo.peya.obfuscator.utils.values.ValueManager;
+import tokyo.peya.obfuscator.configuration.DeprecationLevel;
+import tokyo.peya.obfuscator.configuration.values.EnabledValue;
+import tokyo.peya.obfuscator.configuration.ValueManager;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
@@ -29,7 +29,7 @@ public class HideMembers implements IClassTransformer
 {
     private static final String PROCESSOR_NAME = "HideMembers";
     private static final Random random = new Random();
-    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.GOOD, true);
+    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.AVAILABLE, true);
 
     static
     {

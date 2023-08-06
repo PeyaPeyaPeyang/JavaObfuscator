@@ -28,8 +28,8 @@ import tokyo.peya.obfuscator.ui.GUI;
 import tokyo.peya.obfuscator.utils.ConsoleUtils;
 import tokyo.peya.obfuscator.utils.Templates;
 import tokyo.peya.obfuscator.utils.Utils;
-import tokyo.peya.obfuscator.utils.values.ConfigManager;
-import tokyo.peya.obfuscator.utils.values.Configuration;
+import tokyo.peya.obfuscator.configuration.ConfigManager;
+import tokyo.peya.obfuscator.configuration.Configuration;
 
 import java.awt.GraphicsEnvironment;
 import java.io.File;

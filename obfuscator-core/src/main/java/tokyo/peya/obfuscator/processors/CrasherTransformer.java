@@ -16,10 +16,10 @@ import tokyo.peya.obfuscator.IClassTransformer;
 import tokyo.peya.obfuscator.JarObfuscator;
 import tokyo.peya.obfuscator.ProcessorCallback;
 import tokyo.peya.obfuscator.utils.NameUtils;
-import tokyo.peya.obfuscator.utils.values.BooleanValue;
-import tokyo.peya.obfuscator.utils.values.DeprecationLevel;
-import tokyo.peya.obfuscator.utils.values.EnabledValue;
-import tokyo.peya.obfuscator.utils.values.ValueManager;
+import tokyo.peya.obfuscator.configuration.values.BooleanValue;
+import tokyo.peya.obfuscator.configuration.DeprecationLevel;
+import tokyo.peya.obfuscator.configuration.values.EnabledValue;
+import tokyo.peya.obfuscator.configuration.ValueManager;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
 
@@ -29,9 +29,9 @@ import java.util.ArrayList;
 public class CrasherTransformer implements IClassTransformer
 {
     private static final String EMPTY_STRINGS;
-    private static final EnabledValue V_ENABLED = new EnabledValue("Crasher", DeprecationLevel.GOOD, false);
-    private static final BooleanValue V_INVALID_SIGNATURES = new BooleanValue("Crasher", "Invalid Signatures", "Adds invalid signatures", DeprecationLevel.GOOD, true);
-    private static final BooleanValue V_EMPTY_ANNOTATION = new BooleanValue("Crasher", "Empty annotation spam", "Adds annotations which are repeated newline", DeprecationLevel.GOOD, true);
+    private static final EnabledValue V_ENABLED = new EnabledValue("Crasher", DeprecationLevel.AVAILABLE, false);
+    private static final BooleanValue V_INVALID_SIGNATURES = new BooleanValue("Crasher", "Invalid Signatures", "Adds invalid signatures", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_EMPTY_ANNOTATION = new BooleanValue("Crasher", "Empty annotation spam", "Adds annotations which are repeated newline", DeprecationLevel.AVAILABLE, true);
 
     static
     {

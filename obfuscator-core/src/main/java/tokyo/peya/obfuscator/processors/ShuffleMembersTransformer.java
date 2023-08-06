@@ -15,8 +15,8 @@ import tokyo.peya.obfuscator.annotations.ObfuscationTransformer;
 import tokyo.peya.obfuscator.IClassTransformer;
 import tokyo.peya.obfuscator.JarObfuscator;
 import tokyo.peya.obfuscator.ProcessorCallback;
-import tokyo.peya.obfuscator.utils.values.DeprecationLevel;
-import tokyo.peya.obfuscator.utils.values.EnabledValue;
+import tokyo.peya.obfuscator.configuration.DeprecationLevel;
+import tokyo.peya.obfuscator.configuration.values.EnabledValue;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
@@ -36,7 +36,7 @@ public class ShuffleMembersTransformer implements IClassTransformer
     }
 
     private final JarObfuscator inst;
-    private final EnabledValue enabled = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.GOOD, true);
+    private final EnabledValue enabled = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.AVAILABLE, true);
 
     public ShuffleMembersTransformer(JarObfuscator inst)
     {

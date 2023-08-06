@@ -9,45 +9,19 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package tokyo.peya.obfuscator.utils.values;
+package tokyo.peya.obfuscator.configuration.values;
 
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.Setter;
+import tokyo.peya.obfuscator.configuration.DeprecationLevel;
 
-@Getter
-public abstract class Value<T>
+public class FilePathValue extends StringValue
 {
-    private final String owner;
-    private final String name;
-    private final String description;
-    private final DeprecationLevel deprecation;
-    @Getter(AccessLevel.NONE)
-    @Setter
-    private T value;
-
-    public Value(String owner, String name, DeprecationLevel deprecation, T object)
+    public FilePathValue(String owner, String name, DeprecationLevel deprecated, String object)
     {
-        this(owner, name, "", deprecation, object);
+        super(owner, name, deprecated, object);
     }
 
-    public Value(String owner, String name, String description, DeprecationLevel deprecation, T object)
+    public FilePathValue(String owner, String name, String description, DeprecationLevel deprecation, String object)
     {
-        this.owner = owner;
-        this.name = name;
-        this.description = description;
-        this.deprecation = deprecation;
-        this.value = object;
-    }
-
-    public T get()
-    {
-        return this.value;
-    }
-
-    @Override
-    public String toString()
-    {
-        return String.format("%s::%s = %s", this.owner, this.name, this.value);
+        super(owner, name, description, deprecation, object, 1);
     }
 }

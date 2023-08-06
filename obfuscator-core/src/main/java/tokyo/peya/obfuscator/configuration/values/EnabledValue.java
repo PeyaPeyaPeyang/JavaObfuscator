@@ -9,30 +9,26 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package tokyo.peya.obfuscator.utils.values;
+package tokyo.peya.obfuscator.configuration.values;
 
-import lombok.Getter;
+import tokyo.peya.obfuscator.configuration.DeprecationLevel;
 
-@Getter
-public class StringValue extends Value<String>
+public class EnabledValue extends BooleanValue
 {
-    private final int textFieldLines;
 
-    public StringValue(String owner, String name, DeprecationLevel deprecated, String object)
+    public EnabledValue(String owner, DeprecationLevel deprecated, Boolean object)
     {
-        super(owner, name, deprecated, object);
-        this.textFieldLines = 1;
+        super(owner, "Enabled", deprecated, object);
     }
 
-    public StringValue(String owner, String name, String description, DeprecationLevel deprecation, String object, int textFieldLines)
+    public EnabledValue(String owner, String description, DeprecationLevel deprecation, Boolean object)
     {
-        super(owner, name, description, deprecation, object);
-        this.textFieldLines = textFieldLines;
+        super(owner, "Enabled", description, deprecation, object);
     }
 
     @Override
     public String toString()
     {
-        return String.format("%s::%s = \"%s\"", getOwner(), getName(), get());
+        return String.format("%s = %s", getOwner(), get());
     }
 }

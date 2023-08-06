@@ -17,10 +17,10 @@ import tokyo.peya.obfuscator.JarObfuscator;
 import tokyo.peya.obfuscator.ProcessorCallback;
 import tokyo.peya.obfuscator.utils.NameUtils;
 import tokyo.peya.obfuscator.utils.NodeUtils;
-import tokyo.peya.obfuscator.utils.values.BooleanValue;
-import tokyo.peya.obfuscator.utils.values.DeprecationLevel;
-import tokyo.peya.obfuscator.utils.values.EnabledValue;
-import tokyo.peya.obfuscator.utils.values.ValueManager;
+import tokyo.peya.obfuscator.configuration.values.BooleanValue;
+import tokyo.peya.obfuscator.configuration.DeprecationLevel;
+import tokyo.peya.obfuscator.configuration.values.EnabledValue;
+import tokyo.peya.obfuscator.configuration.ValueManager;
 import org.apache.commons.lang3.RandomUtils;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -43,12 +43,12 @@ public class NumberObfuscationTransformer implements IClassTransformer
 {
     private static final String PROCESSOR_NAME = "NumberObfuscation";
     private static final Random random = new Random();
-    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.GOOD, true);
-    private static final BooleanValue V_EXTRACT_TO_ARRAY = new BooleanValue(PROCESSOR_NAME, "Extract to Array", "Calculates the integers once and store them in an array", DeprecationLevel.GOOD, true);
-    private static final BooleanValue V_OBFUSCATE_ZERO = new BooleanValue(PROCESSOR_NAME, "Obfuscate Zero", "Enables special obfuscation of the number 0", DeprecationLevel.GOOD, true);
-    private static final BooleanValue V_SHIFT = new BooleanValue(PROCESSOR_NAME, "Shift", "Uses \"<<\" to obfuscate numbers", DeprecationLevel.GOOD, false);
-    private static final BooleanValue V_AND = new BooleanValue(PROCESSOR_NAME, "And", "Uses \"&\" to obfuscate numbers", DeprecationLevel.GOOD, false);
-    private static final BooleanValue V_MULTIPLE_INSTRUCTIONS = new BooleanValue(PROCESSOR_NAME, "Multiple Instructions", "Repeats the obfuscation process", DeprecationLevel.GOOD, true);
+    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_EXTRACT_TO_ARRAY = new BooleanValue(PROCESSOR_NAME, "Extract to Array", "Calculates the integers once and store them in an array", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_OBFUSCATE_ZERO = new BooleanValue(PROCESSOR_NAME, "Obfuscate Zero", "Enables special obfuscation of the number 0", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_SHIFT = new BooleanValue(PROCESSOR_NAME, "Shift", "Uses \"<<\" to obfuscate numbers", DeprecationLevel.AVAILABLE, false);
+    private static final BooleanValue V_AND = new BooleanValue(PROCESSOR_NAME, "And", "Uses \"&\" to obfuscate numbers", DeprecationLevel.AVAILABLE, false);
+    private static final BooleanValue V_MULTIPLE_INSTRUCTIONS = new BooleanValue(PROCESSOR_NAME, "Multiple Instructions", "Repeats the obfuscation process", DeprecationLevel.AVAILABLE, true);
 
     static
     {

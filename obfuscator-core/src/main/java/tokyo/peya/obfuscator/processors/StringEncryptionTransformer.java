@@ -23,10 +23,10 @@ import tokyo.peya.obfuscator.processors.encryption.string.XOREncryptionAlgorithm
 import tokyo.peya.obfuscator.utils.NameUtils;
 import tokyo.peya.obfuscator.utils.NodeUtils;
 import tokyo.peya.obfuscator.utils.StringManipulationUtils;
-import tokyo.peya.obfuscator.utils.values.BooleanValue;
-import tokyo.peya.obfuscator.utils.values.DeprecationLevel;
-import tokyo.peya.obfuscator.utils.values.EnabledValue;
-import tokyo.peya.obfuscator.utils.values.ValueManager;
+import tokyo.peya.obfuscator.configuration.values.BooleanValue;
+import tokyo.peya.obfuscator.configuration.DeprecationLevel;
+import tokyo.peya.obfuscator.configuration.values.EnabledValue;
+import tokyo.peya.obfuscator.configuration.ValueManager;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -58,9 +58,9 @@ public class StringEncryptionTransformer implements IClassTransformer
     private static final String MAGICNUMBER_END = "\u00fc";
     private static final String PROCESSOR_NAME = "StringEncryption";
     private static final Random random = new Random();
-    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.GOOD, true);
-    private static final BooleanValue V_HIDE_STRINGS = new BooleanValue(PROCESSOR_NAME, "HideStrings", "Hide strings in SourceFile. Might break after editing the SourceFile", DeprecationLevel.OK, false);
-    private static final BooleanValue V_AES = new BooleanValue(PROCESSOR_NAME, "AES", DeprecationLevel.OK, false);
+    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_HIDE_STRINGS = new BooleanValue(PROCESSOR_NAME, "HideStrings", "Hide strings in SourceFile. Might break after editing the SourceFile", DeprecationLevel.SOME_DEPRECATION, false);
+    private static final BooleanValue V_AES = new BooleanValue(PROCESSOR_NAME, "AES", DeprecationLevel.SOME_DEPRECATION, false);
 
     static
     {

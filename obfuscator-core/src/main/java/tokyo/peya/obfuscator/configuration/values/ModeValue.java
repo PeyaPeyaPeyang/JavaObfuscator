@@ -9,18 +9,36 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package tokyo.peya.obfuscator.utils.values;
+package tokyo.peya.obfuscator.configuration.values;
 
-public class BooleanValue extends Value<Boolean>
+import joptsimple.internal.Strings;
+import tokyo.peya.obfuscator.configuration.DeprecationLevel;
+import tokyo.peya.obfuscator.configuration.Value;
+
+public class ModeValue extends Value<Integer>
 {
+    private final String[] possibleValues;
 
-    public BooleanValue(String owner, String name, DeprecationLevel deprecation, Boolean object)
+    public ModeValue(String owner, String name, DeprecationLevel deprecated, Integer object, String[] possibleValues)
     {
-        super(owner, name, deprecation, object);
+        super(owner, name, deprecated, object);
+        this.possibleValues = possibleValues;
     }
 
-    public BooleanValue(String owner, String name, String description, DeprecationLevel deprecation, Boolean object)
+    public ModeValue(String owner, String name, String description, DeprecationLevel deprecated, Integer object, String[] possibleValues)
     {
-        super(owner, name, description, deprecation, object);
+        super(owner, name, description, deprecated, object);
+        this.possibleValues = possibleValues;
+    }
+
+    private String[] getPossibleValues()
+    {
+        return this.possibleValues;
+    }
+
+    @Override
+    public String toString()
+    {
+        return String.format("%s::%s<%s> = %s", getOwner(), getName(), Strings.join(getPossibleValues(), ", "), get());
     }
 }

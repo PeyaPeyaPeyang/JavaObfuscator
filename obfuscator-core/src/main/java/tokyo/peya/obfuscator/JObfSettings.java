@@ -12,21 +12,21 @@
 package tokyo.peya.obfuscator;
 
 import lombok.Getter;
-import tokyo.peya.obfuscator.utils.values.BooleanValue;
-import tokyo.peya.obfuscator.utils.values.DeprecationLevel;
-import tokyo.peya.obfuscator.utils.values.FilePathValue;
-import tokyo.peya.obfuscator.utils.values.StringValue;
+import tokyo.peya.obfuscator.configuration.values.BooleanValue;
+import tokyo.peya.obfuscator.configuration.DeprecationLevel;
+import tokyo.peya.obfuscator.configuration.values.FilePathValue;
+import tokyo.peya.obfuscator.configuration.values.StringValue;
 
 @Getter
 public class JObfSettings
 {
     private static final String PROCESSOR_NAME = "General Settings";
 
-    private final StringValue generatorChars = new StringValue(PROCESSOR_NAME, "Generator characters", DeprecationLevel.GOOD, "Il");
-    private final BooleanValue useCustomDictionary = new BooleanValue(PROCESSOR_NAME, "Custom dictionary", DeprecationLevel.GOOD, false);
-    private final FilePathValue classNameDictionary = new FilePathValue(PROCESSOR_NAME, "Class Name dictionary", DeprecationLevel.GOOD, "");
-    private final FilePathValue nameDictionary = new FilePathValue(PROCESSOR_NAME, "Name dictionary", DeprecationLevel.GOOD, "");
-    private final BooleanValue useStore = new BooleanValue(PROCESSOR_NAME, "Use STORE instead of DEFLATE (For e.g. SpringBoot)", DeprecationLevel.GOOD, false);
+    private final StringValue generatorChars = new StringValue(PROCESSOR_NAME, "Generator characters", DeprecationLevel.AVAILABLE, "Il");
+    private final BooleanValue useCustomDictionary = new BooleanValue(PROCESSOR_NAME, "Custom dictionary", DeprecationLevel.AVAILABLE, false);
+    private final FilePathValue classNameDictionary = new FilePathValue(PROCESSOR_NAME, "Class Name dictionary", DeprecationLevel.AVAILABLE, "");
+    private final FilePathValue nameDictionary = new FilePathValue(PROCESSOR_NAME, "Name dictionary", DeprecationLevel.AVAILABLE, "");
+    private final BooleanValue useStore = new BooleanValue(PROCESSOR_NAME, "Use STORE instead of DEFLATE (For e.g. SpringBoot)", DeprecationLevel.AVAILABLE, false);
 
 }
 

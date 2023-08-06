@@ -16,11 +16,11 @@ import tokyo.peya.obfuscator.IClassTransformer;
 import tokyo.peya.obfuscator.JarObfuscator;
 import tokyo.peya.obfuscator.ProcessorCallback;
 import tokyo.peya.obfuscator.utils.NameUtils;
-import tokyo.peya.obfuscator.utils.values.BooleanValue;
-import tokyo.peya.obfuscator.utils.values.DeprecationLevel;
-import tokyo.peya.obfuscator.utils.values.EnabledValue;
-import tokyo.peya.obfuscator.utils.values.StringValue;
-import tokyo.peya.obfuscator.utils.values.ValueManager;
+import tokyo.peya.obfuscator.configuration.values.BooleanValue;
+import tokyo.peya.obfuscator.configuration.DeprecationLevel;
+import tokyo.peya.obfuscator.configuration.values.EnabledValue;
+import tokyo.peya.obfuscator.configuration.values.StringValue;
+import tokyo.peya.obfuscator.configuration.ValueManager;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.LabelNode;
@@ -40,12 +40,12 @@ public class LineNumberRemover implements IClassTransformer
     private static final String PROCESSOR_NAME = "LineNumberRemover";
     private static final Random random = new Random();
     private static final ArrayList<String> TYPES = new ArrayList<>();
-    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.GOOD, true);
-    private static final BooleanValue V_RENAME_VALUES = new BooleanValue(PROCESSOR_NAME, "Rename local variables", DeprecationLevel.GOOD, true);
-    private static final BooleanValue V_REMOVE_LINE_NUMBERS = new BooleanValue(PROCESSOR_NAME, "Remove Line Numbers", DeprecationLevel.GOOD, true);
-    private static final BooleanValue V_REMOVE_DEBUG_NAMES = new BooleanValue(PROCESSOR_NAME, "Remove Debug Names", DeprecationLevel.GOOD, true);
-    private static final BooleanValue V_ADD_LOCAL_VARIABLES = new BooleanValue(PROCESSOR_NAME, "Add Local Variables", "Adds random local variables with wrong types. Might break some decompilers", DeprecationLevel.GOOD, true);
-    private static final StringValue V_NEW_SOURCE_FILE_NAME = new StringValue(PROCESSOR_NAME, "New SourceFile Name", DeprecationLevel.GOOD, "");
+    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_RENAME_VALUES = new BooleanValue(PROCESSOR_NAME, "Rename local variables", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_REMOVE_LINE_NUMBERS = new BooleanValue(PROCESSOR_NAME, "Remove Line Numbers", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_REMOVE_DEBUG_NAMES = new BooleanValue(PROCESSOR_NAME, "Remove Debug Names", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_ADD_LOCAL_VARIABLES = new BooleanValue(PROCESSOR_NAME, "Add Local Variables", "Adds random local variables with wrong types. Might break some decompilers", DeprecationLevel.AVAILABLE, true);
+    private static final StringValue V_NEW_SOURCE_FILE_NAME = new StringValue(PROCESSOR_NAME, "New SourceFile Name", DeprecationLevel.AVAILABLE, "");
 
     static
     {

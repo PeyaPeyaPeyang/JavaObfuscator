@@ -9,34 +9,52 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package tokyo.peya.obfuscator.utils.values;
+package tokyo.peya.obfuscator.configuration;
 
-import joptsimple.internal.Strings;
+import lombok.Getter;
 
-public class ModeValue extends Value<Integer>
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
+
+public class ValueManager
 {
-    private final String[] possibleValues;
+    @Getter
+    private static final List<Value<?>> values = new ArrayList<>();
 
-    public ModeValue(String owner, String name, DeprecationLevel deprecated, Integer object, String[] possibleValues)
+    private static void registerField(Field field, Object object)
     {
-        super(owner, name, deprecated, object);
-        this.possibleValues = possibleValues;
+
+        try
+        {
+            field.setAccessible(true);
+
+            Object obj = field.get(object);
+
+            if (obj instanceof Value)
+            {
+                Value<?> value = (Value<?>) obj;
+                values.add(value);
+            }
+        }
+        catch (IllegalAccessException | NullPointerException ignored)
+        {
+        }
     }
 
-    public ModeValue(String owner, String name, String description, DeprecationLevel deprecated, Integer object, String[] possibleValues)
+    public static void registerClass(Object obj)
     {
-        super(owner, name, description, deprecated, object);
-        this.possibleValues = possibleValues;
+        registerClass(obj.getClass(), obj);
     }
 
-    private String[] getPossibleValues()
+    public static void registerClass(Class<?> clazz)
     {
-        return this.possibleValues;
+        registerClass(clazz, null);
     }
 
-    @Override
-    public String toString()
+    private static void registerClass(Class<?> clazz, Object obj)
     {
-        return String.format("%s::%s<%s> = %s", getOwner(), getName(), Strings.join(getPossibleValues(), ", "), get());
+        for (Field field : clazz.getDeclaredFields())
+            registerField(field, obj);
     }
 }

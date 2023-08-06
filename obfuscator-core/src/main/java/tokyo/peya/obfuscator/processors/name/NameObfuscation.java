@@ -16,12 +16,12 @@ import tokyo.peya.obfuscator.JarObfuscator;
 import tokyo.peya.obfuscator.utils.ClassTree;
 import tokyo.peya.obfuscator.utils.NameUtils;
 import tokyo.peya.obfuscator.utils.Utils;
-import tokyo.peya.obfuscator.utils.values.BooleanValue;
-import tokyo.peya.obfuscator.utils.values.DeprecationLevel;
-import tokyo.peya.obfuscator.utils.values.EnabledValue;
-import tokyo.peya.obfuscator.utils.values.FilePathValue;
-import tokyo.peya.obfuscator.utils.values.StringValue;
-import tokyo.peya.obfuscator.utils.values.ValueManager;
+import tokyo.peya.obfuscator.configuration.values.BooleanValue;
+import tokyo.peya.obfuscator.configuration.DeprecationLevel;
+import tokyo.peya.obfuscator.configuration.values.EnabledValue;
+import tokyo.peya.obfuscator.configuration.values.FilePathValue;
+import tokyo.peya.obfuscator.configuration.values.StringValue;
+import tokyo.peya.obfuscator.configuration.ValueManager;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.ClassRemapper;
@@ -50,14 +50,14 @@ public class NameObfuscation implements INameObfuscationProcessor
 {
     private static final String PROCESSOR_NAME = "NameObfuscation";
     private static final Random random = new Random();
-    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.OK, false);
-    private static final StringValue V_EXCLUDED_CLASSES = new StringValue(PROCESSOR_NAME, "Excluded classes", null, DeprecationLevel.GOOD, "me.name.Class\nme.name.*\nio.netty.**", 5);
-    private static final StringValue V_EXCLUDED_METHODS = new StringValue(PROCESSOR_NAME, "Excluded methods", null, DeprecationLevel.GOOD, "me.name.Class.method\nme.name.Class**\nme.name.Class.*", 5);
-    private static final StringValue V_EXCLUDED_FIELDS = new StringValue(PROCESSOR_NAME, "Excluded fields", null, DeprecationLevel.GOOD, "me.name.Class.field\nme.name.Class.*\nme.name.**", 5);
-    private static final BooleanValue V_SHOULD_PACKAGE = new BooleanValue(PROCESSOR_NAME, "Package", DeprecationLevel.OK, false);
-    private static final StringValue V_NEW_PACKAGE = new StringValue(PROCESSOR_NAME, "New Packages", null, DeprecationLevel.GOOD, "", 5);
-    private static final BooleanValue V_ACCEPT_MISSING_LIBRARIES = new BooleanValue(PROCESSOR_NAME, "Accept Missing Libraries", DeprecationLevel.GOOD, false);
-    private static final FilePathValue V_MAPPINGS_TO_SAVE = new FilePathValue(PROCESSOR_NAME, "Mappings to save", null, DeprecationLevel.GOOD, null);
+    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.SOME_DEPRECATION, false);
+    private static final StringValue V_EXCLUDED_CLASSES = new StringValue(PROCESSOR_NAME, "Excluded classes", null, DeprecationLevel.AVAILABLE, "me.name.Class\nme.name.*\nio.netty.**", 5);
+    private static final StringValue V_EXCLUDED_METHODS = new StringValue(PROCESSOR_NAME, "Excluded methods", null, DeprecationLevel.AVAILABLE, "me.name.Class.method\nme.name.Class**\nme.name.Class.*", 5);
+    private static final StringValue V_EXCLUDED_FIELDS = new StringValue(PROCESSOR_NAME, "Excluded fields", null, DeprecationLevel.AVAILABLE, "me.name.Class.field\nme.name.Class.*\nme.name.**", 5);
+    private static final BooleanValue V_SHOULD_PACKAGE = new BooleanValue(PROCESSOR_NAME, "Package", DeprecationLevel.SOME_DEPRECATION, false);
+    private static final StringValue V_NEW_PACKAGE = new StringValue(PROCESSOR_NAME, "New Packages", null, DeprecationLevel.AVAILABLE, "", 5);
+    private static final BooleanValue V_ACCEPT_MISSING_LIBRARIES = new BooleanValue(PROCESSOR_NAME, "Accept Missing Libraries", DeprecationLevel.AVAILABLE, false);
+    private static final FilePathValue V_MAPPINGS_TO_SAVE = new FilePathValue(PROCESSOR_NAME, "Mappings to save", null, DeprecationLevel.AVAILABLE, null);
 
     static
     {

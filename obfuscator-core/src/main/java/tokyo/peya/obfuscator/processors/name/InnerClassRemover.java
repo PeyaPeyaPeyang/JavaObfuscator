@@ -16,10 +16,10 @@ import tokyo.peya.obfuscator.JarObfuscator;
 import tokyo.peya.obfuscator.ProcessorCallback;
 import tokyo.peya.obfuscator.annotations.ObfuscationTransformer;
 import tokyo.peya.obfuscator.utils.NameUtils;
-import tokyo.peya.obfuscator.utils.values.BooleanValue;
-import tokyo.peya.obfuscator.utils.values.DeprecationLevel;
-import tokyo.peya.obfuscator.utils.values.EnabledValue;
-import tokyo.peya.obfuscator.utils.values.ValueManager;
+import tokyo.peya.obfuscator.configuration.values.BooleanValue;
+import tokyo.peya.obfuscator.configuration.DeprecationLevel;
+import tokyo.peya.obfuscator.configuration.values.EnabledValue;
+import tokyo.peya.obfuscator.configuration.ValueManager;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.ClassRemapper;
 import org.objectweb.asm.tree.ClassNode;
@@ -35,9 +35,9 @@ public class InnerClassRemover implements INameObfuscationProcessor, IClassTrans
 {
     private static final String PROCESSOR_NAME = "InnerClassRemover";
     private static final Pattern innerClasses = Pattern.compile(".*[A-Za-z0-9]+\\$[0-9]+");
-    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.GOOD, true);
-    private static final BooleanValue V_REMAP = new BooleanValue(PROCESSOR_NAME, "Remap", DeprecationLevel.OK, false);
-    private static final BooleanValue V_REMOVE_METADATA = new BooleanValue(PROCESSOR_NAME, "Remove Metadata", DeprecationLevel.GOOD, true);
+    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_REMAP = new BooleanValue(PROCESSOR_NAME, "Remap", DeprecationLevel.SOME_DEPRECATION, false);
+    private static final BooleanValue V_REMOVE_METADATA = new BooleanValue(PROCESSOR_NAME, "Remove Metadata", DeprecationLevel.AVAILABLE, true);
 
     static
     {

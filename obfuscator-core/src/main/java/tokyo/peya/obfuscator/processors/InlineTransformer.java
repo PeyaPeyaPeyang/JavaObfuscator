@@ -19,9 +19,9 @@ import tokyo.peya.obfuscator.ProcessorCallback;
 import tokyo.peya.obfuscator.utils.InliningUtils;
 import tokyo.peya.obfuscator.utils.NodeUtils;
 import tokyo.peya.obfuscator.utils.Utils;
-import tokyo.peya.obfuscator.utils.values.DeprecationLevel;
-import tokyo.peya.obfuscator.utils.values.EnabledValue;
-import tokyo.peya.obfuscator.utils.values.ValueManager;
+import tokyo.peya.obfuscator.configuration.DeprecationLevel;
+import tokyo.peya.obfuscator.configuration.values.EnabledValue;
+import tokyo.peya.obfuscator.configuration.ValueManager;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
@@ -46,7 +46,7 @@ public class InlineTransformer implements IClassTransformer
 {
     private static final Random random = new Random();
 
-    private static final EnabledValue V_ENABLED = new EnabledValue("Inlining", "Doesn't work, please don't use this", DeprecationLevel.BAD, false);
+    private static final EnabledValue V_ENABLED = new EnabledValue("Inlining", "Doesn't work, please don't use this", DeprecationLevel.DEPRECATED, false);
 
     private static final List<String> exceptions = new ArrayList<>();
 

@@ -18,9 +18,9 @@ import tokyo.peya.obfuscator.ProcessorCallback;
 import tokyo.peya.obfuscator.utils.NameUtils;
 import tokyo.peya.obfuscator.utils.NodeUtils;
 import tokyo.peya.obfuscator.utils.Utils;
-import tokyo.peya.obfuscator.utils.values.DeprecationLevel;
-import tokyo.peya.obfuscator.utils.values.EnabledValue;
-import tokyo.peya.obfuscator.utils.values.ValueManager;
+import tokyo.peya.obfuscator.configuration.DeprecationLevel;
+import tokyo.peya.obfuscator.configuration.values.EnabledValue;
+import tokyo.peya.obfuscator.configuration.ValueManager;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;
@@ -77,7 +77,7 @@ public class InvokeDynamic implements IClassTransformer
 {
     private static final String PROCESSOR_NAME = "InvokeDynamic";
     private static final Random random = new Random();
-    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, "Hides method calls", DeprecationLevel.OK, false);
+    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, "Hides method calls", DeprecationLevel.SOME_DEPRECATION, false);
 
     static
     {

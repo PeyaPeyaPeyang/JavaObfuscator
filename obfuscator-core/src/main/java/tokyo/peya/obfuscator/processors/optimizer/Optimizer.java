@@ -14,10 +14,10 @@ package tokyo.peya.obfuscator.processors.optimizer;
 import tokyo.peya.obfuscator.IClassTransformer;
 import tokyo.peya.obfuscator.ProcessorCallback;
 import tokyo.peya.obfuscator.annotations.ObfuscationTransformer;
-import tokyo.peya.obfuscator.utils.values.BooleanValue;
-import tokyo.peya.obfuscator.utils.values.DeprecationLevel;
-import tokyo.peya.obfuscator.utils.values.EnabledValue;
-import tokyo.peya.obfuscator.utils.values.ValueManager;
+import tokyo.peya.obfuscator.configuration.values.BooleanValue;
+import tokyo.peya.obfuscator.configuration.DeprecationLevel;
+import tokyo.peya.obfuscator.configuration.values.EnabledValue;
+import tokyo.peya.obfuscator.configuration.ValueManager;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
@@ -25,11 +25,11 @@ public class Optimizer implements IClassTransformer
 {
     private static final String PROCESSOR_NAME = "Optimizer";
 
-    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.OK, false);
+    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.SOME_DEPRECATION, false);
 
-    private static final BooleanValue V_REPLACE_EQUALS = new BooleanValue(PROCESSOR_NAME, "Replace String.equals()", "NOT TESTED", DeprecationLevel.OK, false);
-    private static final BooleanValue V_EQUALS_IGNORE_CASE = new BooleanValue(PROCESSOR_NAME, "Replace String.equalsIgnoreCase()", "Might break some comparisons with strings that contains unicode chars", DeprecationLevel.OK, false);
-    private static final BooleanValue V_OPTIMIZE_STATIC_STRING_CALLS = new BooleanValue(PROCESSOR_NAME, "Optimize static string calls", null, DeprecationLevel.GOOD, false);
+    private static final BooleanValue V_REPLACE_EQUALS = new BooleanValue(PROCESSOR_NAME, "Replace String.equals()", "NOT TESTED", DeprecationLevel.SOME_DEPRECATION, false);
+    private static final BooleanValue V_EQUALS_IGNORE_CASE = new BooleanValue(PROCESSOR_NAME, "Replace String.equalsIgnoreCase()", "Might break some comparisons with strings that contains unicode chars", DeprecationLevel.SOME_DEPRECATION, false);
+    private static final BooleanValue V_OPTIMIZE_STATIC_STRING_CALLS = new BooleanValue(PROCESSOR_NAME, "Optimize static string calls", null, DeprecationLevel.AVAILABLE, false);
 
     static
     {
