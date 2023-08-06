@@ -196,15 +196,30 @@ public class NumberObfuscationTransformer implements IClassTransformer
     {
         int method;
 
-        boolean lengthMode = RandomUtils.nextBoolean();
-        boolean xorMode = RandomUtils.nextBoolean();
-        boolean simpleMathMode = RandomUtils.nextBoolean();
+        boolean LENGTH_MODE_ENABLED = true;
+        boolean XOR_MODE_ENABLED = true;
+        boolean SIMPLE_MATH_MODE_ENABLED = true;
+        boolean AND_MODE_ENABLED = V_AND.get();
 
-        if (lengthMode && (Math.abs(value) < 4 || (!xorMode && !simpleMathMode)))
+        boolean lengthModeEnabled = random.nextBoolean() && LENGTH_MODE_ENABLED;
+        boolean xorModeEnabled = random.nextBoolean() && XOR_MODE_ENABLED;
+        boolean simpleMathModeEnabled = random.nextBoolean() && SIMPLE_MATH_MODE_ENABLED;
+        boolean andModeEnabled = random.nextBoolean() && AND_MODE_ENABLED;
+
+        boolean shouldApplyLengthMode = Math.abs(value) < 4 || !(xorModeEnabled || simpleMathModeEnabled);
+        boolean canApplyLengthMode = Math.abs(value) <= 65535;  // LDC 命令の最大値
+
+        boolean shouldApplyXorMode = !(lengthModeEnabled || simpleMathModeEnabled);
+        boolean canApplyXorMode = Math.abs(value) <= Byte.MAX_VALUE;
+
+        boolean shouldApplyAddMode = !(lengthModeEnabled || xorModeEnabled);
+        boolean canApplyAddMode = Math.abs(value) > 0xFF;
+
+        if (lengthModeEnabled && shouldApplyLengthMode && canApplyLengthMode)
             method = 0;
-        else if (xorMode && (Math.abs(value) < Byte.MAX_VALUE || (!lengthMode && !simpleMathMode)))
+        else if (xorModeEnabled && shouldApplyXorMode && canApplyXorMode)
             method = 1;
-        else if (!V_AND.get() && Math.abs(value) > 0xFF)
+        else if (simpleMathModeEnabled && shouldApplyAddMode && canApplyAddMode)
             method = 3;
         else
             method = 2;
