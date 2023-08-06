@@ -143,20 +143,40 @@ public class NumberObfuscationTransformer implements IClassTransformer
                 break;
             case 2:
                 /*
-                 * Generates a simple calculation e. 5 + 3 - 2 + 3 = 9
+                 * Generates a simple calculation eg.
                  */
-                final int ADD_1 = random.nextInt(value);
-                final int ADD_2 = random.nextInt(value);
-                final int ADD_3 = random.nextInt(value);
-                final int SUB = (ADD_1 + ADD_2 + ADD_3) - value;
+                int addTimes = random.nextInt(10) + 3;
+                int[] values = new int[addTimes];
+                int sum = 0;
+                for (int i = 0; i < addTimes; i++)
+                {
+                    int v = random.nextInt(10);
+                    values[i] = v;
+                    sum += v;
+                }
 
-                methodInstructions.add(NodeUtils.generateIntPush(ADD_1));
-                methodInstructions.add(NodeUtils.generateIntPush(ADD_2));
-                methodInstructions.add(new InsnNode(Opcodes.IADD));
-                methodInstructions.add(NodeUtils.generateIntPush(SUB));
-                methodInstructions.add(new InsnNode(Opcodes.ISUB));
-                methodInstructions.add(NodeUtils.generateIntPush(ADD_3));
-                methodInstructions.add(new InsnNode(Opcodes.IADD));
+                int toSubtract = sum - value;
+
+                boolean subtracted = false;
+                methodInstructions.add(NodeUtils.generateIntPush(values[0]));
+                for (int i = 1; i < addTimes; i++)
+                {
+                    methodInstructions.add(NodeUtils.generateIntPush(values[i]));
+                    methodInstructions.add(new InsnNode(Opcodes.IADD));
+                    if (!subtracted && toSubtract > 0 && random.nextInt(10) == 0)
+                    {
+                        methodInstructions.add(NodeUtils.generateIntPush(toSubtract));
+                        methodInstructions.add(new InsnNode(Opcodes.ISUB));
+                        subtracted = true;
+                    }
+                }
+
+                if (toSubtract > 0 && !subtracted)
+                {
+                    methodInstructions.add(NodeUtils.generateIntPush(toSubtract));
+                    methodInstructions.add(new InsnNode(Opcodes.ISUB));
+                }
+
                 break;
             case 3:
                 int[] and = splitToAnd(value);
@@ -175,13 +195,13 @@ public class NumberObfuscationTransformer implements IClassTransformer
     {
         int method;
 
-        boolean lenghtMode = RandomUtils.nextBoolean();
+        boolean lengthMode = RandomUtils.nextBoolean();
         boolean xorMode = RandomUtils.nextBoolean();
         boolean simpleMathMode = RandomUtils.nextBoolean();
 
-        if (lenghtMode && (Math.abs(value) < 4 || (!xorMode && !simpleMathMode)))
+        if (lengthMode && (Math.abs(value) < 4 || (!xorMode && !simpleMathMode)))
             method = 0;
-        else if (xorMode && (Math.abs(value) < Byte.MAX_VALUE || (!lenghtMode && !simpleMathMode)))
+        else if (xorMode && (Math.abs(value) < Byte.MAX_VALUE || (!lengthMode && !simpleMathMode)))
             method = 1;
         else if (!V_AND.get() && Math.abs(value) > 0xFF)
             method = 3;
@@ -213,7 +233,7 @@ public class NumberObfuscationTransformer implements IClassTransformer
     @Override
     public void process(ProcessorCallback callback, ClassNode node)
     {
-        if (!this.V_ENABLED.get())
+        if (!V_ENABLED.get())
             return;
 
         int proceed = 0;
@@ -222,42 +242,43 @@ public class NumberObfuscationTransformer implements IClassTransformer
         for (MethodNode method : node.methods)
             for (AbstractInsnNode abstractInsnNode : method.instructions.toArray())
             {
-                if (NodeUtils.isIntegerNumber(abstractInsnNode))
+                if (!NodeUtils.isIntegerNumber(abstractInsnNode))
+                    continue;
+
+                int number = NodeUtils.getIntValue(abstractInsnNode);
+
+                if (number == Integer.MIN_VALUE)
+                    continue;
+
+                boolean isExcluded = Modifier.isInterface(node.access);
+
+                if (!isExcluded && V_EXTRACT_TO_ARRAY.get())
                 {
-                    int number = NodeUtils.getIntValue(abstractInsnNode);
-
-                    if (number == Integer.MIN_VALUE)
-                        continue;
-
-                    boolean isExcluded = Modifier.isInterface(node.access);
-
-                    if (!isExcluded && this.V_EXTRACT_TO_ARRAY.get())
+                    int containedSlot = -1;
+                    int j = 0;
+                    for (Integer integer : integerList)
                     {
-                        int containedSlot = -1;
-                        int j = 0;
-                        for (Integer integer : integerList)
-                        {
-                            if (integer == number) containedSlot = j;
-                            j++;
-                        }
-                        if (containedSlot == -1)
-                            integerList.add(number);
-                        method.instructions.insertBefore(abstractInsnNode, new FieldInsnNode(Opcodes.GETSTATIC, node.name, fieldName, "[I"));
-                        method.instructions.insertBefore(abstractInsnNode, NodeUtils.generateIntPush(containedSlot == -1 ? proceed: containedSlot));
-                        method.instructions.insertBefore(abstractInsnNode, new InsnNode(Opcodes.IALOAD));
-                        method.instructions.remove(abstractInsnNode);
-                        if (containedSlot == -1)
-                            proceed++;
-
-                        method.maxStack += 2;
+                        if (integer == number)
+                            containedSlot = j;
+                        j++;
                     }
-                    else
-                    {
-                        method.maxStack += 4;
+                    if (containedSlot == -1)
+                        integerList.add(number);
+                    method.instructions.insertBefore(abstractInsnNode, new FieldInsnNode(Opcodes.GETSTATIC, node.name, fieldName, "[I"));
+                    method.instructions.insertBefore(abstractInsnNode, NodeUtils.generateIntPush(containedSlot == -1 ? proceed: containedSlot));
+                    method.instructions.insertBefore(abstractInsnNode, new InsnNode(Opcodes.IALOAD));
+                    method.instructions.remove(abstractInsnNode);
+                    if (containedSlot == -1)
+                        proceed++;
 
-                        method.instructions.insertBefore(abstractInsnNode, getInstructionsMultipleTimes(number, random.nextInt(2) + 1));
-                        method.instructions.remove(abstractInsnNode);
-                    }
+                    method.maxStack += 2;
+                }
+                else
+                {
+                    method.maxStack += 4;
+
+                    method.instructions.insertBefore(abstractInsnNode, getInstructionsMultipleTimes(number, random.nextInt(2) + 1));
+                    method.instructions.remove(abstractInsnNode);
                 }
             }
 
