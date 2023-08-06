@@ -14,11 +14,12 @@ package tokyo.peya.obfuscator;
 import com.google.common.io.ByteStreams;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import tokyo.peya.obfuscator.processors.Processors;
-import tokyo.peya.obfuscator.processors.name.ClassWrapper;
-import tokyo.peya.obfuscator.processors.name.INameObfuscationProcessor;
-import tokyo.peya.obfuscator.processors.packager.Packager;
-import tokyo.peya.obfuscator.utils.ClassTree;
+import tokyo.peya.obfuscator.clazz.ModifiedClassWriter;
+import tokyo.peya.obfuscator.processor.Processors;
+import tokyo.peya.obfuscator.clazz.ClassWrapper;
+import tokyo.peya.obfuscator.processor.naming.INameObfuscationProcessor;
+import tokyo.peya.obfuscator.processor.Packager;
+import tokyo.peya.obfuscator.clazz.ClassTree;
 import tokyo.peya.obfuscator.utils.MissingClassException;
 import tokyo.peya.obfuscator.utils.NameUtils;
 import tokyo.peya.obfuscator.utils.Utils;
@@ -615,8 +616,8 @@ public class JarObfuscator
                                 log.error(String.format(
                                         "[%s] (%s/%s), Error transforming %s",
                                         Thread.currentThread().getName(),
-                                        processed.get(),
                                         this.classes.size(),
+                                        processed.get(),
                                         entryName
                                 ), e);
                             }

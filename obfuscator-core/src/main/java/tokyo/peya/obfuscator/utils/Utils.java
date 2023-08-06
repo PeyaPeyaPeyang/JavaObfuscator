@@ -18,7 +18,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileFilter;
 import tokyo.peya.obfuscator.JavaObfuscator;
-import tokyo.peya.obfuscator.processors.name.ClassWrapper;
+import tokyo.peya.obfuscator.clazz.ClassWrapper;
 import tokyo.peya.obfuscator.configuration.DeprecationLevel;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
