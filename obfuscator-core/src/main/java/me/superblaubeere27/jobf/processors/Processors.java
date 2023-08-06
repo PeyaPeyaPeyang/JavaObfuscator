@@ -17,7 +17,6 @@ public class Processors
 {
     private static final Class<?>[] PROCESSORS = {
              StaticInitializionTransformer.class,
-                HWIDProtection.class,
                 Optimizer.class,
                 InlineTransformer.class,
                 InvokeDynamic.class,
@@ -52,7 +51,6 @@ public class Processors
         List<IClassTransformer> processors = new ArrayList<>();
         processors.add(new StaticInitializionTransformer(instance));
 
-        processors.add(new HWIDProtection(instance));
         processors.add(new Optimizer());
         processors.add(new InlineTransformer(instance));
         processors.add(new InvokeDynamic());
