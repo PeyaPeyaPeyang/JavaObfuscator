@@ -7,35 +7,49 @@
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-package org.objectweb.asm;
 
-import tokyo.peya.obfuscator.ObfuscatorClassLoader;
+package tokyo.peya.obfuscator.processors.name;
+
+import org.objectweb.asm.tree.MethodNode;
 
 /**
- * A {@link ClassVisitor} that generates a corresponding ClassFile structure, as defined in the Java
- * Virtual Machine Specification (JVMS). It can be used alone, to generate a Java class "from
- * scratch", or with one or more {@link ClassReader} and adapter {@link ClassVisitor} to generate a
- * modified class from one or more existing Java classes.
+ * Wrapper for MethodNodes.
  *
- * @author Eric Bruneton
- * @see <a href="https://docs.oracle.com/javase/specs/jvms/se9/html/jvms-4.html">JVMS 4</a>
+ * @author ItzSomebody
  */
-public class ModifiedClassWriter extends ClassWriter
+public class MethodWrapper
 {
+    /**
+     * Owner of the method this MethodWrapper represents.
+     */
+    public ClassWrapper owner;
+    /**
+     * Attached MethodNode.
+     */
+    MethodNode methodNode;
+    /**
+     * Original method name;
+     */
+    String originalName;
 
-    public ModifiedClassWriter(int flags)
-    {
-        super(flags);
-    }
+    /**
+     * Original method description.
+     */
+    String originalDescription;
 
-    public ModifiedClassWriter(ClassReader classReader, int flags)
+    /**
+     * Creates a MethodWrapper object.
+     *
+     * @param methodNode          the {@link MethodNode} this wrapper represents.
+     * @param owner               the owner of this represented method.
+     * @param originalName        the original method name.
+     * @param originalDescription the original method description.
+     */
+    MethodWrapper(MethodNode methodNode, ClassWrapper owner, String originalName, String originalDescription)
     {
-        super(classReader, flags);
-    }
-
-    @Override
-    protected ClassLoader getClassLoader()
-    {
-        return ObfuscatorClassLoader.INSTANCE;
+        this.methodNode = methodNode;
+        this.owner = owner;
+        this.originalName = originalName;
+        this.originalDescription = originalDescription;
     }
 }

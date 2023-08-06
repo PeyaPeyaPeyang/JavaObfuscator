@@ -7,35 +7,23 @@
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-package org.objectweb.asm;
 
-import tokyo.peya.obfuscator.ObfuscatorClassLoader;
+package tokyo.peya.obfuscator.annotations;
 
-/**
- * A {@link ClassVisitor} that generates a corresponding ClassFile structure, as defined in the Java
- * Virtual Machine Specification (JVMS). It can be used alone, to generate a Java class "from
- * scratch", or with one or more {@link ClassReader} and adapter {@link ClassVisitor} to generate a
- * modified class from one or more existing Java classes.
- *
- * @author Eric Bruneton
- * @see <a href="https://docs.oracle.com/javase/specs/jvms/se9/html/jvms-4.html">JVMS 4</a>
- */
-public class ModifiedClassWriter extends ClassWriter
+public enum ObfuscationTransformer
 {
-
-    public ModifiedClassWriter(int flags)
-    {
-        super(flags);
-    }
-
-    public ModifiedClassWriter(ClassReader classReader, int flags)
-    {
-        super(classReader, flags);
-    }
-
-    @Override
-    protected ClassLoader getClassLoader()
-    {
-        return ObfuscatorClassLoader.INSTANCE;
-    }
+    FLOW_OBFUSCATION,
+    LINE_NUMBER_REMOVER,
+    NUMBER_OBFUSCATION,
+    STRING_ENCRYPTION,
+    HWID_PROTECTION,
+    PEEPHOLE_OPTIMIZER,
+    CRASHER,
+    INVOKE_DYNAMIC,
+    REFERENCE_PROXY,
+    SHUFFLE_MEMBERS,
+    INNER_CLASS_REMOVER,
+    NAME_OBFUSCATION,
+    HIDE_MEMBERS,
+    INLINING
 }

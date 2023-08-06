@@ -7,35 +7,30 @@
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-package org.objectweb.asm;
 
-import tokyo.peya.obfuscator.ObfuscatorClassLoader;
+package tokyo.peya.obfuscator.processors.name;
+
+import org.objectweb.asm.commons.SimpleRemapper;
+
+import java.util.Map;
 
 /**
- * A {@link ClassVisitor} that generates a corresponding ClassFile structure, as defined in the Java
- * Virtual Machine Specification (JVMS). It can be used alone, to generate a Java class "from
- * scratch", or with one or more {@link ClassReader} and adapter {@link ClassVisitor} to generate a
- * modified class from one or more existing Java classes.
+ * Custom implementation of ASM's SimpleRemapper taking in account for field descriptions.
  *
- * @author Eric Bruneton
- * @see <a href="https://docs.oracle.com/javase/specs/jvms/se9/html/jvms-4.html">JVMS 4</a>
+ * @author ItzSomebody
  */
-public class ModifiedClassWriter extends ClassWriter
+public class MemberRemapper extends SimpleRemapper
 {
 
-    public ModifiedClassWriter(int flags)
+    MemberRemapper(final Map<String, String> mappings)
     {
-        super(flags);
-    }
-
-    public ModifiedClassWriter(ClassReader classReader, int flags)
-    {
-        super(classReader, flags);
+        super(mappings);
     }
 
     @Override
-    protected ClassLoader getClassLoader()
+    public String mapFieldName(String owner, String name, String desc)
     {
-        return ObfuscatorClassLoader.INSTANCE;
+        String remappedName = map(owner + '.' + name + '.' + desc);
+        return (remappedName != null) ? remappedName: name;
     }
 }

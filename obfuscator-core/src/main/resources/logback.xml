@@ -16,7 +16,7 @@
     </appender>
 
     <!-- Form -->
-    <appender name="FORM" class="me.superblaubeere27.jobf.ui.Appender"/>
+    <appender name="FORM" class="tokyo.peya.obfuscator.ui.Appender"/>
 
 
     <!--
@@ -47,7 +47,7 @@
     -->
 
     <!-- Turn on debug logging connection pool. -->
-    <logger name="me.superblaubeere27" level="DEBUG"/>
+    <logger name="tokyo.peya" level="DEBUG"/>
 
     <root level="${logging.level}">
         <appender-ref ref="ASYNC"/>

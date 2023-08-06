@@ -7,35 +7,40 @@
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-package org.objectweb.asm;
 
-import tokyo.peya.obfuscator.ObfuscatorClassLoader;
+package tokyo.peya.obfuscator.utils;
 
-/**
- * A {@link ClassVisitor} that generates a corresponding ClassFile structure, as defined in the Java
- * Virtual Machine Specification (JVMS). It can be used alone, to generate a Java class "from
- * scratch", or with one or more {@link ClassReader} and adapter {@link ClassVisitor} to generate a
- * modified class from one or more existing Java classes.
- *
- * @author Eric Bruneton
- * @see <a href="https://docs.oracle.com/javase/specs/jvms/se9/html/jvms-4.html">JVMS 4</a>
- */
-public class ModifiedClassWriter extends ClassWriter
+import java.util.Random;
+
+public class StringManipulationUtils
 {
 
-    public ModifiedClassWriter(int flags)
+    private static final Random random = new Random();
+
+    public static String makeUnreadable(final String input)
     {
-        super(flags);
+        final StringBuilder builder = new StringBuilder();
+        for (final char c : input.toCharArray())
+            builder.append((char) (c + '\u7159'));
+        return builder.toString();
     }
 
-    public ModifiedClassWriter(ClassReader classReader, int flags)
+    public static String generateString(int lenght)
     {
-        super(classReader, flags);
+        final String s = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+        final StringBuilder stringBuilder = new StringBuilder(lenght);
+
+        for (int i = 0; i < lenght; i++)
+            stringBuilder.append(s.charAt(random.nextInt(s.length())));
+        return stringBuilder.toString();
     }
 
-    @Override
-    protected ClassLoader getClassLoader()
+    public static String generateUnicodeString(int lenght)
     {
-        return ObfuscatorClassLoader.INSTANCE;
+        final StringBuilder stringBuilder = new StringBuilder(lenght);
+
+        for (int i = 0; i < lenght; i++)
+            stringBuilder.append((char) random.nextInt(255));
+        return stringBuilder.toString();
     }
 }

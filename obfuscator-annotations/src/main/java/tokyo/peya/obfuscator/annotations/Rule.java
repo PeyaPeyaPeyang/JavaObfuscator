@@ -7,35 +7,31 @@
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-package org.objectweb.asm;
 
-import tokyo.peya.obfuscator.ObfuscatorClassLoader;
+package tokyo.peya.obfuscator.annotations;
 
-/**
- * A {@link ClassVisitor} that generates a corresponding ClassFile structure, as defined in the Java
- * Virtual Machine Specification (JVMS). It can be used alone, to generate a Java class "from
- * scratch", or with one or more {@link ClassReader} and adapter {@link ClassVisitor} to generate a
- * modified class from one or more existing Java classes.
- *
- * @author Eric Bruneton
- * @see <a href="https://docs.oracle.com/javase/specs/jvms/se9/html/jvms-4.html">JVMS 4</a>
- */
-public class ModifiedClassWriter extends ClassWriter
+public @interface Rule
 {
+    Action value();
 
-    public ModifiedClassWriter(int flags)
-    {
-        super(flags);
-    }
+    ObfuscationTransformer[] processors() default {ObfuscationTransformer.FLOW_OBFUSCATION,
+            ObfuscationTransformer.LINE_NUMBER_REMOVER,
+            ObfuscationTransformer.NUMBER_OBFUSCATION,
+            ObfuscationTransformer.STRING_ENCRYPTION,
+            ObfuscationTransformer.HWID_PROTECTION,
+            ObfuscationTransformer.PEEPHOLE_OPTIMIZER,
+            ObfuscationTransformer.CRASHER,
+            ObfuscationTransformer.INVOKE_DYNAMIC,
+            ObfuscationTransformer.REFERENCE_PROXY,
+            ObfuscationTransformer.SHUFFLE_MEMBERS,
+            ObfuscationTransformer.INNER_CLASS_REMOVER,
+            ObfuscationTransformer.NAME_OBFUSCATION,
+            ObfuscationTransformer.HIDE_MEMBERS,
+            ObfuscationTransformer.INLINING};
 
-    public ModifiedClassWriter(ClassReader classReader, int flags)
+    enum Action
     {
-        super(classReader, flags);
-    }
-
-    @Override
-    protected ClassLoader getClassLoader()
-    {
-        return ObfuscatorClassLoader.INSTANCE;
+        ALLOW,
+        DISALLOW
     }
 }

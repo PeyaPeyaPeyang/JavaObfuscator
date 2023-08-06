@@ -7,35 +7,46 @@
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-package org.objectweb.asm;
 
-import tokyo.peya.obfuscator.ObfuscatorClassLoader;
+package tokyo.peya.obfuscator.utils.values;
 
-/**
- * A {@link ClassVisitor} that generates a corresponding ClassFile structure, as defined in the Java
- * Virtual Machine Specification (JVMS). It can be used alone, to generate a Java class "from
- * scratch", or with one or more {@link ClassReader} and adapter {@link ClassVisitor} to generate a
- * modified class from one or more existing Java classes.
- *
- * @author Eric Bruneton
- * @see <a href="https://docs.oracle.com/javase/specs/jvms/se9/html/jvms-4.html">JVMS 4</a>
- */
-public class ModifiedClassWriter extends ClassWriter
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+public abstract class Value<T>
 {
+    private final String owner;
+    private final String name;
+    private final String description;
+    private final DeprecationLevel deprecation;
+    @Getter(AccessLevel.NONE)
+    @Setter
+    private T value;
 
-    public ModifiedClassWriter(int flags)
+    public Value(String owner, String name, DeprecationLevel deprecation, T object)
     {
-        super(flags);
+        this(owner, name, "", deprecation, object);
     }
 
-    public ModifiedClassWriter(ClassReader classReader, int flags)
+    public Value(String owner, String name, String description, DeprecationLevel deprecation, T object)
     {
-        super(classReader, flags);
+        this.owner = owner;
+        this.name = name;
+        this.description = description;
+        this.deprecation = deprecation;
+        this.value = object;
+    }
+
+    public T get()
+    {
+        return this.value;
     }
 
     @Override
-    protected ClassLoader getClassLoader()
+    public String toString()
     {
-        return ObfuscatorClassLoader.INSTANCE;
+        return String.format("%s::%s = %s", this.owner, this.name, this.value);
     }
 }

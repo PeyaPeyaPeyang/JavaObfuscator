@@ -7,35 +7,35 @@
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-package org.objectweb.asm;
 
-import tokyo.peya.obfuscator.ObfuscatorClassLoader;
+package tokyo.peya.obfuscator.utils.values;
 
-/**
- * A {@link ClassVisitor} that generates a corresponding ClassFile structure, as defined in the Java
- * Virtual Machine Specification (JVMS). It can be used alone, to generate a Java class "from
- * scratch", or with one or more {@link ClassReader} and adapter {@link ClassVisitor} to generate a
- * modified class from one or more existing Java classes.
- *
- * @author Eric Bruneton
- * @see <a href="https://docs.oracle.com/javase/specs/jvms/se9/html/jvms-4.html">JVMS 4</a>
- */
-public class ModifiedClassWriter extends ClassWriter
+import joptsimple.internal.Strings;
+
+public class ModeValue extends Value<Integer>
 {
+    private final String[] possibleValues;
 
-    public ModifiedClassWriter(int flags)
+    public ModeValue(String owner, String name, DeprecationLevel deprecated, Integer object, String[] possibleValues)
     {
-        super(flags);
+        super(owner, name, deprecated, object);
+        this.possibleValues = possibleValues;
     }
 
-    public ModifiedClassWriter(ClassReader classReader, int flags)
+    public ModeValue(String owner, String name, String description, DeprecationLevel deprecated, Integer object, String[] possibleValues)
     {
-        super(classReader, flags);
+        super(owner, name, description, deprecated, object);
+        this.possibleValues = possibleValues;
+    }
+
+    private String[] getPossibleValues()
+    {
+        return this.possibleValues;
     }
 
     @Override
-    protected ClassLoader getClassLoader()
+    public String toString()
     {
-        return ObfuscatorClassLoader.INSTANCE;
+        return String.format("%s::%s<%s> = %s", getOwner(), getName(), Strings.join(getPossibleValues(), ", "), get());
     }
 }
