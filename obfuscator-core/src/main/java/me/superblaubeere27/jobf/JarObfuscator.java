@@ -20,6 +20,7 @@ import me.superblaubeere27.jobf.processors.InlineTransformer;
 import me.superblaubeere27.jobf.processors.InvokeDynamic;
 import me.superblaubeere27.jobf.processors.LineNumberRemover;
 import me.superblaubeere27.jobf.processors.NumberObfuscationTransformer;
+import me.superblaubeere27.jobf.processors.Processors;
 import me.superblaubeere27.jobf.processors.ReferenceProxy;
 import me.superblaubeere27.jobf.processors.ShuffleMembersTransformer;
 import me.superblaubeere27.jobf.processors.StaticInitializionTransformer;
@@ -90,7 +91,6 @@ public class JarObfuscator
         ValueManager.registerClass(SETTINGS);
     }
 
-    private final List<INameObfuscationProcessor> nameObfuscationProcessors = new ArrayList<>();
     private final Configuration config;
     private final HashMap<String, byte[]> files;
     private final Map<String, ClassWrapper> classPath;
@@ -98,6 +98,7 @@ public class JarObfuscator
     private final Map<String, ClassTree> hierarchy;
     private final Set<ClassWrapper> libraryClassNodes;
     private final List<IClassTransformer> processors;
+    private final List<INameObfuscationProcessor> nameObfuscationProcessors;
     public JObfScript script;
     private boolean mainClassChanged;
     private String mainClass;
@@ -116,7 +117,10 @@ public class JarObfuscator
         this.mainClass = null;
 
         this.processors = new ArrayList<>();
-        addProcessors();
+        this.nameObfuscationProcessors = new ArrayList<>();
+
+        this.processors.addAll(Processors.createProcessors(this));
+        this.nameObfuscationProcessors.addAll(Processors.createNameProcessors(this));
     }
 
     private static ZipInputStream getInJarStream(String inputJarPath) throws FileNotFoundException
@@ -357,29 +361,6 @@ public class JarObfuscator
     public boolean isLoadedCode(ClassNode classNode)
     {
         return this.classes.containsKey(classNode.name);
-    }
-
-    private void addProcessors()
-    {
-        this.processors.add(new StaticInitializionTransformer(this));
-
-        this.processors.add(new HWIDProtection(this));
-        this.processors.add(new Optimizer());
-        this.processors.add(new InlineTransformer(this));
-        this.processors.add(new InvokeDynamic());
-
-        this.processors.add(new StringEncryptionTransformer(this));
-        this.processors.add(new NumberObfuscationTransformer(this));
-        this.processors.add(new FlowObfuscator(this));
-        this.processors.add(new HideMembers(this));
-        this.processors.add(new LineNumberRemover(this));
-        this.processors.add(new ShuffleMembersTransformer(this));
-
-
-        this.nameObfuscationProcessors.add(new NameObfuscation(this));
-        this.nameObfuscationProcessors.add(new InnerClassRemover(this));
-        this.processors.add(new CrasherTransformer(this));
-        this.processors.add(new ReferenceProxy(this));
     }
 
     public void setScript(JObfScript script)

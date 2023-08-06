@@ -21,6 +21,7 @@ import joptsimple.OptionSet;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import me.superblaubeere27.jobf.processors.Processors;
 import me.superblaubeere27.jobf.processors.packager.Packager;
 import me.superblaubeere27.jobf.ui.GUI;
 import me.superblaubeere27.jobf.utils.ConsoleUtils;
@@ -124,6 +125,7 @@ public class JavaObfuscator
             }
 
             log.info("Starting in GUI Mode");
+            Processors.loadProcessors();
 
             try
             {
