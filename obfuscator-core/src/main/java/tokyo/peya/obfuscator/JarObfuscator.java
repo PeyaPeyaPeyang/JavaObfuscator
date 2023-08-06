@@ -22,7 +22,6 @@ import tokyo.peya.obfuscator.utils.ClassTree;
 import tokyo.peya.obfuscator.utils.MissingClassException;
 import tokyo.peya.obfuscator.utils.NameUtils;
 import tokyo.peya.obfuscator.utils.Utils;
-import tokyo.peya.obfuscator.utils.script.JObfScript;
 import tokyo.peya.obfuscator.configuration.Configuration;
 import tokyo.peya.obfuscator.configuration.ValueManager;
 import org.apache.commons.lang3.StringUtils;
@@ -84,7 +83,7 @@ public class JarObfuscator
     private final Set<ClassWrapper> libraryClassNodes;
     private final List<IClassTransformer> processors;
     private final List<INameObfuscationProcessor> nameObfuscationProcessors;
-    public JObfScript script;
+    public ScriptBridge script;
     private boolean mainClassChanged;
     private String mainClass;
     private int computeMode;
@@ -348,7 +347,7 @@ public class JarObfuscator
         return this.classes.containsKey(classNode.name);
     }
 
-    public void setScript(JObfScript script)
+    public void setScript(ScriptBridge script)
     {
         this.script = script;
     }
@@ -361,7 +360,7 @@ public class JarObfuscator
         try
         {
             this.script = StringUtils.isBlank(this.config.getScript()) ? null:
-                    new JObfScript(this.config.getScript());
+                    new ScriptBridge(this.config.getScript());
         }
         catch (Exception e)
         {
