@@ -18,7 +18,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.Base64;
 
-@Deprecated
 public class AESEncryptionAlgorithm implements IStringEncryptionAlgorithm
 {
 

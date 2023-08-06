@@ -19,7 +19,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-@Slf4j(topic = "obfuscator")
+@Slf4j(topic = "Remapper")
 class CustomRemapper extends Remapper
 {
     private final Map<String, String> map = new HashMap<>();

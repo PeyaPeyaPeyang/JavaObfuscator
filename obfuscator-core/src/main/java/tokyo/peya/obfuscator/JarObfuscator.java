@@ -67,7 +67,7 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 @Getter
-@Slf4j(topic = "obfuscator")
+@Slf4j(topic = "Obfuscator")
 public class JarObfuscator
 {
     private static final JObfSettings SETTINGS = new JObfSettings();

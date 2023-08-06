@@ -40,7 +40,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-@Slf4j(topic = "obfuscator")
+@Slf4j(topic = "Main")
 public class JavaObfuscator
 {
     public static final String SHORT_VERSION = (JavaObfuscator.class.getPackage().getImplementationVersion() == null ? "DEV": "v" + JavaObfuscator.class.getPackage().getImplementationVersion()) + " by superblaubeere27 & Peyang";

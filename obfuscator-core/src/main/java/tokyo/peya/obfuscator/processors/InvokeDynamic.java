@@ -72,7 +72,7 @@ import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
 import static org.objectweb.asm.Opcodes.ISTORE;
 import static org.objectweb.asm.Opcodes.NEW;
 
-@Slf4j(topic = "obfuscator")
+@Slf4j(topic = "Processor/InvokeDynamic")
 public class InvokeDynamic implements IClassTransformer
 {
     private static final String PROCESSOR_NAME = "InvokeDynamic";

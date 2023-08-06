@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-@Slf4j(topic = "obfuscator")
+@Slf4j(topic = "Configuration")
 public class ConfigManager
 {
     private static Gson gson = new Gson();

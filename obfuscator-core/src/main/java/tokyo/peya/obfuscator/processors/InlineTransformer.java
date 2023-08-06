@@ -41,7 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-@Slf4j(topic = "obfuscator")
+@Slf4j(topic = "Processor/InlineTransformer")
 public class InlineTransformer implements IClassTransformer
 {
     private static final Random random = new Random();

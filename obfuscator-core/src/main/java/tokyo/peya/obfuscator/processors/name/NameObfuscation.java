@@ -45,7 +45,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
-@Slf4j(topic = "obfuscator")
+@Slf4j(topic = "Processor/Name/NameObfuscation")
 public class NameObfuscation implements INameObfuscationProcessor
 {
     private static final String PROCESSOR_NAME = "NameObfuscation";
