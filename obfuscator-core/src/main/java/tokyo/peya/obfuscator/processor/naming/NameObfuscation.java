@@ -302,8 +302,12 @@ public class NameObfuscation implements INameObfuscationProcessor
             for (int i = 0; i < copy.fields.size(); i++)
                 classWrapper.fields.get(i).fieldNode = copy.fields.get(i);
 
+        String oldName = classWrapper.classNode.name;
+        if (oldName.contains("/"))
+            oldName = oldName.substring(oldName.lastIndexOf("/") + 1);
+
+        this.obfuscator.getClasses().remove( oldName + ".class");
         classWrapper.classNode = copy;
-        this.obfuscator.getClasses().remove(classWrapper.originalName + ".class");
         this.obfuscator.getClasses().put(classWrapper.classNode.name + ".class", classWrapper.classNode);
         //            JObfImpl.INSTANCE.getClassPath().put();
         //            this.getClasses().put(classWrapper.classNode.name, classWrapper);
