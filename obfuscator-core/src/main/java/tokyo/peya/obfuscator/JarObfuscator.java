@@ -27,7 +27,6 @@ import tokyo.peya.obfuscator.configuration.Configuration;
 import tokyo.peya.obfuscator.configuration.ValueManager;
 import org.apache.commons.lang3.StringUtils;
 import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ModifiedClassWriter;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FrameNode;
 
