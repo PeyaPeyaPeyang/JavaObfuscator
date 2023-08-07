@@ -672,25 +672,7 @@ public class InvokeDynamic implements IClassTransformer
 
             generatorMethod.instructions = generatorMethodNodes;
 
-            MethodNode clInit = NodeUtils.getMethod(classNode, "<clinit>");
-
-            if (clInit == null)
-            {
-                clInit = new MethodNode(Opcodes.ACC_STATIC, "<clinit>", "()V", null, new String[0]);
-                classNode.methods.add(clInit);
-            }
-            if (clInit.instructions == null)
-                clInit.instructions = new InsnList();
-
-            if (clInit.instructions.getFirst() == null)
-            {
-                clInit.instructions.add(new MethodInsnNode(Opcodes.INVOKESTATIC, classNode.name, generatorMethod.name, generatorMethod.desc, false));
-                clInit.instructions.add(new InsnNode(Opcodes.RETURN));
-            }
-            else
-            {
-                clInit.instructions.insertBefore(clInit.instructions.getFirst(), new MethodInsnNode(Opcodes.INVOKESTATIC, classNode.name, generatorMethod.name, generatorMethod.desc, false));
-            }
+            NodeUtils.addInvokeOnClassInitMethod(classNode, generatorMethod);
 
 
             classNode.methods.add(bootstrap);

@@ -443,17 +443,16 @@ public class NodeUtils
         return false;
     }
 
-    public static void addInvokeOnClassInitMethod(ClassNode node, MethodNode generateStrings)
+    public static void addInvokeOnClassInitMethod(ClassNode node, MethodNode method)
     {
-
         MethodNode clInit = NodeUtils.getOrCreateCLInit(node);
         if (clInit.instructions.getFirst() == null)
         {
-            clInit.instructions.add(new MethodInsnNode(Opcodes.INVOKESTATIC, node.name, generateStrings.name, generateStrings.desc, false));
+            clInit.instructions.add(new MethodInsnNode(Opcodes.INVOKESTATIC, node.name, method.name, method.desc, false));
             clInit.instructions.add(new InsnNode(Opcodes.RETURN));
         }
         else
-            clInit.instructions.insertBefore(clInit.instructions.getFirst(), new MethodInsnNode(Opcodes.INVOKESTATIC, node.name, generateStrings.name, generateStrings.desc, false));
+            clInit.instructions.insertBefore(clInit.instructions.getFirst(), new MethodInsnNode(Opcodes.INVOKESTATIC, node.name, method.name, method.desc, false));
 
     }
 

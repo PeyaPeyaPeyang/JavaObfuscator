@@ -207,7 +207,6 @@ public class NumberObfuscationTransformer implements IClassTransformer
                 null)
         );
 
-        MethodNode clInit = NodeUtils.getOrCreateCLInit(node);
         InsnList toAdd = new InsnList();
 
         toAdd.add(NodeUtils.generateIntPush(proceed));
@@ -229,16 +228,7 @@ public class NumberObfuscationTransformer implements IClassTransformer
         generateIntegers.maxStack = 6;
         node.methods.add(generateIntegers);
 
-        if (clInit.instructions == null)
-            clInit.instructions = new InsnList();
-
-        if (clInit.instructions.getFirst() == null)
-        {
-            clInit.instructions.add(new MethodInsnNode(Opcodes.INVOKESTATIC, node.name, generateIntegers.name, generateIntegers.desc, false));
-            clInit.instructions.add(new InsnNode(Opcodes.RETURN));
-        }
-        else
-            clInit.instructions.insertBefore(clInit.instructions.getFirst(), new MethodInsnNode(Opcodes.INVOKESTATIC, node.name, generateIntegers.name, generateIntegers.desc, false));
+        NodeUtils.addInvokeOnClassInitMethod(node, generateIntegers);
     }
 
     private static boolean extractToArrayOne(ClassNode clazz, MethodNode method, AbstractInsnNode abstractInsnNode, String fieldName, int proceed, List<Integer> integerList, int number)
