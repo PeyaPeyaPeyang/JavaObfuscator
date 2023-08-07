@@ -194,58 +194,51 @@ public class NumberObfuscationTransformer implements IClassTransformer
                 }
             }
 
-        if (proceed != 0)
+        if (proceed == 0)
+            return;
+
+        boolean isInterface = (node.access & Opcodes.ACC_INTERFACE) != 0;
+        node.fields.add(new FieldNode(
+                (isInterface ? Opcodes.ACC_PUBLIC: Opcodes.ACC_PRIVATE)  // インターフェースの場合はプライベートにできない
+                        | (node.version > Opcodes.V1_8 ? 0: Opcodes.ACC_FINAL)
+                        | Opcodes.ACC_STATIC, fieldName,
+                "[I",
+                null,
+                null)
+        );
+
+        MethodNode clInit = NodeUtils.getOrCreateCLInit(node);
+        InsnList toAdd = new InsnList();
+
+        toAdd.add(NodeUtils.generateIntPush(proceed));
+
+        toAdd.add(new IntInsnNode(Opcodes.NEWARRAY, Opcodes.T_INT));
+        toAdd.add(new FieldInsnNode(Opcodes.PUTSTATIC, node.name, fieldName, "[I"));
+
+        for (int j = 0; j < proceed; j++)
         {
-            boolean isInterface = (node.access & Opcodes.ACC_INTERFACE) != 0;
-            node.fields.add(new FieldNode(
-                    (isInterface ? Opcodes.ACC_PUBLIC: Opcodes.ACC_PRIVATE)  // インターフェースの場合はプライベートにできない
-                            | (node.version > Opcodes.V1_8 ? 0: Opcodes.ACC_FINAL)
-                            | Opcodes.ACC_STATIC, fieldName,
-                    "[I",
-                    null,
-                    null)
-            );
-            MethodNode clInit = NodeUtils.getMethod(node, "<clinit>");
-            if (clInit == null)
-            {
-                clInit = new MethodNode(Opcodes.ACC_STATIC, "<clinit>", "()V", null, new String[0]);
-                node.methods.add(clInit);
-            }
-            if (clInit.instructions == null)
-                clInit.instructions = new InsnList();
-
-            InsnList toAdd = new InsnList();
-
-            toAdd.add(NodeUtils.generateIntPush(proceed));
-
-            toAdd.add(new IntInsnNode(Opcodes.NEWARRAY, Opcodes.T_INT));
-            toAdd.add(new FieldInsnNode(Opcodes.PUTSTATIC, node.name, fieldName, "[I"));
-
-            for (int j = 0; j < proceed; j++)
-            {
-                toAdd.add(new FieldInsnNode(Opcodes.GETSTATIC, node.name, fieldName, "[I"));
-                toAdd.add(NodeUtils.generateIntPush(j));
-                toAdd.add(getInstructionsMultipleTimes(integerList.get(j), random.nextInt(2) + 1));
-                toAdd.add(new InsnNode(Opcodes.IASTORE));
-            }
-
-            MethodNode generateIntegers = new MethodNode(((node.access & Opcodes.ACC_INTERFACE) != 0 ? Opcodes.ACC_PUBLIC: Opcodes.ACC_PRIVATE) | Opcodes.ACC_STATIC, NameUtils.generateMethodName(node, "()V"), "()V", null, new String[0]);
-            generateIntegers.instructions = toAdd;
-            generateIntegers.instructions.add(new InsnNode(Opcodes.RETURN));
-            generateIntegers.maxStack = 6;
-            node.methods.add(generateIntegers);
-
-            if (clInit.instructions == null)
-                clInit.instructions = new InsnList();
-
-            if (clInit.instructions.getFirst() == null)
-            {
-                clInit.instructions.add(new MethodInsnNode(Opcodes.INVOKESTATIC, node.name, generateIntegers.name, generateIntegers.desc, false));
-                clInit.instructions.add(new InsnNode(Opcodes.RETURN));
-            }
-            else
-                clInit.instructions.insertBefore(clInit.instructions.getFirst(), new MethodInsnNode(Opcodes.INVOKESTATIC, node.name, generateIntegers.name, generateIntegers.desc, false));
+            toAdd.add(new FieldInsnNode(Opcodes.GETSTATIC, node.name, fieldName, "[I"));
+            toAdd.add(NodeUtils.generateIntPush(j));
+            toAdd.add(getInstructionsMultipleTimes(integerList.get(j), random.nextInt(2) + 1));
+            toAdd.add(new InsnNode(Opcodes.IASTORE));
         }
+
+        MethodNode generateIntegers = new MethodNode(((node.access & Opcodes.ACC_INTERFACE) != 0 ? Opcodes.ACC_PUBLIC: Opcodes.ACC_PRIVATE) | Opcodes.ACC_STATIC, NameUtils.generateMethodName(node, "()V"), "()V", null, new String[0]);
+        generateIntegers.instructions = toAdd;
+        generateIntegers.instructions.add(new InsnNode(Opcodes.RETURN));
+        generateIntegers.maxStack = 6;
+        node.methods.add(generateIntegers);
+
+        if (clInit.instructions == null)
+            clInit.instructions = new InsnList();
+
+        if (clInit.instructions.getFirst() == null)
+        {
+            clInit.instructions.add(new MethodInsnNode(Opcodes.INVOKESTATIC, node.name, generateIntegers.name, generateIntegers.desc, false));
+            clInit.instructions.add(new InsnNode(Opcodes.RETURN));
+        }
+        else
+            clInit.instructions.insertBefore(clInit.instructions.getFirst(), new MethodInsnNode(Opcodes.INVOKESTATIC, node.name, generateIntegers.name, generateIntegers.desc, false));
     }
 
     private static boolean extractToArrayOne(ClassNode clazz, MethodNode method, AbstractInsnNode abstractInsnNode, String fieldName, int proceed, List<Integer> integerList, int number)

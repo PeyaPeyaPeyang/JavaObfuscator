@@ -30,6 +30,7 @@ import org.objectweb.asm.util.Textifier;
 import org.objectweb.asm.util.TraceMethodVisitor;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Modifier;
@@ -230,12 +231,20 @@ public class NodeUtils
 
     public static ClassNode toNode(final String className) throws IOException
     {
-        final ClassReader classReader = new ClassReader(JavaObfuscator.class.getResourceAsStream("/" + className.replace('.', '/') + ".class"));
-        final ClassNode classNode = new ClassNode();
+        try(InputStream is = JavaObfuscator.class.getResourceAsStream("/" + className.replace('.', '/') + ".class"))
+        {
+            final ClassReader classReader = new ClassReader(is);
+            final ClassNode classNode = new ClassNode();
 
-        classReader.accept(classNode, 0);
+            classReader.accept(classNode, 0);
 
-        return classNode;
+            return classNode;
+        }
+    }
+
+    public static ClassNode toNode(Class<?> clazz) throws IOException
+    {
+        return toNode(clazz.getName());
     }
 
     public static int getInvertedJump(int opcode)
@@ -399,6 +408,20 @@ public class NodeUtils
         return method.name.equals("<init>") || method.name.equals("<clinit>");
     }
 
+    public static MethodNode getOrCreateCLInit(ClassNode node)
+    {
+        MethodNode clInit = NodeUtils.getMethod(node, "<clinit>");
+        if (clInit == null)
+        {
+            clInit = new MethodNode(Opcodes.ACC_STATIC, "<clinit>", "()V", null, new String[0]);
+            node.methods.add(clInit);
+        }
+        if (clInit.instructions == null)
+            clInit.instructions = new InsnList();
+
+        return clInit;
+    }
+
     public static boolean isBeforeThanInitializer(AbstractInsnNode insnNode, MethodNode method, String owner)
     {
 
@@ -418,6 +441,20 @@ public class NodeUtils
         }
 
         return false;
+    }
+
+    public static void addInvokeOnClassInitMethod(ClassNode node, MethodNode generateStrings)
+    {
+
+        MethodNode clInit = NodeUtils.getOrCreateCLInit(node);
+        if (clInit.instructions.getFirst() == null)
+        {
+            clInit.instructions.add(new MethodInsnNode(Opcodes.INVOKESTATIC, node.name, generateStrings.name, generateStrings.desc, false));
+            clInit.instructions.add(new InsnNode(Opcodes.RETURN));
+        }
+        else
+            clInit.instructions.insertBefore(clInit.instructions.getFirst(), new MethodInsnNode(Opcodes.INVOKESTATIC, node.name, generateStrings.name, generateStrings.desc, false));
+
     }
 
 //    public static int getTypeLoad(Type argumentType) {

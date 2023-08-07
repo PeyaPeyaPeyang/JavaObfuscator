@@ -11,21 +11,7 @@
 
 package tokyo.peya.obfuscator.processor.encryption;
 
-import tokyo.peya.obfuscator.annotations.ObfuscationTransformer;
-import tokyo.peya.obfuscator.IClassTransformer;
-import tokyo.peya.obfuscator.JarObfuscator;
-import tokyo.peya.obfuscator.ProcessorCallback;
-import tokyo.peya.obfuscator.processor.encryption.algorithms.AESEncryptionAlgorithm;
-import tokyo.peya.obfuscator.processor.encryption.algorithms.BlowfishEncryptionAlgorithm;
-import tokyo.peya.obfuscator.processor.encryption.algorithms.DESEncryptionAlgorithm;
-import tokyo.peya.obfuscator.processor.encryption.algorithms.XOREncryptionAlgorithm;
-import tokyo.peya.obfuscator.utils.NameUtils;
-import tokyo.peya.obfuscator.utils.NodeUtils;
-import tokyo.peya.obfuscator.utils.StringManipulationUtils;
-import tokyo.peya.obfuscator.configuration.values.BooleanValue;
-import tokyo.peya.obfuscator.configuration.DeprecationLevel;
-import tokyo.peya.obfuscator.configuration.values.EnabledValue;
-import tokyo.peya.obfuscator.configuration.ValueManager;
+import lombok.extern.slf4j.Slf4j;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -41,15 +27,32 @@ import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TypeInsnNode;
 import org.objectweb.asm.tree.VarInsnNode;
+import tokyo.peya.obfuscator.IClassTransformer;
+import tokyo.peya.obfuscator.JarObfuscator;
+import tokyo.peya.obfuscator.ProcessorCallback;
+import tokyo.peya.obfuscator.annotations.ObfuscationTransformer;
+import tokyo.peya.obfuscator.configuration.DeprecationLevel;
+import tokyo.peya.obfuscator.configuration.ValueManager;
+import tokyo.peya.obfuscator.configuration.values.BooleanValue;
+import tokyo.peya.obfuscator.configuration.values.EnabledValue;
+import tokyo.peya.obfuscator.processor.encryption.algorithms.AESEncryptionAlgorithm;
+import tokyo.peya.obfuscator.processor.encryption.algorithms.BlowfishEncryptionAlgorithm;
+import tokyo.peya.obfuscator.processor.encryption.algorithms.DESEncryptionAlgorithm;
+import tokyo.peya.obfuscator.processor.encryption.algorithms.XOREncryptionAlgorithm;
+import tokyo.peya.obfuscator.utils.NameUtils;
+import tokyo.peya.obfuscator.utils.NodeUtils;
+import tokyo.peya.obfuscator.utils.StringManipulationUtils;
 
 import java.io.IOException;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+@Slf4j(topic = "Processor/StringEncryption")
 public class StringEncryptionTransformer implements IClassTransformer
 {
     public static final String MAGICNUMBER_START = "\u00e4";
@@ -67,10 +70,12 @@ public class StringEncryptionTransformer implements IClassTransformer
     }
 
     private final JarObfuscator inst;
+    private final List<? extends IStringEncryptionAlgorithm> algorithms;
 
     public StringEncryptionTransformer(JarObfuscator inst)
     {
         this.inst = inst;
+        this.algorithms = getAlgorithms();
     }
 
     private static void hideStrings(ClassNode cn, MethodNode... methods)
@@ -97,9 +102,7 @@ public class StringEncryptionTransformer implements IClassTransformer
                     if (ldc.cst instanceof String && ((String) ldc.cst).length() < 500)
                     {
                         if (stringLength + ((String) (ldc).cst).length() > 498)
-                        {
                             break;
-                        }
 
                         InsnList insnList = new InsnList();
                         insnList.add(new FieldInsnNode(Opcodes.GETSTATIC, cn.name, fieldName, "[Ljava/lang/String;"));
@@ -128,8 +131,6 @@ public class StringEncryptionTransformer implements IClassTransformer
             toAdd.add(new FieldInsnNode(Opcodes.PUTSTATIC, cn.name, fieldName, "[Ljava/lang/String;"));
 
             NodeUtils.insertOn(methodNode.instructions, insnNode -> insnNode.getOpcode() >= Opcodes.IRETURN && insnNode.getOpcode() <= Opcodes.RETURN, toAdd);
-
-//            System.out.println("Win in " + cn.name);
         }
 
         StringBuilder sb = new StringBuilder(MAGICNUMBER_START);
@@ -140,11 +141,7 @@ public class StringEncryptionTransformer implements IClassTransformer
         }
         sb.append(MAGICNUMBER_END);
 
-//        if (cn.sourceFile == null) {
         cn.sourceFile = sb.toString();
-//        } else {
-//            cn.sourceFile += sb.toString();
-//        }
 
         if (slot > 0)
         {
@@ -189,167 +186,214 @@ public class StringEncryptionTransformer implements IClassTransformer
             generateStrings.instructions.add(new InsnNode(Opcodes.RETURN));
             generateStrings.maxStack = 4;
             generateStrings.maxLocals = 4;
-//            generateStrings.localVariables.add(new LocalVariableNode(NameUtils.generateLocalVariableName(), "Ljava/lang/String;", null, start, end, 1));
             cn.methods.add(generateStrings);
-//            System.out.println("Added shit in " + cn.name);
 
             clInit.instructions.insertBefore(clInit.instructions.getFirst(), NodeUtils.methodCall(cn, generateStrings));
-//            System.out.println(generateStrings.name);
         }
     }
 
     @Override
     public void process(ProcessorCallback callback, ClassNode node)
     {
-        if (!V_ENABLED.get()) return;
-
-//        if (AnnotationUtils.isExcluded(node, this.getType())) return;
-
-        List<IStringEncryptionAlgorithm> algorithmList = new ArrayList<>();
-
-        initAlgorithms(algorithmList);
+        if (!V_ENABLED.get())
+            return;
+        else if (Modifier.isInterface(node.access))
+            return;
 
         boolean hideStrings = V_HIDE_STRINGS.get();
 
-        if (Modifier.isInterface(node.access)) return;
+        String encryptedStringsFieldName = NameUtils.generateFieldName(node);
+        String[] constantReferences = createStringConstantReferences(node, encryptedStringsFieldName);
 
-        String stringArrayName = NameUtils.generateFieldName(node);
+        int constants = constantReferences.length;
+        if (constants == 0)
+            return;
 
-        HashMap<Integer, String> arrayMap = new HashMap<>();
-
-        int slot = 0;
-
-
-        for (MethodNode method : node.methods)
-        {
-            for (AbstractInsnNode abstractInsnNode : method.instructions.toArray())
-            {
-                if (abstractInsnNode instanceof LdcInsnNode)
-                {
-                    LdcInsnNode insnNode = (LdcInsnNode) abstractInsnNode;
-                    if (insnNode.cst instanceof String && ((String) insnNode.cst).length() < 500)
-                    {
-                        InsnList insnList = new InsnList();
-                        insnList.add(new FieldInsnNode(Opcodes.GETSTATIC, node.name, stringArrayName, "[Ljava/lang/String;"));
-                        insnList.add(NodeUtils.generateIntPush(slot));
-                        insnList.add(new InsnNode(Opcodes.AALOAD));
-//                        String key = StringUtils.generateString(5);
-//                        method.instructions.insertBefore(abstractInsnNode, new LdcInsnNode(decrypt(insnNode.cst.toString(), key)));
-//                        method.instructions.insertBefore(abstractInsnNode, new LdcInsnNode(key));
-//                        method.instructions.insertBefore(abstractInsnNode, new MethodInsnNode(Opcodes.INVOKESTATIC, node.name, decryptMethodName, "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;", false));
-                        method.instructions.insert(abstractInsnNode, insnList);
-                        method.instructions.remove(abstractInsnNode);
-                        arrayMap.put(slot, (String) insnNode.cst);
-                        slot++;
-                    }
-                }
-            }
-        }
-
+        boolean isInterface = (node.access & Opcodes.ACC_INTERFACE) != 0;
+        node.fields.add(new FieldNode(
+                        (isInterface ? Opcodes.ACC_PUBLIC: Opcodes.ACC_PRIVATE)  // インターフェースの場合はプライベートにできない
+                                | (node.version > Opcodes.V1_8 ? 0: Opcodes.ACC_FINAL)
+                                | Opcodes.ACC_STATIC, encryptedStringsFieldName,
+                        "[Ljava/lang/String;",
+                        null,
+                        null
+                )
+        );
 
         HashMap<IStringEncryptionAlgorithm, String> encryptionMethodMap = new HashMap<>();
+        for (IStringEncryptionAlgorithm algorithm : this.algorithms)
+            encryptionMethodMap.put(
+                    algorithm,
+                    NameUtils.generateMethodName(node, "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;")
+            );
 
-        if (slot > 0)
+        InsnList encryptedStringConstants = this.createEncryptedStringConstants(
+                node,
+                constants,
+                encryptedStringsFieldName,
+                encryptionMethodMap,
+                constantReferences
+        );
+
+        MethodNode generateStrings = createInitStringsMethod(node, encryptedStringConstants);
+        node.methods.add(generateStrings);
+        NodeUtils.addInvokeOnClassInitMethod(node, generateStrings);
+
+        if (hideStrings)
+            hideStrings(node, generateStrings);
+
+        // 実際に復号化するメソッドを追加
+        deployDecryptionMethods(node, encryptionMethodMap);
+    }
+
+    private static MethodNode createInitStringsMethod(ClassNode node, InsnList stringArrayInstructions)
+    {
+        MethodNode generateStrings = new MethodNode(
+                ((node.access & Opcodes.ACC_INTERFACE) != 0 ? Opcodes.ACC_PUBLIC: Opcodes.ACC_PRIVATE)
+                        | Opcodes.ACC_STATIC,
+                NameUtils.generateMethodName(node, "()V"),
+                "()V",
+                null,
+                new String[0]
+        );
+
+        generateStrings.instructions = stringArrayInstructions;
+        generateStrings.instructions.add(new InsnNode(Opcodes.RETURN));
+        generateStrings.maxStack = 6;
+
+        return generateStrings;
+    }
+
+    private InsnList createEncryptedStringConstants(
+            ClassNode node,
+            int constants,
+            String encryptedStringsFieldName,
+            Map<IStringEncryptionAlgorithm, String> encryptionMethodMap,
+            String[] constantReferences)
+    {
+        InsnList instructions = new InsnList();
+
+        // 空の配列 (constants 個 ) を生成
+        instructions.add(NodeUtils.generateIntPush(constants));
+        instructions.add(new TypeInsnNode(Opcodes.ANEWARRAY, "java/lang/String"));
+        instructions.add(new FieldInsnNode(Opcodes.PUTSTATIC, node.name, encryptedStringsFieldName, "[Ljava/lang/String;"));
+
+        for (int j = 0; j < constants; j++)
         {
-            if (arrayMap.size() > 0)
-            {
-                node.fields.add(new FieldNode(((node.access & Opcodes.ACC_INTERFACE) != 0 ? Opcodes.ACC_PUBLIC: Opcodes.ACC_PRIVATE) | (node.version > Opcodes.V1_8 ? 0: Opcodes.ACC_FINAL) | Opcodes.ACC_STATIC, stringArrayName, "[Ljava/lang/String;", null, null));
-                MethodNode clInit = NodeUtils.getMethod(node, "<clinit>");
-                if (clInit == null)
-                {
-                    clInit = new MethodNode(Opcodes.ACC_STATIC, "<clinit>", "()V", null, new String[0]);
-                    node.methods.add(clInit);
-                }
-                if (clInit.instructions == null)
-                    clInit.instructions = new InsnList();
+            IStringEncryptionAlgorithm processor = this.algorithms.get(random.nextInt(this.algorithms.size()));
+            String decryptionKey = StringManipulationUtils.generateString(5);
 
+            String decrypterName = encryptionMethodMap.get(processor);
 
-                InsnList toAdd = new InsnList();
-
-//            if (clInit.instructions.getFirst() == null)
-//                clInit.instructions.insert(NodeUtils.generateIntPush(i));
-//            else
-                toAdd.add(NodeUtils.generateIntPush(slot));
-
-                toAdd.add(new TypeInsnNode(Opcodes.ANEWARRAY, "java/lang/String"));
-//            toAdd.insert(new IntInsnNode(Opcodes.NEWARRAY, 0));
-                toAdd.add(new FieldInsnNode(Opcodes.PUTSTATIC, node.name, stringArrayName, "[Ljava/lang/String;"));
-
-                for (int j = 0; j < slot; j++)
-                {
-                    IStringEncryptionAlgorithm processor = algorithmList.get(random.nextInt(algorithmList.size()));
-
-                    String name;
-
-                    if (!encryptionMethodMap.containsKey(processor))
-                    {
-                        encryptionMethodMap.put(processor, name = NameUtils.generateMethodName(node, "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;"));
-                    }
-                    else
-                    {
-                        name = encryptionMethodMap.get(processor);
-                    }
-
-                    LabelNode label = new LabelNode(new Label());
-                    toAdd.add(label);
-                    toAdd.add(new LineNumberNode(j, label));
-                    toAdd.add(new FieldInsnNode(Opcodes.GETSTATIC, node.name, stringArrayName, "[Ljava/lang/String;"));
-                    toAdd.add(NodeUtils.generateIntPush(j));
-//                toAdd.add(getInstructions(integerList.get(j)));
-                    String key = StringManipulationUtils.generateString(5);
-                    toAdd.add(new LdcInsnNode(processor.encrypt(arrayMap.get(j), key)));
-                    toAdd.add(new LdcInsnNode(key));
-//                    System.out.println(name);
-                    toAdd.add(new MethodInsnNode(Opcodes.INVOKESTATIC, node.name, name, "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;", false));
-
-                    toAdd.add(new InsnNode(Opcodes.AASTORE));
-                }
-
-                MethodNode generateStrings = new MethodNode(((node.access & Opcodes.ACC_INTERFACE) != 0 ? Opcodes.ACC_PUBLIC: Opcodes.ACC_PRIVATE) | Opcodes.ACC_STATIC, NameUtils.generateMethodName(node, "()V"), "()V", null, new String[0]);
-                generateStrings.instructions = toAdd;
-                generateStrings.instructions.add(new InsnNode(Opcodes.RETURN));
-                generateStrings.maxStack = 6;
-                node.methods.add(generateStrings);
-
-                if (clInit.instructions == null || clInit.instructions.getFirst() == null)
-                {
-                    clInit.instructions.add(new MethodInsnNode(Opcodes.INVOKESTATIC, node.name, generateStrings.name, generateStrings.desc, false));
-                    clInit.instructions.add(new InsnNode(Opcodes.RETURN));
-                }
-                else
-                {
-                    clInit.instructions.insertBefore(clInit.instructions.getFirst(), new MethodInsnNode(Opcodes.INVOKESTATIC, node.name, generateStrings.name, generateStrings.desc, false));
-                }
-
-                if (hideStrings)
-                    hideStrings(node, generateStrings);
-
-            }
+            instructions.add(generateDecrypterInvocation(
+                    node,
+                    j,
+                    encryptedStringsFieldName,
+                    decryptionKey,
+                    decrypterName,
+                    processor.encrypt(constantReferences[j], decryptionKey)
+            ));
         }
 
-        for (Map.Entry<IStringEncryptionAlgorithm, String> iStringEncryptionAlgorithmStringEntry : encryptionMethodMap.entrySet())
+        return instructions;
+    }
+
+    private static InsnList generateDecrypterInvocation(ClassNode node,
+                                                        int constantNumber,
+                                                        String encryptedStringsField,
+                                                        String decryptionKey,
+                                                        String processorMethodName,
+                                                        String encryptedString)
+    {
+        InsnList toAdd = new InsnList();
+
+        LabelNode label = new LabelNode(new Label());
+        toAdd.add(label);
+        toAdd.add(new LineNumberNode(constantNumber, label));
+        toAdd.add(new FieldInsnNode(Opcodes.GETSTATIC,
+                node.name,
+                encryptedStringsField,
+                "[Ljava/lang/String;")
+
+        );
+
+        toAdd.add(NodeUtils.generateIntPush(constantNumber));
+        toAdd.add(new LdcInsnNode(encryptedString));
+        toAdd.add(new LdcInsnNode(decryptionKey));
+        toAdd.add(new MethodInsnNode(
+                Opcodes.INVOKESTATIC,
+                node.name,
+                processorMethodName,
+                "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;",
+                false)
+        );
+        toAdd.add(new InsnNode(Opcodes.AASTORE));
+
+        return toAdd;
+    }
+
+    private static void deployDecryptionMethods(ClassNode node, HashMap<IStringEncryptionAlgorithm, String> methods)
+    {
+        for (Map.Entry<IStringEncryptionAlgorithm, String> entry : methods.entrySet())
         {
             try
             {
-                MethodNode method = NodeUtils.getMethod(NodeUtils.toNode(iStringEncryptionAlgorithmStringEntry.getKey().getClass().getName()), "decrypt");
+                MethodNode method = NodeUtils.getMethod(NodeUtils.toNode(entry.getKey().getClass()), "decrypt");
 
                 if (method != null)
                 {
                     method.access = Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC;
-                    method.name = iStringEncryptionAlgorithmStringEntry.getValue();
+                    method.name = entry.getValue();
                     node.methods.add(method);
                 }
                 else
-                {
-                    throw new Error("Decryption method of " + iStringEncryptionAlgorithmStringEntry.getKey().getClass().getSimpleName() + " wasn't found");
-                }
+                    throw new IllegalStateException("Could not find decryption method for " + entry.getKey().getClass().getName());
             }
             catch (IOException e)
             {
-                e.printStackTrace();
+                throw new IllegalStateException("Could not find decryption method for " + entry.getKey().getClass().getName(), e);
             }
         }
+    }
 
+    private static String[] createStringConstantReferences(ClassNode node, String referenceName)
+    {
+        LinkedList<String> strings = new LinkedList<>();
+
+        int index = 0;
+        for (MethodNode method : node.methods)
+            for (AbstractInsnNode abstractInsnNode : method.instructions.toArray())
+            {
+                if (!(abstractInsnNode instanceof LdcInsnNode))
+                    continue;
+
+                LdcInsnNode insnNode = (LdcInsnNode) abstractInsnNode;
+                if (!(insnNode.cst instanceof String))
+                    continue;
+
+                String string = (String) insnNode.cst;
+                if (string.length() >= 500)
+                {
+                    log.warn("A constant string value in class " + node.name +
+                            " is too long (\"" + string.substring(0, 10) +
+                            "...\", length: " + string.length() +
+                            "), skipping");
+                    continue;
+                }
+
+                InsnList insnList = new InsnList();
+
+                insnList.add(new FieldInsnNode(Opcodes.GETSTATIC, node.name, referenceName, "[Ljava/lang/String;"));
+                insnList.add(NodeUtils.generateIntPush(index));
+                insnList.add(new InsnNode(Opcodes.AALOAD));
+
+                method.instructions.insert(abstractInsnNode, insnList);
+                method.instructions.remove(abstractInsnNode);
+                strings.add(string);
+                index++;
+            }
+
+        return strings.toArray(new String[0]);
     }
 
     @Override
@@ -358,15 +402,18 @@ public class StringEncryptionTransformer implements IClassTransformer
         return ObfuscationTransformer.STRING_ENCRYPTION;
     }
 
-    private void initAlgorithms(List<IStringEncryptionAlgorithm> algorithmList)
+    private static List<? extends IStringEncryptionAlgorithm> getAlgorithms()
     {
-        algorithmList.clear();
+        List<IStringEncryptionAlgorithm> algorithms = new ArrayList<>();
 
-        algorithmList.add(new XOREncryptionAlgorithm());
-        algorithmList.add(new DESEncryptionAlgorithm());
-        algorithmList.add(new BlowfishEncryptionAlgorithm());
+        algorithms.add(new XOREncryptionAlgorithm());
+        algorithms.add(new DESEncryptionAlgorithm());
+        algorithms.add(new BlowfishEncryptionAlgorithm());
 
-        if (V_AES.get()) algorithmList.add(new AESEncryptionAlgorithm());
+        if (V_AES.get())
+            algorithms.add(new AESEncryptionAlgorithm());
+
+        return algorithms;
     }
 
 }

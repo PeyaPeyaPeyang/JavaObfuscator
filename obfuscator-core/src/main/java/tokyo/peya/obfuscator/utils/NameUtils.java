@@ -140,7 +140,19 @@ public class NameUtils
 
     public static String generateMethodName(final ClassNode classNode, String desc)
     {
-        return generateMethodName(classNode.name, desc);
+        String nameBase = generateMethodName(classNode.name, desc);
+        String name = nameBase;
+        int tryna = 0;
+        while (true)
+        {
+            String name$ = name;
+            if (classNode.methods.stream().anyMatch(methodNode -> methodNode.name.equals(name$)))
+                name = nameBase + "$" + ++tryna;
+            else
+                break;
+        }
+
+        return name;
     }
 
     public static String generateFieldName(final String className)
