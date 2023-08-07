@@ -261,8 +261,8 @@
                     <constraints/>
                     <properties>
                       <codeFoldingEnabled value="true"/>
-                      <columns value="150"/>
-                      <rows value="27"/>
+                      <columns value="0"/>
+                      <rows value="0"/>
                       <showMatchedBracketPopup value="false"/>
                       <syntaxEditingStyle value="text/javascript"/>
                     </properties>
