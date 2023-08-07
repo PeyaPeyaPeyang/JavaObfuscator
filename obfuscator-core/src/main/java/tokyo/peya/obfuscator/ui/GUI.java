@@ -156,7 +156,7 @@ public class GUI extends JFrame
                     initValues();
                     System.gc();
                 }
-                catch (IOException e1)
+                catch (Exception e1)
                 {
                     e1.printStackTrace();
                     JOptionPane.showMessageDialog(GUI.this, e1.toString(), "ERROR", JOptionPane.ERROR_MESSAGE);
