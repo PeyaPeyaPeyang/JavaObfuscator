@@ -190,6 +190,9 @@ public enum NumberObfuscationMethod implements INumberObfuscator
     public static NumberObfuscationMethod pickup(int value,
                                                  NumberObfuscationMethod[] methods)
     {
+        if (methods.length == 0)
+            return null;
+
         Random random = new Random();
         List<NumberObfuscationMethod> methodList = new ArrayList<>(Arrays.asList(methods));
 

@@ -356,6 +356,70 @@ public class NodeUtils
         }
     }
 
+    public static void insertAfterInvokeSpecial(InsnList instructions, int margin, AbstractInsnNode... insertions)
+    {
+        int i = 0;
+        boolean invokeSpecialFound = false;
+        for (AbstractInsnNode insnNode : instructions.toArray())
+        {
+            if (!(insnNode instanceof MethodInsnNode))
+                continue;
+
+            MethodInsnNode methodInsnNode = (MethodInsnNode) insnNode;
+            if (methodInsnNode.getOpcode() == Opcodes.INVOKESPECIAL)
+                invokeSpecialFound = true;
+
+            if (invokeSpecialFound)
+                if (i++ == margin)
+                {
+                    AbstractInsnNode current = insnNode;
+                    for (AbstractInsnNode insertion : insertions)
+                    {
+                        instructions.insert(current, insertion);
+                        current = insertion;
+                    }
+                    return;
+                }
+        }
+
+        // invokespecial がなかった -> そのまま追加
+
+        for (AbstractInsnNode insertion : insertions)
+            instructions.add(insertion);
+
+    }
+
+    public static void insertAfterInvokeSpecial(InsnList instructions, AbstractInsnNode insertion)
+    {
+        insertAfterInvokeSpecial(instructions, 0, insertion);
+    }
+
+    public static boolean isSpecialMethod(MethodNode method)
+    {
+        return method.name.equals("<init>") || method.name.equals("<clinit>");
+    }
+
+    public static boolean isBeforeThanInitializer(AbstractInsnNode insnNode, MethodNode method, String owner)
+    {
+
+        AbstractInsnNode current = insnNode;
+        while (current != null)
+        {
+            if (!method.instructions.contains(current))
+                return false; // 探索終わり
+
+            if (current.getOpcode() == Opcodes.INVOKESPECIAL)
+            {
+                MethodInsnNode methodInsnNode = (MethodInsnNode) current;
+                if (methodInsnNode.owner.equals(owner) && methodInsnNode.name.equals("<init>"))
+                    return true;
+            }
+            current = current.getNext();
+        }
+
+        return false;
+    }
+
 //    public static int getTypeLoad(Type argumentType) {
 //        if (argumentType.getOpcode()) {
 //

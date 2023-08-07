@@ -154,34 +154,36 @@ public class NumberObfuscationTransformer implements IClassTransformer
             {
                 if (!NodeUtils.isIntegerNumber(abstractInsnNode))
                     continue;
+                else if (NodeUtils.isBeforeThanInitializer(abstractInsnNode, method, node.name))
+                    continue;  // InvokeSpecial が呼ばれる前には実行できない
+                /*
+                例：
+                <init>(String)V {
+                    this.<init>(var a = new String[0], a[0] = "a");  // JVM による自動生成
+                }
+                <init>(String[]) {
+                    // ...
+                }
+                 */
 
                 int number = NodeUtils.getIntValue(abstractInsnNode);
 
                 if (number == Integer.MIN_VALUE)
                     continue;
 
-                boolean isExcluded = Modifier.isInterface(node.access);
-
-                if (!isExcluded && V_EXTRACT_TO_ARRAY.get())
+                if (!Modifier.isInterface(node.access) && V_EXTRACT_TO_ARRAY.get())
                 {
-                    int containedSlot = -1;
-                    int j = 0;
-                    for (Integer integer : integerList)
-                    {
-                        if (integer == number)
-                            containedSlot = j;
-                        j++;
-                    }
-                    if (containedSlot == -1)
-                        integerList.add(number);
-                    method.instructions.insertBefore(abstractInsnNode, new FieldInsnNode(Opcodes.GETSTATIC, node.name, fieldName, "[I"));
-                    method.instructions.insertBefore(abstractInsnNode, NodeUtils.generateIntPush(containedSlot == -1 ? proceed: containedSlot));
-                    method.instructions.insertBefore(abstractInsnNode, new InsnNode(Opcodes.IALOAD));
-                    method.instructions.remove(abstractInsnNode);
-                    if (containedSlot == -1)
+                    boolean isExtracted = extractToArrayOne(
+                            node,
+                            method,
+                            abstractInsnNode,
+                            fieldName,
+                            proceed,
+                            integerList,
+                            number
+                    );
+                    if (isExtracted)
                         proceed++;
-
-                    method.maxStack += 2;
                 }
                 else
                 {
@@ -194,7 +196,15 @@ public class NumberObfuscationTransformer implements IClassTransformer
 
         if (proceed != 0)
         {
-            node.fields.add(new FieldNode(((node.access & Opcodes.ACC_INTERFACE) != 0 ? Opcodes.ACC_PUBLIC: Opcodes.ACC_PRIVATE) | (node.version > Opcodes.V1_8 ? 0: Opcodes.ACC_FINAL) | Opcodes.ACC_STATIC, fieldName, "[I", null, null));
+            boolean isInterface = (node.access & Opcodes.ACC_INTERFACE) != 0;
+            node.fields.add(new FieldNode(
+                    (isInterface ? Opcodes.ACC_PUBLIC: Opcodes.ACC_PRIVATE)  // インターフェースの場合はプライベートにできない
+                            | (node.version > Opcodes.V1_8 ? 0: Opcodes.ACC_FINAL)
+                            | Opcodes.ACC_STATIC, fieldName,
+                    "[I",
+                    null,
+                    null)
+            );
             MethodNode clInit = NodeUtils.getMethod(node, "<clinit>");
             if (clInit == null)
             {
@@ -236,6 +246,30 @@ public class NumberObfuscationTransformer implements IClassTransformer
             else
                 clInit.instructions.insertBefore(clInit.instructions.getFirst(), new MethodInsnNode(Opcodes.INVOKESTATIC, node.name, generateIntegers.name, generateIntegers.desc, false));
         }
+    }
+
+    private static boolean extractToArrayOne(ClassNode clazz, MethodNode method, AbstractInsnNode abstractInsnNode, String fieldName, int proceed, List<Integer> integerList, int number)
+    {
+        int containedSlot = -1;
+        int j = 0;
+        for (Integer integer : integerList)
+        {
+            if (integer == number)
+                containedSlot = j;
+            j++;
+        }
+        if (containedSlot == -1)
+            integerList.add(number);
+        method.instructions.insertBefore(abstractInsnNode, new FieldInsnNode(Opcodes.GETSTATIC, clazz.name, fieldName, "[I"));
+        method.instructions.insertBefore(abstractInsnNode, NodeUtils.generateIntPush(containedSlot == -1 ? proceed: containedSlot));
+        method.instructions.insertBefore(abstractInsnNode, new InsnNode(Opcodes.IALOAD));
+        method.instructions.remove(abstractInsnNode);
+        if (containedSlot == -1)
+            return true;
+
+        method.maxStack += 2;
+
+        return false;
     }
 
     @Override
