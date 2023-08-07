@@ -11,7 +11,7 @@
 
 package tokyo.peya.obfuscator.processor.flows;
 
-import tokyo.peya.obfuscator.processor.NumberObfuscationTransformer;
+import tokyo.peya.obfuscator.processor.number.NumberObfuscationTransformer;
 import tokyo.peya.obfuscator.utils.VariableProvider;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;

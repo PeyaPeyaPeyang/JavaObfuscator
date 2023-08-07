@@ -9,19 +9,9 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package tokyo.peya.obfuscator.processor;
+package tokyo.peya.obfuscator.processor.number;
 
 import lombok.extern.slf4j.Slf4j;
-import tokyo.peya.obfuscator.annotations.ObfuscationTransformer;
-import tokyo.peya.obfuscator.IClassTransformer;
-import tokyo.peya.obfuscator.JarObfuscator;
-import tokyo.peya.obfuscator.ProcessorCallback;
-import tokyo.peya.obfuscator.utils.NameUtils;
-import tokyo.peya.obfuscator.utils.NodeUtils;
-import tokyo.peya.obfuscator.configuration.values.BooleanValue;
-import tokyo.peya.obfuscator.configuration.DeprecationLevel;
-import tokyo.peya.obfuscator.configuration.values.EnabledValue;
-import tokyo.peya.obfuscator.configuration.ValueManager;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
@@ -30,9 +20,17 @@ import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.IntInsnNode;
-import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
+import tokyo.peya.obfuscator.IClassTransformer;
+import tokyo.peya.obfuscator.ProcessorCallback;
+import tokyo.peya.obfuscator.annotations.ObfuscationTransformer;
+import tokyo.peya.obfuscator.configuration.DeprecationLevel;
+import tokyo.peya.obfuscator.configuration.ValueManager;
+import tokyo.peya.obfuscator.configuration.values.BooleanValue;
+import tokyo.peya.obfuscator.configuration.values.EnabledValue;
+import tokyo.peya.obfuscator.utils.NameUtils;
+import tokyo.peya.obfuscator.utils.NodeUtils;
 
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -46,7 +44,7 @@ public class NumberObfuscationTransformer implements IClassTransformer
     private static final Random random = new Random();
     private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.AVAILABLE, true);
     private static final BooleanValue V_EXTRACT_TO_ARRAY = new BooleanValue(PROCESSOR_NAME, "Extract to Array", "Calculates the integers once and store them in an array", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_OBFUSCATE_ZERO = new BooleanValue(PROCESSOR_NAME, "Obfuscate Zero", "Enables special obfuscation of the number 0", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_SPECIAL_OBFUSCATE_ZERO = new BooleanValue(PROCESSOR_NAME, "Obfuscate Zero", "Enables special obfuscation of the number 0", DeprecationLevel.AVAILABLE, true);
     private static final BooleanValue V_SHIFT = new BooleanValue(PROCESSOR_NAME, "Shift", "Uses \"<<\" to obfuscate numbers", DeprecationLevel.AVAILABLE, false);
     private static final BooleanValue V_MULTIPLE_INSTRUCTIONS = new BooleanValue(PROCESSOR_NAME, "Multiple Instructions", "Repeats the obfuscation process", DeprecationLevel.AVAILABLE, true);
 
@@ -57,13 +55,6 @@ public class NumberObfuscationTransformer implements IClassTransformer
     static
     {
         ValueManager.registerClass(NumberObfuscationTransformer.class);
-    }
-
-    private final JarObfuscator inst;
-
-    public NumberObfuscationTransformer(JarObfuscator inst)
-    {
-        this.inst = inst;
     }
 
     private static InsnList getInstructionsMultipleTimes(int value, int iterations)
@@ -79,6 +70,9 @@ public class NumberObfuscationTransformer implements IClassTransformer
 
     public static InsnList obfuscateInsnList(InsnList list)
     {
+        if (!V_ENABLED.get())
+            return list;  // 他のプロセッサから呼び出される可能性がある
+
         for (AbstractInsnNode abstractInsnNode : list.toArray())
         {
             if (NodeUtils.isIntegerNumber(abstractInsnNode))
@@ -98,161 +92,52 @@ public class NumberObfuscationTransformer implements IClassTransformer
     public static InsnList obfuscateIntInsn(int value)
     {
         InsnList methodInstructions = new InsnList();
-        if (value == 0 && V_OBFUSCATE_ZERO.get())
-        {
-            int randomInt = random.nextInt(100);
-            methodInstructions.add(obfuscateIntInsn(randomInt));
-            methodInstructions.add(obfuscateIntInsn(randomInt));
-            methodInstructions.add(new InsnNode(Opcodes.ICONST_M1));
-            methodInstructions.add(new InsnNode(Opcodes.IXOR));
-            methodInstructions.add(new InsnNode(Opcodes.IAND));
-
-            return methodInstructions;
-        }
-        int[] shiftOutput = splitToLShift(value);
-
-        if (shiftOutput[1] > 0 && V_SHIFT.get())
-        {
-            methodInstructions.add(obfuscateIntInsn(shiftOutput[0]));
-            methodInstructions.add(obfuscateIntInsn(shiftOutput[1]));
-            methodInstructions.add(new InsnNode(Opcodes.ISHL));
-            return methodInstructions;
-        }
-
-        int method = getMethod(value);
         final boolean negative = value < 0;
+
+        if (!V_ENABLED.get())
+        {
+            methodInstructions.add(NodeUtils.generateIntPush(value));
+            return methodInstructions;  // 他のプロセッサから呼び出される可能性がある
+        }
+
+        NumberObfuscationMethod method = NumberObfuscationMethod.pickup(value, getAvailableMethods());
+
+        if (method == null)
+        {
+            log.warn("Number obfuscation is enabled but no method was selected/matched for value " + value);
+            methodInstructions.add(NodeUtils.generateIntPush(value));
+            return methodInstructions;
+        }
 
         if (negative)
             value = -value;
 
-        switch (method)
-        {
-            case 0:
-                /*
-                 * Generates a string.length() statement (e. 4 will be "kfjr".length())
-                 */
-                methodInstructions.add(new LdcInsnNode(NameUtils.generateSpaceString(value)));
-                methodInstructions.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/String", "length", "()I", false));
-                break;
-            case 1:
-                /*
-                 * Generates a XOR statement 20 will be 29 ^ 9 <--- It's random that there a two 9s
-                 */
-                int A = value;
-                int B = random.nextInt(200);
-                A = A ^ B;
-                methodInstructions.add(NodeUtils.generateIntPush(A));
-                methodInstructions.add(NodeUtils.generateIntPush(B));
-                methodInstructions.add(new InsnNode(Opcodes.IXOR));
-                break;
-            case 2:
-                /*
-                 * Generates a simple calculation eg.
-                 */
-                int addTimes = random.nextInt(10) + 3;
-                int[] values = new int[addTimes];
-                int sum = 0;
-                for (int i = 0; i < addTimes; i++)
-                {
-                    int v = random.nextInt(10);
-                    values[i] = v;
-                    sum += v;
-                }
+        methodInstructions.add(method.obfuscate(value));
 
-                int toSubtract = sum - value;
-
-                boolean subtracted = false;
-                methodInstructions.add(NodeUtils.generateIntPush(values[0]));
-                for (int i = 1; i < addTimes; i++)
-                {
-                    methodInstructions.add(NodeUtils.generateIntPush(values[i]));
-                    methodInstructions.add(new InsnNode(Opcodes.IADD));
-                    if (!subtracted && toSubtract > 0 && random.nextInt(10) == 0)
-                    {
-                        methodInstructions.add(NodeUtils.generateIntPush(toSubtract));
-                        methodInstructions.add(new InsnNode(Opcodes.ISUB));
-                        subtracted = true;
-                    }
-                }
-
-                if (toSubtract > 0 && !subtracted)
-                {
-                    methodInstructions.add(NodeUtils.generateIntPush(toSubtract));
-                    methodInstructions.add(new InsnNode(Opcodes.ISUB));
-                }
-
-                break;
-            case 3:
-                int[] and = splitToAnd(value);
-                methodInstructions.add(NodeUtils.generateIntPush(and[0]));
-                methodInstructions.add(NodeUtils.generateIntPush(and[1]));
-                methodInstructions.add(new InsnNode(Opcodes.IAND));
-                break;
-            default:
-                log.warn("Number obfuscation is enabled but no method was selected/matched for value " + value);
-                methodInstructions.add(NodeUtils.generateIntPush(value));
-                break;
-        }
         if (negative)
             methodInstructions.add(new InsnNode(Opcodes.INEG));
 
         return methodInstructions;
     }
 
-    private static int getMethod(int value)
+    private static NumberObfuscationMethod[] getAvailableMethods()
     {
+        List<NumberObfuscationMethod> methods = new ArrayList<>();
 
-        boolean LENGTH_MODE_ENABLED = V_METHOD_STRING_LENGTH.get();
-        boolean XOR_MODE_ENABLED = V_METHOD_XOR.get();
-        boolean SIMPLE_MATH_MODE_ENABLED = V_METHOD_SIMPLE_MATH.get();
-        boolean AND_MODE_ENABLED = V_METHOD_AND.get();
+        if (V_SPECIAL_OBFUSCATE_ZERO.get())
+            methods.add(NumberObfuscationMethod.SPECIAL_ZERO);
+        if (V_SHIFT.get())
+            methods.add(NumberObfuscationMethod.SHIFT);
+        if (V_METHOD_AND.get())
+            methods.add(NumberObfuscationMethod.AND);
+        if (V_METHOD_XOR.get())
+            methods.add(NumberObfuscationMethod.XOR);
+        if (V_METHOD_STRING_LENGTH.get())
+            methods.add(NumberObfuscationMethod.STRING_LENGTH);
+        if (V_METHOD_SIMPLE_MATH.get())
+            methods.add(NumberObfuscationMethod.SIMPLE_MATH);
 
-        boolean lengthModeEnabled = random.nextBoolean() && LENGTH_MODE_ENABLED;
-        boolean xorModeEnabled = random.nextBoolean() && XOR_MODE_ENABLED;
-        boolean simpleMathModeEnabled = random.nextBoolean() && SIMPLE_MATH_MODE_ENABLED;
-        boolean andModeEnabled = random.nextBoolean() && AND_MODE_ENABLED;
-
-        boolean shouldApplyLengthMode = Math.abs(value) < 4 || !(xorModeEnabled || simpleMathModeEnabled);
-        boolean canApplyLengthMode = Math.abs(value) <= 65535;  // LDC 命令の最大値
-
-        boolean shouldApplyXorMode = !(lengthModeEnabled || simpleMathModeEnabled);
-        boolean canApplyXorMode = Math.abs(value) <= Byte.MAX_VALUE;
-
-        boolean shouldApplyAddMode = !(lengthModeEnabled || xorModeEnabled);
-        boolean canApplyAddMode = Math.abs(value) > 0xFF;
-
-        int method;
-        if (lengthModeEnabled && shouldApplyLengthMode && canApplyLengthMode)
-            method = 0;
-        else if (xorModeEnabled && shouldApplyXorMode && canApplyXorMode)
-            method = 1;
-        else if (andModeEnabled && shouldApplyAddMode && canApplyAddMode)
-            method = 3;
-        else if (simpleMathModeEnabled)
-            method = 2;
-        else
-            method = -1;
-
-        return method;
-    }
-
-    private static int[] splitToAnd(int number)
-    {
-        int number2 = random.nextInt(Short.MAX_VALUE) & ~number;
-
-        return new int[]{~number2, number2 | number};
-    }
-
-    private static int[] splitToLShift(int number)
-    {
-        int shift = 0;
-
-        while ((number & ~0x7ffffffffffffffEL) == 0 && number != 0)
-        {
-            number = number >> 1;
-            shift++;
-        }
-        return new int[]{number, shift};
+        return methods.toArray(new NumberObfuscationMethod[0]);
     }
 
     @Override

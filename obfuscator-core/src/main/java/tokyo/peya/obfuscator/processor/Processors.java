@@ -8,6 +8,7 @@ import tokyo.peya.obfuscator.processor.flows.FlowObfuscator;
 import tokyo.peya.obfuscator.processor.naming.INameObfuscationProcessor;
 import tokyo.peya.obfuscator.processor.naming.InnerClassRemover;
 import tokyo.peya.obfuscator.processor.naming.NameObfuscation;
+import tokyo.peya.obfuscator.processor.number.NumberObfuscationTransformer;
 import tokyo.peya.obfuscator.processor.optimizer.Optimizer;
 
 import java.util.ArrayList;
@@ -56,7 +57,7 @@ public class Processors
         processors.add(new InvokeDynamic());
 
         processors.add(new StringEncryptionTransformer(instance));
-        processors.add(new NumberObfuscationTransformer(instance));
+        processors.add(new NumberObfuscationTransformer());
         processors.add(new FlowObfuscator(instance));
         processors.add(new HideMembers(instance));
         processors.add(new LineNumberRemover(instance));

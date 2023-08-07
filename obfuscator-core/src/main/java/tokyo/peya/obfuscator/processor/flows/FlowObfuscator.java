@@ -15,7 +15,7 @@ import tokyo.peya.obfuscator.IClassTransformer;
 import tokyo.peya.obfuscator.JarObfuscator;
 import tokyo.peya.obfuscator.ProcessorCallback;
 import tokyo.peya.obfuscator.annotations.ObfuscationTransformer;
-import tokyo.peya.obfuscator.processor.NumberObfuscationTransformer;
+import tokyo.peya.obfuscator.processor.number.NumberObfuscationTransformer;
 import tokyo.peya.obfuscator.utils.NameUtils;
 import tokyo.peya.obfuscator.utils.NodeUtils;
 import tokyo.peya.obfuscator.configuration.values.BooleanValue;
