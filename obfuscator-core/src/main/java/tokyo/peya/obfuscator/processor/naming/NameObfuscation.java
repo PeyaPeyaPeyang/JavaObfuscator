@@ -95,9 +95,6 @@ public class NameObfuscation implements INameObfuscationProcessor
 
     public String getPackageName()
     {
-        if (!V_SHOULD_PACKAGE.get())
-            return "";
-
         String retVal;
         if (this.packageNames.size() == 1 && this.packageNames.get(0).equalsIgnoreCase("common"))
             retVal = CommonPackageTrees.getRandomPackage();
@@ -202,9 +199,25 @@ public class NameObfuscation implements INameObfuscationProcessor
         {
             log.info("Renaming class " + clazz.originalName + " is automatically excluded because it has native methods.");
             mappings.put(clazz.originalName, clazz.originalName);
+            return;
         }
+
+        String packageName;
+        if (V_SHOULD_PACKAGE.get())
+            packageName = getPackageName();
         else
-            mappings.put(clazz.originalName, getPackageName() + NameUtils.generateClassName());
+        {
+            String className = clazz.originalName;
+            if (className.contains("/"))
+                packageName = className.substring(0, className.lastIndexOf("/") + 1);
+            else
+                packageName = "";
+
+            if (!packageName.endsWith("/"))
+                packageName = packageName + "/";
+        }
+
+        mappings.put(clazz.originalName, packageName + NameUtils.generateClassName());
     }
 
     private void processMethods(ClassWrapper classWrapper, Map<String, String> mappings)
@@ -236,7 +249,7 @@ public class NameObfuscation implements INameObfuscationProcessor
     private void processFields(ClassWrapper classWrapper, Map<String, String> mappings)
     {
         Predicate<FieldWrapper> isExclude = field ->
-                !isFieldExcluded(classWrapper.originalName, field)
+                isFieldExcluded(classWrapper.originalName, field)
                         || !canRenameFieldTree(mappings, new HashSet<>(), field, classWrapper.originalName);
 
         classWrapper.fields.stream()
@@ -302,11 +315,7 @@ public class NameObfuscation implements INameObfuscationProcessor
             for (int i = 0; i < copy.fields.size(); i++)
                 classWrapper.fields.get(i).fieldNode = copy.fields.get(i);
 
-        String oldName = classWrapper.classNode.name;
-        if (oldName.contains("/"))
-            oldName = oldName.substring(oldName.lastIndexOf("/") + 1);
-
-        this.obfuscator.getClasses().remove( oldName + ".class");
+        this.obfuscator.getClasses().remove( classWrapper.originalName + ".class");
         classWrapper.classNode = copy;
         this.obfuscator.getClasses().put(classWrapper.classNode.name + ".class", classWrapper.classNode);
         //            JObfImpl.INSTANCE.getClassPath().put();
