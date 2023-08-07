@@ -57,8 +57,8 @@ public class NameObfuscation implements INameObfuscationProcessor
     private static final StringValue V_EXCLUDED_CLASSES = new StringValue(PROCESSOR_NAME, "Excluded classes", null, DeprecationLevel.AVAILABLE, "me.name.Class\nme.name.*\nio.netty.**", 5);
     private static final StringValue V_EXCLUDED_METHODS = new StringValue(PROCESSOR_NAME, "Excluded methods", null, DeprecationLevel.AVAILABLE, "me.name.Class.method\nme.name.Class**\nme.name.Class.*", 5);
     private static final StringValue V_EXCLUDED_FIELDS = new StringValue(PROCESSOR_NAME, "Excluded fields", null, DeprecationLevel.AVAILABLE, "me.name.Class.field\nme.name.Class.*\nme.name.**", 5);
-    private static final BooleanValue V_SHOULD_PACKAGE = new BooleanValue(PROCESSOR_NAME, "Package", DeprecationLevel.SOME_DEPRECATION, false);
-    private static final StringValue V_NEW_PACKAGE = new StringValue(PROCESSOR_NAME, "New Packages", null, DeprecationLevel.AVAILABLE, "", 5);
+    private static final BooleanValue V_RANDOM_PACKAGE = new BooleanValue(PROCESSOR_NAME, "Random package structures", DeprecationLevel.SOME_DEPRECATION, false);
+    private static final StringValue V_NEW_PACKAGE = new StringValue(PROCESSOR_NAME, "New Packages(separate by \\n)", null, DeprecationLevel.AVAILABLE, "", 5);
     private static final BooleanValue V_ACCEPT_MISSING_LIBRARIES = new BooleanValue(PROCESSOR_NAME, "Accept Missing Libraries", DeprecationLevel.AVAILABLE, false);
     private static final FilePathValue V_MAPPINGS_TO_SAVE = new FilePathValue(PROCESSOR_NAME, "Mappings to save", null, DeprecationLevel.AVAILABLE, null);
 
@@ -84,23 +84,33 @@ public class NameObfuscation implements INameObfuscationProcessor
         return classNode.methods.stream().anyMatch(methodNode -> Modifier.isNative(methodNode.access));
     }
 
-    public void setupPackages()
+    public void setupPackageRandomizer()
     {
-        if (V_SHOULD_PACKAGE.get())
+        if (V_RANDOM_PACKAGE.get())
         {
             String[] newPackages = V_NEW_PACKAGE.get().split("\n");
             this.packageNames = Arrays.asList(newPackages);
         }
     }
 
-    public String getPackageName()
+    public String generateRandomPackage()
     {
         String retVal;
-        if (this.packageNames.size() == 1 && this.packageNames.get(0).equalsIgnoreCase("common"))
-            retVal = CommonPackageTrees.getRandomPackage();
+        if (this.packageNames.size() == 1)
+        {
+            String packageName = this.packageNames.get(0);
+            if (packageName.equalsIgnoreCase("common"))
+                retVal = CommonPackageTrees.getRandomPackage();
+            else if (packageName.isEmpty())
+                retVal = NameUtils.crazyString(random.nextInt(10) + 5);
+            else
+                retVal = packageName;
+        }
         else
             retVal = this.packageNames.get(random.nextInt(this.packageNames.size()));
 
+        if (retVal.contains("."))
+            retVal = retVal.replace(".", "/");
         if (retVal.startsWith("/"))
             retVal = retVal.substring(1);
         if (!retVal.endsWith("/"))
@@ -155,7 +165,7 @@ public class NameObfuscation implements INameObfuscationProcessor
             log.info("Generating mappings...");
 
             NameUtils.setup();
-            this.setupPackages();
+            this.setupPackageRandomizer();
 
             this.processClasses(classWrappers, mappings);
 
@@ -203,8 +213,8 @@ public class NameObfuscation implements INameObfuscationProcessor
         }
 
         String packageName;
-        if (V_SHOULD_PACKAGE.get())
-            packageName = getPackageName();
+        if (V_RANDOM_PACKAGE.get())
+            packageName = generateRandomPackage();
         else
         {
             String className = clazz.originalName;
