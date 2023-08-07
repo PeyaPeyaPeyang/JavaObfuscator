@@ -11,6 +11,7 @@
 
 package tokyo.peya.obfuscator.processor;
 
+import lombok.extern.slf4j.Slf4j;
 import tokyo.peya.obfuscator.annotations.ObfuscationTransformer;
 import tokyo.peya.obfuscator.IClassTransformer;
 import tokyo.peya.obfuscator.JarObfuscator;
@@ -21,7 +22,6 @@ import tokyo.peya.obfuscator.configuration.values.BooleanValue;
 import tokyo.peya.obfuscator.configuration.DeprecationLevel;
 import tokyo.peya.obfuscator.configuration.values.EnabledValue;
 import tokyo.peya.obfuscator.configuration.ValueManager;
-import org.apache.commons.lang3.RandomUtils;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+@Slf4j(topic = "Processor/NumberObfuscationTransformer")
 public class NumberObfuscationTransformer implements IClassTransformer
 {
     private static final String PROCESSOR_NAME = "NumberObfuscation";
@@ -47,9 +48,12 @@ public class NumberObfuscationTransformer implements IClassTransformer
     private static final BooleanValue V_EXTRACT_TO_ARRAY = new BooleanValue(PROCESSOR_NAME, "Extract to Array", "Calculates the integers once and store them in an array", DeprecationLevel.AVAILABLE, true);
     private static final BooleanValue V_OBFUSCATE_ZERO = new BooleanValue(PROCESSOR_NAME, "Obfuscate Zero", "Enables special obfuscation of the number 0", DeprecationLevel.AVAILABLE, true);
     private static final BooleanValue V_SHIFT = new BooleanValue(PROCESSOR_NAME, "Shift", "Uses \"<<\" to obfuscate numbers", DeprecationLevel.AVAILABLE, false);
-    private static final BooleanValue V_AND = new BooleanValue(PROCESSOR_NAME, "And", "Uses \"&\" to obfuscate numbers", DeprecationLevel.AVAILABLE, false);
     private static final BooleanValue V_MULTIPLE_INSTRUCTIONS = new BooleanValue(PROCESSOR_NAME, "Multiple Instructions", "Repeats the obfuscation process", DeprecationLevel.AVAILABLE, true);
 
+    private static final BooleanValue V_METHOD_AND = new BooleanValue(PROCESSOR_NAME, "And", "Uses \"&\" to obfuscate numbers", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_METHOD_XOR = new BooleanValue(PROCESSOR_NAME, "XOR", "Uses \"^\" to obfuscate numbers", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_METHOD_STRING_LENGTH = new BooleanValue(PROCESSOR_NAME, "String Length", "Uses the length of a random string(fixed length) to obfuscate numbers", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_METHOD_SIMPLE_MATH = new BooleanValue(PROCESSOR_NAME, "Simple Math", "Uses simple math(add, sub, ) to obfuscate numbers", DeprecationLevel.AVAILABLE, true);
     static
     {
         ValueManager.registerClass(NumberObfuscationTransformer.class);
@@ -94,7 +98,6 @@ public class NumberObfuscationTransformer implements IClassTransformer
     public static InsnList obfuscateIntInsn(int value)
     {
         InsnList methodInstructions = new InsnList();
-
         if (value == 0 && V_OBFUSCATE_ZERO.get())
         {
             int randomInt = random.nextInt(100);
@@ -185,6 +188,10 @@ public class NumberObfuscationTransformer implements IClassTransformer
                 methodInstructions.add(NodeUtils.generateIntPush(and[1]));
                 methodInstructions.add(new InsnNode(Opcodes.IAND));
                 break;
+            default:
+                log.warn("Number obfuscation is enabled but no method was selected/matched for value " + value);
+                methodInstructions.add(NodeUtils.generateIntPush(value));
+                break;
         }
         if (negative)
             methodInstructions.add(new InsnNode(Opcodes.INEG));
@@ -194,12 +201,11 @@ public class NumberObfuscationTransformer implements IClassTransformer
 
     private static int getMethod(int value)
     {
-        int method;
 
-        boolean LENGTH_MODE_ENABLED = true;
-        boolean XOR_MODE_ENABLED = true;
-        boolean SIMPLE_MATH_MODE_ENABLED = true;
-        boolean AND_MODE_ENABLED = V_AND.get();
+        boolean LENGTH_MODE_ENABLED = V_METHOD_STRING_LENGTH.get();
+        boolean XOR_MODE_ENABLED = V_METHOD_XOR.get();
+        boolean SIMPLE_MATH_MODE_ENABLED = V_METHOD_SIMPLE_MATH.get();
+        boolean AND_MODE_ENABLED = V_METHOD_AND.get();
 
         boolean lengthModeEnabled = random.nextBoolean() && LENGTH_MODE_ENABLED;
         boolean xorModeEnabled = random.nextBoolean() && XOR_MODE_ENABLED;
@@ -215,14 +221,17 @@ public class NumberObfuscationTransformer implements IClassTransformer
         boolean shouldApplyAddMode = !(lengthModeEnabled || xorModeEnabled);
         boolean canApplyAddMode = Math.abs(value) > 0xFF;
 
+        int method;
         if (lengthModeEnabled && shouldApplyLengthMode && canApplyLengthMode)
             method = 0;
         else if (xorModeEnabled && shouldApplyXorMode && canApplyXorMode)
             method = 1;
-        else if (simpleMathModeEnabled && shouldApplyAddMode && canApplyAddMode)
+        else if (andModeEnabled && shouldApplyAddMode && canApplyAddMode)
             method = 3;
-        else
+        else if (simpleMathModeEnabled)
             method = 2;
+        else
+            method = -1;
 
         return method;
     }
@@ -347,6 +356,6 @@ public class NumberObfuscationTransformer implements IClassTransformer
     @Override
     public ObfuscationTransformer getType()
     {
-        return ObfuscationTransformer.INLINING;
+        return ObfuscationTransformer.NUMBER_OBFUSCATION;
     }
 }
