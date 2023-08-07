@@ -56,7 +56,7 @@ public class Processors
         processors.add(new InlineTransformer(instance));
         processors.add(new InvokeDynamic());
 
-        processors.add(new StringEncryptionTransformer(instance));
+        processors.add(new StringEncryptionTransformer());
         processors.add(new NumberObfuscationTransformer());
         processors.add(new FlowObfuscator(instance));
         processors.add(new HideMembers(instance));

@@ -28,7 +28,6 @@ import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TypeInsnNode;
 import org.objectweb.asm.tree.VarInsnNode;
 import tokyo.peya.obfuscator.IClassTransformer;
-import tokyo.peya.obfuscator.JarObfuscator;
 import tokyo.peya.obfuscator.ProcessorCallback;
 import tokyo.peya.obfuscator.annotations.ObfuscationTransformer;
 import tokyo.peya.obfuscator.configuration.DeprecationLevel;
@@ -62,19 +61,20 @@ public class StringEncryptionTransformer implements IClassTransformer
     private static final Random random = new Random();
     private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.AVAILABLE, true);
     private static final BooleanValue V_HIDE_STRINGS = new BooleanValue(PROCESSOR_NAME, "HideStrings", "Hide strings in SourceFile. Might break after editing the SourceFile", DeprecationLevel.SOME_DEPRECATION, false);
-    private static final BooleanValue V_AES = new BooleanValue(PROCESSOR_NAME, "AES", DeprecationLevel.SOME_DEPRECATION, false);
+    private static final BooleanValue V_ALGO_AES = new BooleanValue(PROCESSOR_NAME, "Algorithm: AES", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_ALGO_XOR = new BooleanValue(PROCESSOR_NAME, "Algorithm: XOR Processing", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_ALGO_BLOWFISH = new BooleanValue(PROCESSOR_NAME, "Algorithm: Blowfish", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_ALGO_DES = new BooleanValue(PROCESSOR_NAME, "Algorithm: DES", DeprecationLevel.AVAILABLE, true);
+
 
     static
     {
         ValueManager.registerClass(StringEncryptionTransformer.class);
     }
-
-    private final JarObfuscator inst;
     private final List<? extends IStringEncryptionAlgorithm> algorithms;
 
-    public StringEncryptionTransformer(JarObfuscator inst)
+    public StringEncryptionTransformer()
     {
-        this.inst = inst;
         this.algorithms = getAlgorithms();
     }
 
@@ -406,12 +406,14 @@ public class StringEncryptionTransformer implements IClassTransformer
     {
         List<IStringEncryptionAlgorithm> algorithms = new ArrayList<>();
 
-        algorithms.add(new XOREncryptionAlgorithm());
-        algorithms.add(new DESEncryptionAlgorithm());
-        algorithms.add(new BlowfishEncryptionAlgorithm());
-
-        if (V_AES.get())
+        if (V_ALGO_AES.get())
             algorithms.add(new AESEncryptionAlgorithm());
+        if (V_ALGO_XOR.get())
+            algorithms.add(new XOREncryptionAlgorithm());
+        if (V_ALGO_BLOWFISH.get())
+            algorithms.add(new BlowfishEncryptionAlgorithm());
+        if (V_ALGO_DES.get())
+            algorithms.add(new DESEncryptionAlgorithm());
 
         return algorithms;
     }
