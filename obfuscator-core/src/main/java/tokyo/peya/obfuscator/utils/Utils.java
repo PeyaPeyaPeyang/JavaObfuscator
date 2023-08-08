@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2019 superblaubeere27, Sam Sun, MarcoMC
- * Copyright (c) 2023      Peyang 
+ * Copyright (c) 2023      Peyang
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
  *
@@ -17,9 +17,6 @@ import com.google.gson.JsonObject;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileFilter;
-import tokyo.peya.obfuscator.JavaObfuscator;
-import tokyo.peya.obfuscator.clazz.ClassWrapper;
-import tokyo.peya.obfuscator.configuration.DeprecationLevel;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -33,6 +30,9 @@ import org.objectweb.asm.tree.LineNumberNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.VarInsnNode;
+import tokyo.peya.obfuscator.JavaObfuscator;
+import tokyo.peya.obfuscator.clazz.ClassWrapper;
+import tokyo.peya.obfuscator.configuration.DeprecationLevel;
 
 import java.awt.Color;
 import java.awt.Component;

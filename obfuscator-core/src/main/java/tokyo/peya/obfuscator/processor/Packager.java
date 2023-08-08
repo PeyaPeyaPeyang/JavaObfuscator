@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2019 superblaubeere27, Sam Sun, MarcoMC
- * Copyright (c) 2023      Peyang 
+ * Copyright (c) 2023      Peyang
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
  *
@@ -12,26 +12,26 @@
 package tokyo.peya.obfuscator.processor;
 
 import lombok.Getter;
-import tokyo.peya.obfuscator.IClassTransformer;
-import tokyo.peya.obfuscator.JavaObfuscator;
-import tokyo.peya.obfuscator.ProcessorCallback;
-import tokyo.peya.obfuscator.clazz.ClassWrapper;
-import tokyo.peya.obfuscator.utils.NameUtils;
-import tokyo.peya.obfuscator.utils.NodeUtils;
-import tokyo.peya.obfuscator.configuration.values.BooleanValue;
-import tokyo.peya.obfuscator.configuration.DeprecationLevel;
-import tokyo.peya.obfuscator.configuration.values.EnabledValue;
-import tokyo.peya.obfuscator.configuration.values.StringValue;
-import tokyo.peya.obfuscator.configuration.ValueManager;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
-import tokyo.peya.obfuscator.clazz.ModifiedClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
+import tokyo.peya.obfuscator.IClassTransformer;
+import tokyo.peya.obfuscator.JavaObfuscator;
+import tokyo.peya.obfuscator.ProcessorCallback;
+import tokyo.peya.obfuscator.clazz.ClassWrapper;
+import tokyo.peya.obfuscator.clazz.ModifiedClassWriter;
+import tokyo.peya.obfuscator.configuration.DeprecationLevel;
+import tokyo.peya.obfuscator.configuration.ValueManager;
+import tokyo.peya.obfuscator.configuration.values.BooleanValue;
+import tokyo.peya.obfuscator.configuration.values.EnabledValue;
+import tokyo.peya.obfuscator.configuration.values.StringValue;
+import tokyo.peya.obfuscator.utils.NameUtils;
+import tokyo.peya.obfuscator.utils.NodeUtils;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
@@ -47,18 +47,18 @@ public class Packager
     private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.SOME_DEPRECATION, false);
     private static final BooleanValue V_AUTO_FIND_MAIN_CLASS = new BooleanValue(PROCESSOR_NAME, "Use MainClass from the JAR manifest", DeprecationLevel.AVAILABLE, true);
     private static final StringValue V_MAIN_CLASS = new StringValue(PROCESSOR_NAME, "Main class", DeprecationLevel.AVAILABLE, "org.example.Main");
+    public static Packager INSTANCE = new Packager();
 
-    static {
+    static
+    {
 
         ValueManager.registerClass(Packager.class);
     }
 
-    public static Packager INSTANCE = new Packager();
     private byte[] key;
     @Getter
     private String decryptionClassName;
     private String mainClass;
-
 
     private static byte[] xor(byte[] data, byte[] key)
     {

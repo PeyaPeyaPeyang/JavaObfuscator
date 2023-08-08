@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2019 superblaubeere27, Sam Sun, MarcoMC
- * Copyright (c) 2023      Peyang 
+ * Copyright (c) 2023      Peyang
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
  *
@@ -11,7 +11,6 @@
 
 package tokyo.peya.obfuscator.utils;
 
-import tokyo.peya.obfuscator.JavaObfuscator;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -28,6 +27,7 @@ import org.objectweb.asm.tree.VarInsnNode;
 import org.objectweb.asm.util.Printer;
 import org.objectweb.asm.util.Textifier;
 import org.objectweb.asm.util.TraceMethodVisitor;
+import tokyo.peya.obfuscator.JavaObfuscator;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -231,7 +231,7 @@ public class NodeUtils
 
     public static ClassNode toNode(final String className) throws IOException
     {
-        try(InputStream is = JavaObfuscator.class.getResourceAsStream("/" + className.replace('.', '/') + ".class"))
+        try (InputStream is = JavaObfuscator.class.getResourceAsStream("/" + className.replace('.', '/') + ".class"))
         {
             final ClassReader classReader = new ClassReader(is);
             final ClassNode classNode = new ClassNode();

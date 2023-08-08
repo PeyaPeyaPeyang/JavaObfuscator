@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2019 superblaubeere27, Sam Sun, MarcoMC
- * Copyright (c) 2023      Peyang 
+ * Copyright (c) 2023      Peyang
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
  *
@@ -14,21 +14,21 @@ package tokyo.peya.obfuscator;
 import com.google.common.io.ByteStreams;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import tokyo.peya.obfuscator.clazz.ModifiedClassWriter;
-import tokyo.peya.obfuscator.processor.Processors;
-import tokyo.peya.obfuscator.clazz.ClassWrapper;
-import tokyo.peya.obfuscator.processor.naming.INameObfuscationProcessor;
-import tokyo.peya.obfuscator.processor.Packager;
-import tokyo.peya.obfuscator.clazz.ClassTree;
-import tokyo.peya.obfuscator.utils.MissingClassException;
-import tokyo.peya.obfuscator.utils.NameUtils;
-import tokyo.peya.obfuscator.utils.Utils;
-import tokyo.peya.obfuscator.configuration.Configuration;
-import tokyo.peya.obfuscator.configuration.ValueManager;
 import org.apache.commons.lang3.StringUtils;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FrameNode;
+import tokyo.peya.obfuscator.clazz.ClassTree;
+import tokyo.peya.obfuscator.clazz.ClassWrapper;
+import tokyo.peya.obfuscator.clazz.ModifiedClassWriter;
+import tokyo.peya.obfuscator.configuration.Configuration;
+import tokyo.peya.obfuscator.configuration.ValueManager;
+import tokyo.peya.obfuscator.processor.Packager;
+import tokyo.peya.obfuscator.processor.Processors;
+import tokyo.peya.obfuscator.processor.naming.INameObfuscationProcessor;
+import tokyo.peya.obfuscator.utils.MissingClassException;
+import tokyo.peya.obfuscator.utils.NameUtils;
+import tokyo.peya.obfuscator.utils.Utils;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -139,6 +139,11 @@ public class Obfuscator
         {
             throw new FileNotFoundException("Could not open output file: " + e.getMessage());
         }
+    }
+
+    private static boolean isClass(String name)
+    {
+        return name.endsWith(".class");
     }
 
     public ClassTree getTree(String ref)
@@ -435,7 +440,7 @@ public class Obfuscator
         String fileName = path.getFileName().toString();
 
         try (InputStream in = Files.newInputStream(path);
-                ByteArrayOutputStream out = new ByteArrayOutputStream())
+             ByteArrayOutputStream out = new ByteArrayOutputStream())
         {
             Utils.copy(in, out);
 
@@ -445,11 +450,6 @@ public class Obfuscator
 
         Map<String, byte[]> toWrite = this.processClasses();
         finishOutJar(toWrite, outJar, useStore);
-    }
-
-    private static boolean isClass(String name)
-    {
-        return name.endsWith(".class");
     }
 
     private void finishProcessing(ZipOutputStream stream)

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2019 superblaubeere27, Sam Sun, MarcoMC
- * Copyright (c) 2023      Peyang 
+ * Copyright (c) 2023      Peyang
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
  *
@@ -22,14 +22,14 @@ import joptsimple.OptionSet;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import tokyo.peya.obfuscator.processor.Processors;
-import tokyo.peya.obfuscator.processor.Packager;
-import tokyo.peya.obfuscator.ui.GUI;
-import tokyo.peya.obfuscator.utils.ConsoleUtils;
-import tokyo.peya.obfuscator.templating.Templates;
-import tokyo.peya.obfuscator.utils.Utils;
 import tokyo.peya.obfuscator.configuration.ConfigManager;
 import tokyo.peya.obfuscator.configuration.Configuration;
+import tokyo.peya.obfuscator.processor.Packager;
+import tokyo.peya.obfuscator.processor.Processors;
+import tokyo.peya.obfuscator.templating.Templates;
+import tokyo.peya.obfuscator.ui.GUI;
+import tokyo.peya.obfuscator.utils.ConsoleUtils;
+import tokyo.peya.obfuscator.utils.Utils;
 
 import java.awt.GraphicsEnvironment;
 import java.io.File;
@@ -165,7 +165,7 @@ public class JavaObfuscator
                 "  / _ \\| '_ \\|  _| | | / __|/ __/ _` | __/ _ \\| '__|\n" +
                 " | (_) | |_) | | | |_| \\__ \\ (_| (_| | || (_) | |   \n" +
                 "  \\___/|_.__/|_|  \\__,_|___/\\___\\__,_|\\__\\___/|_|   \n" +
-                "   " + SHORT_VERSION + (embedded ? " (EMBEDDED)" : "") +
+                "   " + SHORT_VERSION + (embedded ? " (EMBEDDED)": "") +
                 "\n\n");
     }
 

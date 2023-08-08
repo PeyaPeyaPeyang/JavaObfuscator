@@ -17,20 +17,20 @@ import java.util.List;
 public class Processors
 {
     private static final Class<?>[] PROCESSORS = {
-             StaticInitializionTransformer.class,
-                Optimizer.class,
-                InlineTransformer.class,
-                InvokeDynamic.class,
-                StringEncryptionTransformer.class,
-                NumberObfuscationTransformer.class,
-                FlowObfuscator.class,
-                HideMembers.class,
-                LineNumberRemover.class,
-                ShuffleMembersTransformer.class,
-                NameObfuscation.class,
-                InnerClassRemover.class,
-                CrasherTransformer.class,
-                ReferenceProxy.class
+            StaticInitializionTransformer.class,
+            Optimizer.class,
+            InlineTransformer.class,
+            InvokeDynamic.class,
+            StringEncryptionTransformer.class,
+            NumberObfuscationTransformer.class,
+            FlowObfuscator.class,
+            HideMembers.class,
+            LineNumberRemover.class,
+            ShuffleMembersTransformer.class,
+            NameObfuscation.class,
+            InnerClassRemover.class,
+            CrasherTransformer.class,
+            ReferenceProxy.class
     };
 
     public static Class<?>[] getProcessors()
@@ -69,7 +69,8 @@ public class Processors
         return processors;
     }
 
-    public static List<INameObfuscationProcessor> createNameProcessors(Obfuscator instance) {
+    public static List<INameObfuscationProcessor> createNameProcessors(Obfuscator instance)
+    {
         List<INameObfuscationProcessor> processors = new ArrayList<>();
         processors.add(new NameObfuscation(instance));
         processors.add(new InnerClassRemover(instance));

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2019 superblaubeere27, Sam Sun, MarcoMC
- * Copyright (c) 2023      Peyang 
+ * Copyright (c) 2023      Peyang
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
  *
@@ -11,15 +11,6 @@
 
 package tokyo.peya.obfuscator.processor;
 
-import tokyo.peya.obfuscator.annotations.ObfuscationTransformer;
-import tokyo.peya.obfuscator.IClassTransformer;
-import tokyo.peya.obfuscator.Obfuscator;
-import tokyo.peya.obfuscator.ProcessorCallback;
-import tokyo.peya.obfuscator.utils.NameUtils;
-import tokyo.peya.obfuscator.utils.NodeUtils;
-import tokyo.peya.obfuscator.configuration.DeprecationLevel;
-import tokyo.peya.obfuscator.configuration.values.EnabledValue;
-import tokyo.peya.obfuscator.configuration.ValueManager;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -27,6 +18,15 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
+import tokyo.peya.obfuscator.IClassTransformer;
+import tokyo.peya.obfuscator.Obfuscator;
+import tokyo.peya.obfuscator.ProcessorCallback;
+import tokyo.peya.obfuscator.annotations.ObfuscationTransformer;
+import tokyo.peya.obfuscator.configuration.DeprecationLevel;
+import tokyo.peya.obfuscator.configuration.ValueManager;
+import tokyo.peya.obfuscator.configuration.values.EnabledValue;
+import tokyo.peya.obfuscator.utils.NameUtils;
+import tokyo.peya.obfuscator.utils.NodeUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;

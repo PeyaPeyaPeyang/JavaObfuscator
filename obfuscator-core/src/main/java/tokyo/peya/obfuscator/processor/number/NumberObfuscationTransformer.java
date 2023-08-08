@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2019 superblaubeere27, Sam Sun, MarcoMC
- * Copyright (c) 2023      Peyang 
+ * Copyright (c) 2023      Peyang
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
  *
@@ -20,7 +20,6 @@ import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.IntInsnNode;
-import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import tokyo.peya.obfuscator.IClassTransformer;
 import tokyo.peya.obfuscator.ProcessorCallback;
@@ -52,6 +51,7 @@ public class NumberObfuscationTransformer implements IClassTransformer
     private static final BooleanValue V_METHOD_XOR = new BooleanValue(PROCESSOR_NAME, "XOR", "Uses \"^\" to obfuscate numbers", DeprecationLevel.AVAILABLE, true);
     private static final BooleanValue V_METHOD_STRING_LENGTH = new BooleanValue(PROCESSOR_NAME, "String Length", "Uses the length of a random string(fixed length) to obfuscate numbers", DeprecationLevel.AVAILABLE, true);
     private static final BooleanValue V_METHOD_SIMPLE_MATH = new BooleanValue(PROCESSOR_NAME, "Simple Math", "Uses simple math(add, sub, ) to obfuscate numbers", DeprecationLevel.AVAILABLE, true);
+
     static
     {
         ValueManager.registerClass(NumberObfuscationTransformer.class);
@@ -140,6 +140,30 @@ public class NumberObfuscationTransformer implements IClassTransformer
         return methods.toArray(new NumberObfuscationMethod[0]);
     }
 
+    private static boolean extractToArrayOne(ClassNode clazz, MethodNode method, AbstractInsnNode abstractInsnNode, String fieldName, int proceed, List<Integer> integerList, int number)
+    {
+        int containedSlot = -1;
+        int j = 0;
+        for (Integer integer : integerList)
+        {
+            if (integer == number)
+                containedSlot = j;
+            j++;
+        }
+        if (containedSlot == -1)
+            integerList.add(number);
+        method.instructions.insertBefore(abstractInsnNode, new FieldInsnNode(Opcodes.GETSTATIC, clazz.name, fieldName, "[I"));
+        method.instructions.insertBefore(abstractInsnNode, NodeUtils.generateIntPush(containedSlot == -1 ? proceed: containedSlot));
+        method.instructions.insertBefore(abstractInsnNode, new InsnNode(Opcodes.IALOAD));
+        method.instructions.remove(abstractInsnNode);
+        if (containedSlot == -1)
+            return true;
+
+        method.maxStack += 2;
+
+        return false;
+    }
+
     @Override
     public void process(ProcessorCallback callback, ClassNode node)
     {
@@ -199,12 +223,13 @@ public class NumberObfuscationTransformer implements IClassTransformer
 
         boolean isInterface = (node.access & Opcodes.ACC_INTERFACE) != 0;
         node.fields.add(new FieldNode(
-                (isInterface ? Opcodes.ACC_PUBLIC: Opcodes.ACC_PRIVATE)  // インターフェースの場合はプライベートにできない
-                        | (node.version > Opcodes.V1_8 ? 0: Opcodes.ACC_FINAL)
-                        | Opcodes.ACC_STATIC, fieldName,
-                "[I",
-                null,
-                null)
+                        (isInterface ? Opcodes.ACC_PUBLIC: Opcodes.ACC_PRIVATE)  // インターフェースの場合はプライベートにできない
+                                | (node.version > Opcodes.V1_8 ? 0: Opcodes.ACC_FINAL)
+                                | Opcodes.ACC_STATIC, fieldName,
+                        "[I",
+                        null,
+                        null
+                )
         );
 
         InsnList toAdd = new InsnList();
@@ -229,30 +254,6 @@ public class NumberObfuscationTransformer implements IClassTransformer
         node.methods.add(generateIntegers);
 
         NodeUtils.addInvokeOnClassInitMethod(node, generateIntegers);
-    }
-
-    private static boolean extractToArrayOne(ClassNode clazz, MethodNode method, AbstractInsnNode abstractInsnNode, String fieldName, int proceed, List<Integer> integerList, int number)
-    {
-        int containedSlot = -1;
-        int j = 0;
-        for (Integer integer : integerList)
-        {
-            if (integer == number)
-                containedSlot = j;
-            j++;
-        }
-        if (containedSlot == -1)
-            integerList.add(number);
-        method.instructions.insertBefore(abstractInsnNode, new FieldInsnNode(Opcodes.GETSTATIC, clazz.name, fieldName, "[I"));
-        method.instructions.insertBefore(abstractInsnNode, NodeUtils.generateIntPush(containedSlot == -1 ? proceed: containedSlot));
-        method.instructions.insertBefore(abstractInsnNode, new InsnNode(Opcodes.IALOAD));
-        method.instructions.remove(abstractInsnNode);
-        if (containedSlot == -1)
-            return true;
-
-        method.maxStack += 2;
-
-        return false;
     }
 
     @Override

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2019 superblaubeere27, Sam Sun, MarcoMC
- * Copyright (c) 2023      Peyang 
+ * Copyright (c) 2023      Peyang
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
  *
@@ -12,16 +12,6 @@
 package tokyo.peya.obfuscator.processor.naming;
 
 import lombok.extern.slf4j.Slf4j;
-import tokyo.peya.obfuscator.Obfuscator;
-import tokyo.peya.obfuscator.clazz.ClassTree;
-import tokyo.peya.obfuscator.utils.NameUtils;
-import tokyo.peya.obfuscator.utils.Utils;
-import tokyo.peya.obfuscator.configuration.values.BooleanValue;
-import tokyo.peya.obfuscator.configuration.DeprecationLevel;
-import tokyo.peya.obfuscator.configuration.values.EnabledValue;
-import tokyo.peya.obfuscator.configuration.values.FilePathValue;
-import tokyo.peya.obfuscator.configuration.values.StringValue;
-import tokyo.peya.obfuscator.configuration.ValueManager;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.ClassRemapper;
@@ -29,9 +19,19 @@ import org.objectweb.asm.commons.Remapper;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
+import tokyo.peya.obfuscator.Obfuscator;
+import tokyo.peya.obfuscator.clazz.ClassTree;
 import tokyo.peya.obfuscator.clazz.ClassWrapper;
 import tokyo.peya.obfuscator.clazz.FieldWrapper;
 import tokyo.peya.obfuscator.clazz.MethodWrapper;
+import tokyo.peya.obfuscator.configuration.DeprecationLevel;
+import tokyo.peya.obfuscator.configuration.ValueManager;
+import tokyo.peya.obfuscator.configuration.values.BooleanValue;
+import tokyo.peya.obfuscator.configuration.values.EnabledValue;
+import tokyo.peya.obfuscator.configuration.values.FilePathValue;
+import tokyo.peya.obfuscator.configuration.values.StringValue;
+import tokyo.peya.obfuscator.utils.NameUtils;
+import tokyo.peya.obfuscator.utils.Utils;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -334,7 +334,7 @@ public class NameObfuscation implements INameObfuscationProcessor
             for (int i = 0; i < copy.fields.size(); i++)
                 classWrapper.fields.get(i).fieldNode = copy.fields.get(i);
 
-        this.obfuscator.getClasses().remove( classWrapper.originalName + ".class");
+        this.obfuscator.getClasses().remove(classWrapper.originalName + ".class");
         classWrapper.classNode = copy;
         this.obfuscator.getClasses().put(classWrapper.classNode.name + ".class", classWrapper.classNode);
         //            JObfImpl.INSTANCE.getClassPath().put();

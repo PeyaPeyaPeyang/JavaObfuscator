@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2019 superblaubeere27, Sam Sun, MarcoMC
- * Copyright (c) 2023      Peyang 
+ * Copyright (c) 2023      Peyang
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
  *
@@ -71,6 +71,7 @@ public class StringEncryptionTransformer implements IClassTransformer
     {
         ValueManager.registerClass(StringEncryptionTransformer.class);
     }
+
     private final List<? extends IStringEncryptionAlgorithm> algorithms;
 
     public StringEncryptionTransformer()
@@ -192,60 +193,6 @@ public class StringEncryptionTransformer implements IClassTransformer
         }
     }
 
-    @Override
-    public void process(ProcessorCallback callback, ClassNode node)
-    {
-        if (!V_ENABLED.get())
-            return;
-        else if (Modifier.isInterface(node.access))
-            return;
-
-        boolean hideStrings = V_HIDE_STRINGS.get();
-
-        String encryptedStringsFieldName = NameUtils.generateFieldName(node);
-        String[] constantReferences = createStringConstantReferences(node, encryptedStringsFieldName);
-
-        int constants = constantReferences.length;
-        if (constants == 0)
-            return;
-
-        boolean isInterface = (node.access & Opcodes.ACC_INTERFACE) != 0;
-        node.fields.add(new FieldNode(
-                        (isInterface ? Opcodes.ACC_PUBLIC: Opcodes.ACC_PRIVATE)  // インターフェースの場合はプライベートにできない
-                                | (node.version > Opcodes.V1_8 ? 0: Opcodes.ACC_FINAL)
-                                | Opcodes.ACC_STATIC, encryptedStringsFieldName,
-                        "[Ljava/lang/String;",
-                        null,
-                        null
-                )
-        );
-
-        HashMap<IStringEncryptionAlgorithm, String> encryptionMethodMap = new HashMap<>();
-        for (IStringEncryptionAlgorithm algorithm : this.algorithms)
-            encryptionMethodMap.put(
-                    algorithm,
-                    NameUtils.generateMethodName(node, "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;")
-            );
-
-        InsnList encryptedStringConstants = this.createEncryptedStringConstants(
-                node,
-                constants,
-                encryptedStringsFieldName,
-                encryptionMethodMap,
-                constantReferences
-        );
-
-        MethodNode generateStrings = createInitStringsMethod(node, encryptedStringConstants);
-        node.methods.add(generateStrings);
-        NodeUtils.addInvokeOnClassInitMethod(node, generateStrings);
-
-        if (hideStrings)
-            hideStrings(node, generateStrings);
-
-        // 実際に復号化するメソッドを追加
-        deployDecryptionMethods(node, encryptionMethodMap);
-    }
-
     private static MethodNode createInitStringsMethod(ClassNode node, InsnList stringArrayInstructions)
     {
         MethodNode generateStrings = new MethodNode(
@@ -264,40 +211,6 @@ public class StringEncryptionTransformer implements IClassTransformer
         return generateStrings;
     }
 
-    private InsnList createEncryptedStringConstants(
-            ClassNode node,
-            int constants,
-            String encryptedStringsFieldName,
-            Map<IStringEncryptionAlgorithm, String> encryptionMethodMap,
-            String[] constantReferences)
-    {
-        InsnList instructions = new InsnList();
-
-        // 空の配列 (constants 個 ) を生成
-        instructions.add(NodeUtils.generateIntPush(constants));
-        instructions.add(new TypeInsnNode(Opcodes.ANEWARRAY, "java/lang/String"));
-        instructions.add(new FieldInsnNode(Opcodes.PUTSTATIC, node.name, encryptedStringsFieldName, "[Ljava/lang/String;"));
-
-        for (int j = 0; j < constants; j++)
-        {
-            IStringEncryptionAlgorithm processor = this.algorithms.get(random.nextInt(this.algorithms.size()));
-            String decryptionKey = StringManipulationUtils.generateString(5);
-
-            String decrypterName = encryptionMethodMap.get(processor);
-
-            instructions.add(generateDecrypterInvocation(
-                    node,
-                    j,
-                    encryptedStringsFieldName,
-                    decryptionKey,
-                    decrypterName,
-                    processor.encrypt(constantReferences[j], decryptionKey)
-            ));
-        }
-
-        return instructions;
-    }
-
     private static InsnList generateDecrypterInvocation(ClassNode node,
                                                         int constantNumber,
                                                         String encryptedStringsField,
@@ -310,10 +223,12 @@ public class StringEncryptionTransformer implements IClassTransformer
         LabelNode label = new LabelNode(new Label());
         toAdd.add(label);
         toAdd.add(new LineNumberNode(constantNumber, label));
-        toAdd.add(new FieldInsnNode(Opcodes.GETSTATIC,
-                node.name,
-                encryptedStringsField,
-                "[Ljava/lang/String;")
+        toAdd.add(new FieldInsnNode(
+                        Opcodes.GETSTATIC,
+                        node.name,
+                        encryptedStringsField,
+                        "[Ljava/lang/String;"
+                )
 
         );
 
@@ -321,11 +236,12 @@ public class StringEncryptionTransformer implements IClassTransformer
         toAdd.add(new LdcInsnNode(encryptedString));
         toAdd.add(new LdcInsnNode(decryptionKey));
         toAdd.add(new MethodInsnNode(
-                Opcodes.INVOKESTATIC,
-                node.name,
-                processorMethodName,
-                "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;",
-                false)
+                        Opcodes.INVOKESTATIC,
+                        node.name,
+                        processorMethodName,
+                        "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;",
+                        false
+                )
         );
         toAdd.add(new InsnNode(Opcodes.AASTORE));
 
@@ -396,12 +312,6 @@ public class StringEncryptionTransformer implements IClassTransformer
         return strings.toArray(new String[0]);
     }
 
-    @Override
-    public ObfuscationTransformer getType()
-    {
-        return ObfuscationTransformer.STRING_ENCRYPTION;
-    }
-
     private static List<? extends IStringEncryptionAlgorithm> getAlgorithms()
     {
         List<IStringEncryptionAlgorithm> algorithms = new ArrayList<>();
@@ -416,6 +326,100 @@ public class StringEncryptionTransformer implements IClassTransformer
             algorithms.add(new DESEncryptionAlgorithm());
 
         return algorithms;
+    }
+
+    @Override
+    public void process(ProcessorCallback callback, ClassNode node)
+    {
+        if (!V_ENABLED.get())
+            return;
+        else if (Modifier.isInterface(node.access))
+            return;
+
+        boolean hideStrings = V_HIDE_STRINGS.get();
+
+        String encryptedStringsFieldName = NameUtils.generateFieldName(node);
+        String[] constantReferences = createStringConstantReferences(node, encryptedStringsFieldName);
+
+        int constants = constantReferences.length;
+        if (constants == 0)
+            return;
+
+        boolean isInterface = (node.access & Opcodes.ACC_INTERFACE) != 0;
+        node.fields.add(new FieldNode(
+                        (isInterface ? Opcodes.ACC_PUBLIC: Opcodes.ACC_PRIVATE)  // インターフェースの場合はプライベートにできない
+                                | (node.version > Opcodes.V1_8 ? 0: Opcodes.ACC_FINAL)
+                                | Opcodes.ACC_STATIC, encryptedStringsFieldName,
+                        "[Ljava/lang/String;",
+                        null,
+                        null
+                )
+        );
+
+        HashMap<IStringEncryptionAlgorithm, String> encryptionMethodMap = new HashMap<>();
+        for (IStringEncryptionAlgorithm algorithm : this.algorithms)
+            encryptionMethodMap.put(
+                    algorithm,
+                    NameUtils.generateMethodName(node, "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;")
+            );
+
+        InsnList encryptedStringConstants = this.createEncryptedStringConstants(
+                node,
+                constants,
+                encryptedStringsFieldName,
+                encryptionMethodMap,
+                constantReferences
+        );
+
+        MethodNode generateStrings = createInitStringsMethod(node, encryptedStringConstants);
+        node.methods.add(generateStrings);
+        NodeUtils.addInvokeOnClassInitMethod(node, generateStrings);
+
+        if (hideStrings)
+            hideStrings(node, generateStrings);
+
+        // 実際に復号化するメソッドを追加
+        deployDecryptionMethods(node, encryptionMethodMap);
+    }
+
+    private InsnList createEncryptedStringConstants(
+            ClassNode node,
+            int constants,
+            String encryptedStringsFieldName,
+            Map<IStringEncryptionAlgorithm, String> encryptionMethodMap,
+            String[] constantReferences)
+    {
+        InsnList instructions = new InsnList();
+
+        // 空の配列 (constants 個 ) を生成
+        instructions.add(NodeUtils.generateIntPush(constants));
+        instructions.add(new TypeInsnNode(Opcodes.ANEWARRAY, "java/lang/String"));
+        instructions.add(new FieldInsnNode(Opcodes.PUTSTATIC, node.name, encryptedStringsFieldName, "[Ljava/lang/String;"));
+
+        for (int j = 0; j < constants; j++)
+        {
+            IStringEncryptionAlgorithm processor = this.algorithms.get(random.nextInt(this.algorithms.size()));
+            String decryptionKey = StringManipulationUtils.generateString(5);
+
+            String decrypterName = encryptionMethodMap.get(processor);
+
+            instructions.add(generateDecrypterInvocation(
+                    node,
+                    j,
+                    encryptedStringsFieldName,
+                    decryptionKey,
+                    decrypterName,
+                    processor.encrypt(constantReferences[j], decryptionKey)
+            ));
+        }
+
+        return instructions;
+    }
+
+    @Override
+    public ObfuscationTransformer getType()
+    {
+        return ObfuscationTransformer.STRING_ENCRYPTION;
     }
 
 }

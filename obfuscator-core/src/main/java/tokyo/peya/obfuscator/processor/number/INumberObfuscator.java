@@ -9,6 +9,7 @@ public interface INumberObfuscator
 {
     /**
      * Obfuscates number.
+     *
      * @param value Number to obfuscate.
      * @param insns InsnList to add.
      */
@@ -16,6 +17,7 @@ public interface INumberObfuscator
 
     /**
      * Checks if this obfuscator can apply to this number.
+     *
      * @param value Number to check.
      * @return If this obfuscator can apply to this number.
      */
