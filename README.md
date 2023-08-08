@@ -9,11 +9,21 @@ A Java bytecode obfuscator supporting
 * Number Obfuscation
 * Name Obfuscation (Classes, methods and fields) with custom dictionaries
 * Deobfuscator crasher
-* String Encryption
+* String Encryption(Supporting algorithms: AES, XOR, Blowfish, DES)
 * Inner Class Removal
 * Invoke Dynamic
-* Reference Proxy
+* Reference Proxy(Accessing all fields with reflection.)
 * Member Shuffling & Hiding
+
+## Differences from the original
+
++ NO HWID Protections
++ NO NumberObfuscation crashing bugs
++ Improved codes(**I rewrote!!**)
++ Advanced NameObfuscation configurations
++ Mapping saving
++ More algorithm for StringEncryption
++ Better log color
 
 ## Obfuscated code
 
