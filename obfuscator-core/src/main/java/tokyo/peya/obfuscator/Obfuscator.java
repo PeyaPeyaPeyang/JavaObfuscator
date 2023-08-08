@@ -788,7 +788,7 @@ public class Obfuscator
         if (stored)
         {
             CRC32 crc = new CRC32();
-            crc.update(value);
+            crc.update(value, 0, value.length);
 
             newEntry.setSize(value.length);
             newEntry.setCrc(crc.getValue());
