@@ -236,7 +236,11 @@ public class NameObfuscation implements INameObfuscationProcessor
                 packageName = packageName + "/";
         }
 
-        mappings.put(clazz.originalName, packageName + NameUtils.generateClassName());
+        String newName = packageName + NameUtils.generateClassName();
+        mappings.put(clazz.originalName, newName);
+
+        if (this.obfuscator.getMainClass().equals(clazz.originalName))  // MANIFEST.MFの改変のため
+            this.obfuscator.setMainClass(newName);
     }
 
     private void processMethods(ClassWrapper classWrapper, Map<String, String> mappings)

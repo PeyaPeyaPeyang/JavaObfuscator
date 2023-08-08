@@ -622,6 +622,15 @@ public class Obfuscator
         return toWrite;
     }
 
+    public void setMainClass(String newMainClass)
+    {
+        log.info("!!! Changing the main class to " + newMainClass + " !!!");
+
+        this.mainClass = newMainClass;
+        this.mainClassChanged = true;
+
+    }
+
     private Map<String, byte[]> transformClasses(int threadCount)
     {
         ExecutorService executorService = Executors.newFixedThreadPool(threadCount);

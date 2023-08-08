@@ -24,6 +24,7 @@ A Java bytecode obfuscator supporting
 + Mapping saving
 + More algorithm for StringEncryption
 + Better log color
++ Rename Main-Class in MANIFEST.MF
 
 ## Obfuscated code
 
