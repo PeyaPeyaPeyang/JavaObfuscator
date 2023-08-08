@@ -2,7 +2,7 @@ package tokyo.peya.obfuscator.processor;
 
 import lombok.SneakyThrows;
 import tokyo.peya.obfuscator.IClassTransformer;
-import tokyo.peya.obfuscator.JarObfuscator;
+import tokyo.peya.obfuscator.Obfuscator;
 import tokyo.peya.obfuscator.processor.encryption.StringEncryptionTransformer;
 import tokyo.peya.obfuscator.processor.flows.FlowObfuscator;
 import tokyo.peya.obfuscator.processor.naming.INameObfuscationProcessor;
@@ -47,7 +47,7 @@ public class Processors
         }
     }
 
-    public static List<IClassTransformer> createProcessors(JarObfuscator instance)
+    public static List<IClassTransformer> createProcessors(Obfuscator instance)
     {
         List<IClassTransformer> processors = new ArrayList<>();
         processors.add(new StaticInitializionTransformer(instance));
@@ -69,7 +69,7 @@ public class Processors
         return processors;
     }
 
-    public static List<INameObfuscationProcessor> createNameProcessors(JarObfuscator instance) {
+    public static List<INameObfuscationProcessor> createNameProcessors(Obfuscator instance) {
         List<INameObfuscationProcessor> processors = new ArrayList<>();
         processors.add(new NameObfuscation(instance));
         processors.add(new InnerClassRemover(instance));

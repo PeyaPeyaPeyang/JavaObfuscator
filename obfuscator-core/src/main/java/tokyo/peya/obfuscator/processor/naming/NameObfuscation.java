@@ -12,7 +12,7 @@
 package tokyo.peya.obfuscator.processor.naming;
 
 import lombok.extern.slf4j.Slf4j;
-import tokyo.peya.obfuscator.JarObfuscator;
+import tokyo.peya.obfuscator.Obfuscator;
 import tokyo.peya.obfuscator.clazz.ClassTree;
 import tokyo.peya.obfuscator.utils.NameUtils;
 import tokyo.peya.obfuscator.utils.Utils;
@@ -70,14 +70,14 @@ public class NameObfuscation implements INameObfuscationProcessor
         ValueManager.registerClass(NameObfuscation.class);
     }
 
-    private final JarObfuscator obfuscator;
+    private final Obfuscator obfuscator;
     private final List<Pattern> excludedClassesPatterns = new ArrayList<>();
     private final List<Pattern> excludedMethodsPatterns = new ArrayList<>();
     private final List<Pattern> excludedFieldsPatterns = new ArrayList<>();
 
     private List<String> packageNames;
 
-    public NameObfuscation(JarObfuscator obfuscator)
+    public NameObfuscation(Obfuscator obfuscator)
     {
         this.obfuscator = obfuscator;
     }
@@ -149,7 +149,7 @@ public class NameObfuscation implements INameObfuscationProcessor
     }
 
     @Override
-    public void transformPost(JarObfuscator inst, HashMap<String, ClassNode> nodes)
+    public void transformPost(Obfuscator inst, HashMap<String, ClassNode> nodes)
     {
         if (!V_ENABLED.get())
             return;

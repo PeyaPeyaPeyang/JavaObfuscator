@@ -14,7 +14,7 @@ package tokyo.peya.obfuscator.processor;
 import lombok.extern.slf4j.Slf4j;
 import tokyo.peya.obfuscator.annotations.ObfuscationTransformer;
 import tokyo.peya.obfuscator.IClassTransformer;
-import tokyo.peya.obfuscator.JarObfuscator;
+import tokyo.peya.obfuscator.Obfuscator;
 import tokyo.peya.obfuscator.ProcessorCallback;
 import tokyo.peya.obfuscator.utils.InliningUtils;
 import tokyo.peya.obfuscator.utils.NodeUtils;
@@ -55,9 +55,9 @@ public class InlineTransformer implements IClassTransformer
         ValueManager.registerClass(InlineTransformer.class);
     }
 
-    private final JarObfuscator inst;
+    private final Obfuscator inst;
 
-    public InlineTransformer(JarObfuscator inst)
+    public InlineTransformer(Obfuscator inst)
     {
         this.inst = inst;
     }

@@ -11,12 +11,12 @@
 
 package tokyo.peya.obfuscator.processor.naming;
 
-import tokyo.peya.obfuscator.JarObfuscator;
+import tokyo.peya.obfuscator.Obfuscator;
 import org.objectweb.asm.tree.ClassNode;
 
 import java.util.HashMap;
 
 public interface INameObfuscationProcessor
 {
-    void transformPost(JarObfuscator inst, HashMap<String, ClassNode> nodes);
+    void transformPost(Obfuscator inst, HashMap<String, ClassNode> nodes);
 }

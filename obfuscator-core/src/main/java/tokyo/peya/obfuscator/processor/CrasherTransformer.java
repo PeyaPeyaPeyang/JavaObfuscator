@@ -13,7 +13,7 @@ package tokyo.peya.obfuscator.processor;
 
 import tokyo.peya.obfuscator.annotations.ObfuscationTransformer;
 import tokyo.peya.obfuscator.IClassTransformer;
-import tokyo.peya.obfuscator.JarObfuscator;
+import tokyo.peya.obfuscator.Obfuscator;
 import tokyo.peya.obfuscator.ProcessorCallback;
 import tokyo.peya.obfuscator.utils.NameUtils;
 import tokyo.peya.obfuscator.configuration.values.BooleanValue;
@@ -48,9 +48,9 @@ public class CrasherTransformer implements IClassTransformer
         ValueManager.registerClass(CrasherTransformer.class);
     }
 
-    private final JarObfuscator inst;
+    private final Obfuscator inst;
 
-    public CrasherTransformer(JarObfuscator inst)
+    public CrasherTransformer(Obfuscator inst)
     {
         this.inst = inst;
     }

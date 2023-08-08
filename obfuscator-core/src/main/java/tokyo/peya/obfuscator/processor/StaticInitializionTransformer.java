@@ -13,7 +13,7 @@ package tokyo.peya.obfuscator.processor;
 
 import tokyo.peya.obfuscator.annotations.ObfuscationTransformer;
 import tokyo.peya.obfuscator.IClassTransformer;
-import tokyo.peya.obfuscator.JarObfuscator;
+import tokyo.peya.obfuscator.Obfuscator;
 import tokyo.peya.obfuscator.ProcessorCallback;
 import tokyo.peya.obfuscator.utils.NodeUtils;
 import org.objectweb.asm.Opcodes;
@@ -32,9 +32,9 @@ import java.util.Random;
 public class StaticInitializionTransformer implements IClassTransformer
 {
     private static final Random random = new Random();
-    private final JarObfuscator inst;
+    private final Obfuscator inst;
 
-    public StaticInitializionTransformer(JarObfuscator inst)
+    public StaticInitializionTransformer(Obfuscator inst)
     {
         this.inst = inst;
     }

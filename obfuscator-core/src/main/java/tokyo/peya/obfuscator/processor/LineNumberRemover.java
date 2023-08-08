@@ -13,7 +13,7 @@ package tokyo.peya.obfuscator.processor;
 
 import tokyo.peya.obfuscator.annotations.ObfuscationTransformer;
 import tokyo.peya.obfuscator.IClassTransformer;
-import tokyo.peya.obfuscator.JarObfuscator;
+import tokyo.peya.obfuscator.Obfuscator;
 import tokyo.peya.obfuscator.ProcessorCallback;
 import tokyo.peya.obfuscator.processor.encryption.StringEncryptionTransformer;
 import tokyo.peya.obfuscator.utils.NameUtils;
@@ -67,9 +67,9 @@ public class LineNumberRemover implements IClassTransformer
         ValueManager.registerClass(LineNumberRemover.class);
     }
 
-    private final JarObfuscator inst;
+    private final Obfuscator inst;
 
-    public LineNumberRemover(JarObfuscator inst)
+    public LineNumberRemover(Obfuscator inst)
     {
         this.inst = inst;
     }

@@ -49,7 +49,7 @@ public class JavaObfuscator
     public static boolean VERBOSE;
     private static GUI gui;
     @Getter
-    private static JarObfuscator currentSession;
+    private static Obfuscator currentSession;
     @Getter
     private static Exception lastException;
 
@@ -63,7 +63,7 @@ public class JavaObfuscator
         if (JavaObfuscator.class.getPackage().getImplementationVersion() == null)  // デバッガの場合
             VERBOSE = true;
 
-        Class.forName(JarObfuscator.class.getCanonicalName());
+        Class.forName(Obfuscator.class.getCanonicalName());
 
         OptionParser parser = new OptionParser();
         parser.accepts("jarIn").withRequiredArg().required();
@@ -259,8 +259,8 @@ public class JavaObfuscator
         try
         {
             lastException = null;
-            JarObfuscator obfuscator = JavaObfuscator.currentSession = new JarObfuscator(config);
-            obfuscator.processJar();
+            Obfuscator obfuscator = JavaObfuscator.currentSession = new Obfuscator(config);
+            obfuscator.process();
             succeed = true;
         }
         catch (Exception e)

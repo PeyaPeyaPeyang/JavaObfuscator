@@ -12,7 +12,7 @@
 package tokyo.peya.obfuscator.processor.naming;
 
 import tokyo.peya.obfuscator.IClassTransformer;
-import tokyo.peya.obfuscator.JarObfuscator;
+import tokyo.peya.obfuscator.Obfuscator;
 import tokyo.peya.obfuscator.ProcessorCallback;
 import tokyo.peya.obfuscator.annotations.ObfuscationTransformer;
 import tokyo.peya.obfuscator.utils.NameUtils;
@@ -44,9 +44,9 @@ public class InnerClassRemover implements INameObfuscationProcessor, IClassTrans
         ValueManager.registerClass(InnerClassRemover.class);
     }
 
-    private final JarObfuscator obfuscator;
+    private final Obfuscator obfuscator;
 
-    public InnerClassRemover(JarObfuscator obfuscator)
+    public InnerClassRemover(Obfuscator obfuscator)
     {
         this.obfuscator = obfuscator;
     }
@@ -94,7 +94,7 @@ public class InnerClassRemover implements INameObfuscationProcessor, IClassTrans
     }
 
     @Override
-    public void transformPost(JarObfuscator inst, HashMap<String, ClassNode> nodes)
+    public void transformPost(Obfuscator inst, HashMap<String, ClassNode> nodes)
     {
         if (!(V_ENABLED.get() && V_REMAP.get()))
             return;

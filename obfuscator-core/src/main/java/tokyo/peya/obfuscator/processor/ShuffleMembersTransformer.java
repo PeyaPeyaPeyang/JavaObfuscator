@@ -13,7 +13,7 @@ package tokyo.peya.obfuscator.processor;
 
 import tokyo.peya.obfuscator.annotations.ObfuscationTransformer;
 import tokyo.peya.obfuscator.IClassTransformer;
-import tokyo.peya.obfuscator.JarObfuscator;
+import tokyo.peya.obfuscator.Obfuscator;
 import tokyo.peya.obfuscator.ProcessorCallback;
 import tokyo.peya.obfuscator.configuration.DeprecationLevel;
 import tokyo.peya.obfuscator.configuration.values.EnabledValue;
@@ -35,10 +35,10 @@ public class ShuffleMembersTransformer implements IClassTransformer
 
     }
 
-    private final JarObfuscator inst;
+    private final Obfuscator inst;
     private final EnabledValue enabled = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.AVAILABLE, true);
 
-    public ShuffleMembersTransformer(JarObfuscator inst)
+    public ShuffleMembersTransformer(Obfuscator inst)
     {
         this.inst = inst;
     }

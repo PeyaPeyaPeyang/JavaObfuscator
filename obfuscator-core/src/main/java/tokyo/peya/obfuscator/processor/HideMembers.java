@@ -13,7 +13,7 @@ package tokyo.peya.obfuscator.processor;
 
 import tokyo.peya.obfuscator.annotations.ObfuscationTransformer;
 import tokyo.peya.obfuscator.IClassTransformer;
-import tokyo.peya.obfuscator.JarObfuscator;
+import tokyo.peya.obfuscator.Obfuscator;
 import tokyo.peya.obfuscator.ProcessorCallback;
 import tokyo.peya.obfuscator.configuration.DeprecationLevel;
 import tokyo.peya.obfuscator.configuration.values.EnabledValue;
@@ -36,9 +36,9 @@ public class HideMembers implements IClassTransformer
         ValueManager.registerClass(HideMembers.class);
     }
 
-    private final JarObfuscator inst;
+    private final Obfuscator inst;
 
-    public HideMembers(JarObfuscator inst)
+    public HideMembers(Obfuscator inst)
     {
         this.inst = inst;
     }

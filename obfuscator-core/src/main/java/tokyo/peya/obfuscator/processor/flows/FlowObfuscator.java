@@ -12,7 +12,7 @@
 package tokyo.peya.obfuscator.processor.flows;
 
 import tokyo.peya.obfuscator.IClassTransformer;
-import tokyo.peya.obfuscator.JarObfuscator;
+import tokyo.peya.obfuscator.Obfuscator;
 import tokyo.peya.obfuscator.ProcessorCallback;
 import tokyo.peya.obfuscator.annotations.ObfuscationTransformer;
 import tokyo.peya.obfuscator.processor.number.NumberObfuscationTransformer;
@@ -60,9 +60,9 @@ public class FlowObfuscator implements IClassTransformer
         ValueManager.registerClass(FlowObfuscator.class);
     }
 
-    private final JarObfuscator inst;
+    private final Obfuscator inst;
 
-    public FlowObfuscator(JarObfuscator inst)
+    public FlowObfuscator(Obfuscator inst)
     {
         this.inst = inst;
     }
