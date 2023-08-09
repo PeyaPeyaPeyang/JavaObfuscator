@@ -223,6 +223,8 @@ public class StringEncryptionTransformer implements IClassTransformer
         LabelNode label = new LabelNode(new Label());
         toAdd.add(label);
         toAdd.add(new LineNumberNode(constantNumber, label));
+
+        /// aastore(&arrayField, index, &value) {
         toAdd.add(new FieldInsnNode(
                         Opcodes.GETSTATIC,
                         node.name,
@@ -231,8 +233,9 @@ public class StringEncryptionTransformer implements IClassTransformer
                 )
 
         );
-
         toAdd.add(NodeUtils.generateIntPush(constantNumber));
+
+        /// invokestatic(*string, *string) {
         toAdd.add(new LdcInsnNode(encryptedString));
         toAdd.add(new LdcInsnNode(decryptionKey));
         toAdd.add(new MethodInsnNode(
@@ -243,7 +246,10 @@ public class StringEncryptionTransformer implements IClassTransformer
                         false
                 )
         );
+        /// }
+
         toAdd.add(new InsnNode(Opcodes.AASTORE));
+        /// }
 
         return toAdd;
     }
@@ -392,9 +398,26 @@ public class StringEncryptionTransformer implements IClassTransformer
         InsnList instructions = new InsnList();
 
         // 空の配列 (constants 個 ) を生成
+        /// anewarray(count, &fieldArray) {
         instructions.add(NodeUtils.generateIntPush(constants));
         instructions.add(new TypeInsnNode(Opcodes.ANEWARRAY, "java/lang/String"));
         instructions.add(new FieldInsnNode(Opcodes.PUTSTATIC, node.name, encryptedStringsFieldName, "[Ljava/lang/String;"));
+        /// }
+
+        if (this.algorithms.isEmpty())
+        {
+            log.warn("No string encryption algorithms are enabled, skipping");
+            for (int i = 0; i < constants; i++)
+            {
+                /// aastore(&arrayField, index, &value)
+                instructions.add(new FieldInsnNode(Opcodes.GETSTATIC, node.name, encryptedStringsFieldName, "[Ljava/lang/String;"));
+                instructions.add(NodeUtils.generateIntPush(i));
+                instructions.add(new LdcInsnNode(constantReferences[i]));
+                instructions.add(new InsnNode(Opcodes.AASTORE));
+            }
+
+            return instructions;
+        }
 
         for (int j = 0; j < constants; j++)
         {
