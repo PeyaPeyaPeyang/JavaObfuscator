@@ -3,13 +3,13 @@ package tokyo.peya.obfuscator.processor;
 import lombok.SneakyThrows;
 import tokyo.peya.obfuscator.IClassTransformer;
 import tokyo.peya.obfuscator.Obfuscator;
-import tokyo.peya.obfuscator.processor.encryption.StringEncryptionTransformer;
 import tokyo.peya.obfuscator.processor.flows.FlowObfuscator;
 import tokyo.peya.obfuscator.processor.naming.INameObfuscationProcessor;
 import tokyo.peya.obfuscator.processor.naming.InnerClassRemover;
 import tokyo.peya.obfuscator.processor.naming.NameObfuscation;
 import tokyo.peya.obfuscator.processor.number.NumberObfuscationTransformer;
 import tokyo.peya.obfuscator.processor.optimizer.Optimizer;
+import tokyo.peya.obfuscator.processor.strings.StringEncryptionTransformer;
 
 import java.util.ArrayList;
 import java.util.List;

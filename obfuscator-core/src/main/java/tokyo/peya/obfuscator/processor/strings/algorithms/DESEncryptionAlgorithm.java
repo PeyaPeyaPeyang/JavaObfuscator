@@ -9,41 +9,55 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package tokyo.peya.obfuscator.processor.encryption.algorithms;
+package tokyo.peya.obfuscator.processor.strings.algorithms;
 
-import tokyo.peya.obfuscator.processor.encryption.IStringEncryptionAlgorithm;
+import javax.crypto.Cipher;
+import javax.crypto.spec.SecretKeySpec;
+import tokyo.peya.obfuscator.processor.strings.IStringEncryptionAlgorithm;
 
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.util.Arrays;
 import java.util.Base64;
 
-public class XOREncryptionAlgorithm implements IStringEncryptionAlgorithm
+public class DESEncryptionAlgorithm implements IStringEncryptionAlgorithm
 {
-
     public static String decrypt(String obj, String key)
     {
-        obj = new String(Base64.getDecoder().decode(obj.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
-        StringBuilder sb = new StringBuilder();
-        char[] keyChars = key.toCharArray();
-        int i = 0;
-        for (char c : obj.toCharArray())
+        try
         {
-            sb.append((char) (c ^ keyChars[i % keyChars.length]));
-            i++;
+            SecretKeySpec keySpec = new SecretKeySpec(Arrays.copyOf(MessageDigest.getInstance("MD5").digest(key.getBytes(StandardCharsets.UTF_8)), 8), "DES");
+
+            Cipher des = Cipher.getInstance("DES");
+            des.init(Cipher.DECRYPT_MODE, keySpec);
+
+            return new String(des.doFinal(Base64.getDecoder().decode(obj.getBytes(StandardCharsets.UTF_8))), StandardCharsets.UTF_8);
+
         }
-        return sb.toString();
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     @Override
     public String encrypt(String obj, String key)
     {
-        StringBuilder sb = new StringBuilder();
-        char[] keyChars = key.toCharArray();
-        int i = 0;
-        for (char c : obj.toCharArray())
+        try
         {
-            sb.append((char) (c ^ keyChars[i % keyChars.length]));
-            i++;
+            SecretKeySpec keySpec = new SecretKeySpec(Arrays.copyOf(MessageDigest.getInstance("MD5").digest(key.getBytes(StandardCharsets.UTF_8)), 8), "DES");
+
+            Cipher des = Cipher.getInstance("DES");
+            des.init(Cipher.ENCRYPT_MODE, keySpec);
+
+            return new String(Base64.getEncoder().encode(des.doFinal(obj.getBytes(StandardCharsets.UTF_8))), StandardCharsets.UTF_8);
+
         }
-        return new String(Base64.getEncoder().encode(sb.toString().getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+        return null;
     }
 }

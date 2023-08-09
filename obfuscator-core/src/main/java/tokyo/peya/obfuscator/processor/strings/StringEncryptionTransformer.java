@@ -9,7 +9,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package tokyo.peya.obfuscator.processor.encryption;
+package tokyo.peya.obfuscator.processor.strings;
 
 import lombok.extern.slf4j.Slf4j;
 import org.objectweb.asm.Label;
@@ -34,10 +34,10 @@ import tokyo.peya.obfuscator.configuration.DeprecationLevel;
 import tokyo.peya.obfuscator.configuration.ValueManager;
 import tokyo.peya.obfuscator.configuration.values.BooleanValue;
 import tokyo.peya.obfuscator.configuration.values.EnabledValue;
-import tokyo.peya.obfuscator.processor.encryption.algorithms.AESEncryptionAlgorithm;
-import tokyo.peya.obfuscator.processor.encryption.algorithms.BlowfishEncryptionAlgorithm;
-import tokyo.peya.obfuscator.processor.encryption.algorithms.DESEncryptionAlgorithm;
-import tokyo.peya.obfuscator.processor.encryption.algorithms.XOREncryptionAlgorithm;
+import tokyo.peya.obfuscator.processor.strings.algorithms.AESEncryptionAlgorithm;
+import tokyo.peya.obfuscator.processor.strings.algorithms.BlowfishEncryptionAlgorithm;
+import tokyo.peya.obfuscator.processor.strings.algorithms.DESEncryptionAlgorithm;
+import tokyo.peya.obfuscator.processor.strings.algorithms.XOREncryptionAlgorithm;
 import tokyo.peya.obfuscator.utils.NameUtils;
 import tokyo.peya.obfuscator.utils.NodeUtils;
 import tokyo.peya.obfuscator.utils.StringManipulationUtils;

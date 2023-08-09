@@ -9,25 +9,26 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package tokyo.peya.obfuscator.processor.encryption.algorithms;
+package tokyo.peya.obfuscator.processor.strings.algorithms;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
-import tokyo.peya.obfuscator.processor.encryption.IStringEncryptionAlgorithm;
+import tokyo.peya.obfuscator.processor.strings.IStringEncryptionAlgorithm;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.Base64;
 
-public class BlowfishEncryptionAlgorithm implements IStringEncryptionAlgorithm
+public class AESEncryptionAlgorithm implements IStringEncryptionAlgorithm
 {
+
     public static String decrypt(String obj, String key)
     {
         try
         {
-            SecretKeySpec keySpec = new SecretKeySpec(MessageDigest.getInstance("MD5").digest(key.getBytes(StandardCharsets.UTF_8)), "Blowfish");
+            SecretKeySpec keySpec = new SecretKeySpec(MessageDigest.getInstance("SHA-256").digest(key.getBytes(StandardCharsets.UTF_8)), "AES");
 
-            Cipher des = Cipher.getInstance("Blowfish");
+            Cipher des = Cipher.getInstance("AES");
             des.init(Cipher.DECRYPT_MODE, keySpec);
 
             return new String(des.doFinal(Base64.getDecoder().decode(obj.getBytes(StandardCharsets.UTF_8))), StandardCharsets.UTF_8);
@@ -45,9 +46,9 @@ public class BlowfishEncryptionAlgorithm implements IStringEncryptionAlgorithm
     {
         try
         {
-            SecretKeySpec keySpec = new SecretKeySpec(MessageDigest.getInstance("MD5").digest(key.getBytes(StandardCharsets.UTF_8)), "Blowfish");
+            SecretKeySpec keySpec = new SecretKeySpec(MessageDigest.getInstance("SHA-256").digest(key.getBytes(StandardCharsets.UTF_8)), "AES");
 
-            Cipher des = Cipher.getInstance("Blowfish");
+            Cipher des = Cipher.getInstance("AES");
             des.init(Cipher.ENCRYPT_MODE, keySpec);
 
             return new String(Base64.getEncoder().encode(des.doFinal(obj.getBytes(StandardCharsets.UTF_8))), StandardCharsets.UTF_8);
