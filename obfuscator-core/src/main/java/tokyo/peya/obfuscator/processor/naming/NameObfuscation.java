@@ -232,7 +232,7 @@ public class NameObfuscation implements INameObfuscationProcessor
             else
                 packageName = "";
 
-            if (!packageName.endsWith("/"))
+            if (!(packageName.isEmpty() || packageName.endsWith("/")))
                 packageName = packageName + "/";
         }
 
