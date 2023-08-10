@@ -688,6 +688,8 @@ public class Obfuscator
                                         processed.get(),
                                         entryName
                                 ), e);
+
+                                throw e;
                             }
                     }
                     else
@@ -725,26 +727,7 @@ public class Obfuscator
                     cn.accept(writer);
 
                     entryData = writer.toByteArray();
-                }
-                catch (Throwable e)
-                {
-                    log.error(String.format(
-                            "[%s] (%s/%s), Error writing %s",
-                            Thread.currentThread().getName(),
-                            processed.get(),
-                            this.classes.size(),
-                            entryName
-                    ), e);
-                    ModifiedClassWriter writer = new ModifiedClassWriter(ModifiedClassWriter.COMPUTE_MAXS
-                            //                            | ModifiedClassWriter.COMPUTE_FRAMES
-                    );
-                    cn.accept(writer);
 
-
-                    entryData = writer.toByteArray();
-                }
-                try
-                {
                     if (Packager.INSTANCE.isEnabled())
                     {
                         entryName = Packager.INSTANCE.encryptName(entryName.replace(".class", ""));
@@ -754,12 +737,14 @@ public class Obfuscator
                 catch (Exception e)
                 {
                     log.error(String.format(
-                            "[%s] (%s/%s), Error processing package %s",
+                            "[%s] (%s/%s), Error processing %s",
                             Thread.currentThread().getName(),
                             processed.get(),
                             this.classes.size(),
                             entryName
                     ), e);
+
+                    throw e;
                 }
 
                 toWriteThread.put(entryName, entryData);
@@ -779,8 +764,15 @@ public class Obfuscator
             {
                 toWrite.putAll(future.get());
             }
-            catch (InterruptedException | ExecutionException e)
+            catch (InterruptedException e)
             {
+                log.error("Error getting future", e);
+            }
+            catch (ExecutionException e)
+            {
+                if (e.getCause() instanceof Exception)
+                    JavaObfuscator.setLastException((Exception) e.getCause());
+
                 log.error("Error getting future", e);
             }
 

@@ -20,6 +20,7 @@ import joptsimple.OptionException;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import tokyo.peya.obfuscator.configuration.ConfigManager;
@@ -40,6 +41,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+@Getter
 @Slf4j(topic = "Main")
 public class JavaObfuscator
 {
@@ -48,8 +50,8 @@ public class JavaObfuscator
 
     public static boolean VERBOSE;
     private static GUI gui;
-    @Getter
     private static Obfuscator currentSession;
+    @Setter
     @Getter
     private static Exception lastException;
 
