@@ -53,7 +53,7 @@ public class NameObfuscation implements INameObfuscationProcessor
 {
     private static final String PROCESSOR_NAME = "NameObfuscation";
     private static final Random random = new Random();
-    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.SOME_DEPRECATION, false);
+    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.AVAILABLE, false);
     private static final StringValue V_EXCLUDED_CLASSES = new StringValue(PROCESSOR_NAME, "Excluded classes", null, DeprecationLevel.AVAILABLE, "me.name.Class\nme.name.*\nio.netty.**", 5);
     private static final StringValue V_EXCLUDED_METHODS = new StringValue(PROCESSOR_NAME, "Excluded methods", null, DeprecationLevel.AVAILABLE, "me.name.Class.method\nme.name.Class**\nme.name.Class.*", 5);
     private static final StringValue V_EXCLUDED_FIELDS = new StringValue(PROCESSOR_NAME, "Excluded fields", null, DeprecationLevel.AVAILABLE, "me.name.Class.field\nme.name.Class.*\nme.name.**", 5);
@@ -61,7 +61,7 @@ public class NameObfuscation implements INameObfuscationProcessor
     private static final BooleanValue V_REMAP_CLASSES = new BooleanValue(PROCESSOR_NAME, "Enabled for class names", DeprecationLevel.AVAILABLE, true);
     private static final BooleanValue V_REMAP_METHODS = new BooleanValue(PROCESSOR_NAME, "Enabled for method names", DeprecationLevel.AVAILABLE, true);
     private static final BooleanValue V_REMAP_FIELDS = new BooleanValue(PROCESSOR_NAME, "Enabled for field names", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_RANDOM_PACKAGE = new BooleanValue(PROCESSOR_NAME, "Randomise package structure", DeprecationLevel.SOME_DEPRECATION, false);
+    private static final BooleanValue V_RANDOM_PACKAGE = new BooleanValue(PROCESSOR_NAME, "Randomise package structure", DeprecationLevel.AVAILABLE, false);
     private static final StringValue V_NEW_PACKAGE = new StringValue(PROCESSOR_NAME, "New Packages(separate by \\n)", null, DeprecationLevel.AVAILABLE, "", 5);
     private static final FilePathValue V_MAPPINGS_TO_SAVE = new FilePathValue(PROCESSOR_NAME, "Mappings to save", null, DeprecationLevel.AVAILABLE, null);
 
