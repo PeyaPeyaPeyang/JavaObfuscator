@@ -25,6 +25,8 @@ A Java bytecode obfuscator supporting
 + More algorithm for StringEncryption
 + Better log color
 + Rename Main-Class in MANIFEST.MF
++ Advanced string hiding
+  * Optimizing strings ledger with reusing string references
 
 ## Obfuscated code
 
