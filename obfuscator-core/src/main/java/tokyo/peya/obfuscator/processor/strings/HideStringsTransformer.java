@@ -34,13 +34,17 @@ import java.util.Random;
 public class HideStringsTransformer implements IClassTransformer
 {
     private static final String PROCESSOR_NAME = "HideStrings";
-    public static final StringValue V_MAGIC_NUMBER = new StringValue(PROCESSOR_NAME, "Magigic number: Start",
-            "Begin marker of the hided string",
-            DeprecationLevel.AVAILABLE, "", 1
-    );
     private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME,
             "This processor will hide strings in your code in class's debug info. It might break after editing the SourceFile field in the class.",
             DeprecationLevel.AVAILABLE, true
+    );
+    private static final EnabledValue V_OPTIMIZE = new EnabledValue(PROCESSOR_NAME,
+            "Reuses the same string if it is already in the array",
+            DeprecationLevel.AVAILABLE, true
+    );
+    public static final StringValue V_MAGIC_NUMBER = new StringValue(PROCESSOR_NAME, "Magigic number: Start",
+            "Begin marker of the hided string",
+            DeprecationLevel.AVAILABLE, "", 1
     );
     private static final StringValue V_MAGIC_NUMBER_SPLIT = new StringValue(PROCESSOR_NAME, "Split of the magic number",
             "Delimiter of the hided strings",
@@ -50,6 +54,7 @@ public class HideStringsTransformer implements IClassTransformer
             "End marker of the hided string",
             DeprecationLevel.AVAILABLE, "", 1
     );
+
     private static final int MAX_ONE_STRING_LENGTH = 500;
     private static final int MAX_TOTAL_STRING_LENGTH = 65535;
 
@@ -202,10 +207,11 @@ public class HideStringsTransformer implements IClassTransformer
                     continue;
             }
 
+            boolean optimize = V_OPTIMIZE.get();
             int idx;
-            if (strings.contains(string))
+            if (optimize && strings.contains(string))
                 idx = strings.indexOf(string);
-            else if (hiddenStrings.contains(string))
+            else if (optimize && hiddenStrings.contains(string))
                 idx = strings.size() + hiddenStrings.indexOf(string);
             else
                 idx = strings.size() + hiddenStrings.size();
@@ -219,7 +225,7 @@ public class HideStringsTransformer implements IClassTransformer
             method.instructions.remove(abstractInsnNode);
 
             ledgerLength += string.length();
-            if (!(strings.contains(string) || hiddenStrings.contains(string)))
+            if (!optimize || !(strings.contains(string) || hiddenStrings.contains(string)))
                 hiddenStrings.add(string);
         }
 
