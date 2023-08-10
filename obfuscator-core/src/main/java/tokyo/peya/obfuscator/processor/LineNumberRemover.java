@@ -28,7 +28,6 @@ import tokyo.peya.obfuscator.configuration.ValueManager;
 import tokyo.peya.obfuscator.configuration.values.BooleanValue;
 import tokyo.peya.obfuscator.configuration.values.EnabledValue;
 import tokyo.peya.obfuscator.configuration.values.StringValue;
-import tokyo.peya.obfuscator.processor.strings.StringEncryptionTransformer;
 import tokyo.peya.obfuscator.utils.NameUtils;
 
 import java.util.ArrayList;
@@ -140,7 +139,7 @@ public class LineNumberRemover implements IClassTransformer
                 }
             }
         }
-        if ((node.sourceFile == null || !node.sourceFile.contains(StringEncryptionTransformer.MAGICNUMBER_START)) && V_REMOVE_DEBUG_NAMES.get())
+        if (node.sourceFile != null && V_REMOVE_DEBUG_NAMES.get())
         {
             node.sourceFile = V_NEW_SOURCE_FILE_NAME.get().isEmpty() ? null: V_NEW_SOURCE_FILE_NAME.get();
         }

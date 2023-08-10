@@ -26,7 +26,6 @@ import org.objectweb.asm.tree.LineNumberNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TypeInsnNode;
-import org.objectweb.asm.tree.VarInsnNode;
 import tokyo.peya.obfuscator.IClassTransformer;
 import tokyo.peya.obfuscator.ProcessorCallback;
 import tokyo.peya.obfuscator.annotations.ObfuscationTransformer;
@@ -54,13 +53,9 @@ import java.util.Random;
 @Slf4j(topic = "Processor/StringEncryption")
 public class StringEncryptionTransformer implements IClassTransformer
 {
-    public static final String MAGICNUMBER_START = "\u00e4";
-    private static final String MAGICNUMBER_SPLIT = "\u00f6";
-    private static final String MAGICNUMBER_END = "\u00fc";
     private static final String PROCESSOR_NAME = "StringEncryption";
     private static final Random random = new Random();
     private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_HIDE_STRINGS = new BooleanValue(PROCESSOR_NAME, "HideStrings", "Hide strings in SourceFile. Might break after editing the SourceFile", DeprecationLevel.SOME_DEPRECATION, false);
     private static final BooleanValue V_ALGO_AES = new BooleanValue(PROCESSOR_NAME, "Algorithm: AES", DeprecationLevel.AVAILABLE, true);
     private static final BooleanValue V_ALGO_XOR = new BooleanValue(PROCESSOR_NAME, "Algorithm: XOR Processing", DeprecationLevel.AVAILABLE, true);
     private static final BooleanValue V_ALGO_BLOWFISH = new BooleanValue(PROCESSOR_NAME, "Algorithm: Blowfish", DeprecationLevel.AVAILABLE, true);
@@ -79,119 +74,6 @@ public class StringEncryptionTransformer implements IClassTransformer
         this.algorithms = getAlgorithms();
     }
 
-    private static void hideStrings(ClassNode cn, MethodNode... methods)
-    {
-        cn.sourceFile = null;
-        cn.sourceDebug = null;
-        String fieldName = NameUtils.generateFieldName(cn);
-        HashMap<Integer, String> hiddenStrings = new HashMap<>();
-        int slot = 0;
-
-        int stringLength = 0;
-
-        int methodCount = 0;
-        MethodNode methodNode = null;
-
-        for (MethodNode method : methods)
-        {
-            boolean hide = false;
-            for (AbstractInsnNode abstractInsnNode : method.instructions.toArray())
-            {
-                if (abstractInsnNode instanceof LdcInsnNode)
-                {
-                    LdcInsnNode ldc = (LdcInsnNode) abstractInsnNode;
-                    if (ldc.cst instanceof String && ((String) ldc.cst).length() < 500)
-                    {
-                        if (stringLength + ((String) (ldc).cst).length() > 498)
-                            break;
-
-                        InsnList insnList = new InsnList();
-                        insnList.add(new FieldInsnNode(Opcodes.GETSTATIC, cn.name, fieldName, "[Ljava/lang/String;"));
-                        insnList.add(NodeUtils.generateIntPush(slot));
-                        insnList.add(new InsnNode(Opcodes.AALOAD));
-                        method.instructions.insert(abstractInsnNode, insnList);
-                        method.instructions.remove(abstractInsnNode);
-                        slot++;
-                        stringLength += ((String) ldc.cst).length() + 1;
-                        hiddenStrings.put(slot, (String) ldc.cst);
-                        hide = true;
-                    }
-                }
-            }
-            if (hide)
-            {
-                methodCount++;
-                methodNode = method;
-            }
-        }
-
-        if (methodCount == 1)
-        {
-            InsnList toAdd = new InsnList();
-            toAdd.add(new InsnNode(Opcodes.ACONST_NULL));
-            toAdd.add(new FieldInsnNode(Opcodes.PUTSTATIC, cn.name, fieldName, "[Ljava/lang/String;"));
-
-            NodeUtils.insertOn(methodNode.instructions, insnNode -> insnNode.getOpcode() >= Opcodes.IRETURN && insnNode.getOpcode() <= Opcodes.RETURN, toAdd);
-        }
-
-        StringBuilder sb = new StringBuilder(MAGICNUMBER_START);
-        for (String s : hiddenStrings.values())
-        {
-            sb.append(s);
-            sb.append(MAGICNUMBER_SPLIT);
-        }
-        sb.append(MAGICNUMBER_END);
-
-        cn.sourceFile = sb.toString();
-
-        if (slot > 0)
-        {
-            cn.fields.add(new FieldNode(((cn.access & Opcodes.ACC_INTERFACE) != 0 ? Opcodes.ACC_PUBLIC: Opcodes.ACC_PRIVATE) | Opcodes.ACC_STATIC, fieldName, "[Ljava/lang/String;", null, null));
-            MethodNode clInit = NodeUtils.getMethod(cn, "<clinit>");
-            if (clInit == null)
-            {
-                clInit = new MethodNode(Opcodes.ACC_STATIC, "<clinit>", "()V", null, new String[0]);
-                clInit.instructions.add(new InsnNode(Opcodes.RETURN));
-                cn.methods.add(clInit);
-            }
-
-            LabelNode start = new LabelNode(new Label());
-            LabelNode end = new LabelNode(new Label());
-            InsnList toAdd = new InsnList();
-            toAdd.add(start);
-            toAdd.add(new TypeInsnNode(Opcodes.NEW, "java/lang/Exception"));
-            toAdd.add(new InsnNode(Opcodes.DUP));
-            toAdd.add(new MethodInsnNode(Opcodes.INVOKESPECIAL, "java/lang/Exception", "<init>", "()V", false));
-            toAdd.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/Exception", "getStackTrace", "()[Ljava/lang/StackTraceElement;", false));
-            toAdd.add(new InsnNode(Opcodes.ICONST_0));
-            toAdd.add(new InsnNode(Opcodes.AALOAD));
-            toAdd.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/StackTraceElement", "getFileName", "()Ljava/lang/String;", false));
-            toAdd.add(new VarInsnNode(Opcodes.ASTORE, 0));
-            toAdd.add(new VarInsnNode(Opcodes.ALOAD, 0));
-            toAdd.add(new VarInsnNode(Opcodes.ALOAD, 0));
-            toAdd.add(new LdcInsnNode(MAGICNUMBER_START));
-            toAdd.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/String", "indexOf", "(Ljava/lang/String;)I", false));
-            toAdd.add(new InsnNode(Opcodes.ICONST_1));
-            toAdd.add(new InsnNode(Opcodes.IADD));
-            toAdd.add(new VarInsnNode(Opcodes.ALOAD, 0));
-            toAdd.add(new LdcInsnNode(MAGICNUMBER_END));
-            toAdd.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/String", "lastIndexOf", "(Ljava/lang/String;)I", false));
-            toAdd.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/String", "substring", "(II)Ljava/lang/String;", false));
-            toAdd.add(new LdcInsnNode(MAGICNUMBER_SPLIT));
-            toAdd.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/String", "split", "(Ljava/lang/String;)[Ljava/lang/String;", false));
-            toAdd.add(new FieldInsnNode(Opcodes.PUTSTATIC, cn.name, fieldName, "[Ljava/lang/String;"));
-            toAdd.add(end);
-
-            MethodNode generateStrings = new MethodNode(((cn.access & Opcodes.ACC_INTERFACE) != 0 ? Opcodes.ACC_PUBLIC: Opcodes.ACC_PRIVATE) | Opcodes.ACC_STATIC, NameUtils.generateMethodName(cn, "()V"), "()V", null, new String[0]);
-            generateStrings.instructions = toAdd;
-            generateStrings.instructions.add(new InsnNode(Opcodes.RETURN));
-            generateStrings.maxStack = 4;
-            generateStrings.maxLocals = 4;
-            cn.methods.add(generateStrings);
-
-            clInit.instructions.insertBefore(clInit.instructions.getFirst(), NodeUtils.methodCall(cn, generateStrings));
-        }
-    }
 
     private static MethodNode createInitStringsMethod(ClassNode node, InsnList stringArrayInstructions)
     {
@@ -341,9 +223,6 @@ public class StringEncryptionTransformer implements IClassTransformer
             return;
         else if (Modifier.isInterface(node.access))
             return;
-
-        boolean hideStrings = V_HIDE_STRINGS.get();
-
         String encryptedStringsFieldName = NameUtils.generateFieldName(node);
         String[] constantReferences = createStringConstantReferences(node, encryptedStringsFieldName);
 
@@ -380,9 +259,6 @@ public class StringEncryptionTransformer implements IClassTransformer
         MethodNode generateStrings = createInitStringsMethod(node, encryptedStringConstants);
         node.methods.add(generateStrings);
         NodeUtils.addInvokeOnClassInitMethod(node, generateStrings);
-
-        if (hideStrings)
-            hideStrings(node, generateStrings);
 
         // 実際に復号化するメソッドを追加
         deployDecryptionMethods(node, encryptionMethodMap);

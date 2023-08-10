@@ -9,6 +9,7 @@ import tokyo.peya.obfuscator.processor.naming.InnerClassRemover;
 import tokyo.peya.obfuscator.processor.naming.NameObfuscation;
 import tokyo.peya.obfuscator.processor.number.NumberObfuscationTransformer;
 import tokyo.peya.obfuscator.processor.optimizer.Optimizer;
+import tokyo.peya.obfuscator.processor.strings.HideStringsTransformer;
 import tokyo.peya.obfuscator.processor.strings.StringEncryptionTransformer;
 
 import java.util.ArrayList;
@@ -28,6 +29,7 @@ public class Processors
             LineNumberRemover.class,
             ShuffleMembersTransformer.class,
             NameObfuscation.class,
+            HideStringsTransformer.class,
             InnerClassRemover.class,
             CrasherTransformer.class,
             ReferenceProxy.class
@@ -57,11 +59,13 @@ public class Processors
         processors.add(new InvokeDynamic());
 
         processors.add(new StringEncryptionTransformer());
+
         processors.add(new NumberObfuscationTransformer());
         processors.add(new FlowObfuscator(instance));
         processors.add(new HideMembers(instance));
         processors.add(new LineNumberRemover(instance));
         processors.add(new ShuffleMembersTransformer(instance));
+        processors.add(new HideStringsTransformer());  // StringEncryptionTransformer, LineNumberRemover のあと
 
         processors.add(new CrasherTransformer(instance));
         processors.add(new ReferenceProxy(instance));
