@@ -25,9 +25,9 @@ import tokyo.peya.obfuscator.configuration.values.StringValue;
 import tokyo.peya.obfuscator.utils.NameUtils;
 import tokyo.peya.obfuscator.utils.NodeUtils;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 import java.util.Random;
 
 @Slf4j(topic = "Processor/String/HideStrings")
@@ -166,13 +166,13 @@ public class HideStringsTransformer implements IClassTransformer
         return sb.toString();
     }
 
-    private static Map<Integer, String> createConstantReferences(ClassNode owner,
-                                                                 MethodNode method,
-                                                                 String cacheFieldName,
-                                                                 int startIndex,
-                                                                 int ledgerLength)
+    private static List<String> createConstantReferences(List<String> strings,
+                                                         ClassNode owner,
+                                                         MethodNode method,
+                                                         String cacheFieldName,
+                                                         int ledgerLength)
     {
-        Map<Integer, String> hiddenStrings = new HashMap<>();
+        List<String> hiddenStrings = new ArrayList<>();
 
         for (AbstractInsnNode abstractInsnNode : method.instructions.toArray())
         {
@@ -202,16 +202,25 @@ public class HideStringsTransformer implements IClassTransformer
                     continue;
             }
 
+            int idx;
+            if (strings.contains(string))
+                idx = strings.indexOf(string);
+            else if (hiddenStrings.contains(string))
+                idx = strings.size() + hiddenStrings.indexOf(string);
+            else
+                idx = strings.size() + hiddenStrings.size();
+
             InsnList insnList = new InsnList();
             insnList.add(new FieldInsnNode(Opcodes.GETSTATIC, owner.name, cacheFieldName, "[Ljava/lang/String;"));
-            insnList.add(NodeUtils.generateIntPush(startIndex++));
+            insnList.add(NodeUtils.generateIntPush(idx));
             insnList.add(new InsnNode(Opcodes.AALOAD));
 
             method.instructions.insert(abstractInsnNode, insnList);
             method.instructions.remove(abstractInsnNode);
 
             ledgerLength += string.length();
-            hiddenStrings.put(startIndex, string);
+            if (!(strings.contains(string) || hiddenStrings.contains(string)))
+                hiddenStrings.add(string);
         }
 
         return hiddenStrings;
@@ -232,29 +241,28 @@ public class HideStringsTransformer implements IClassTransformer
             return;
 
         String fieldName = NameUtils.generateFieldName(node);
-        HashMap<Integer, String> hiddenStrings = new HashMap<>();
+        List<String> hiddenStrings = new ArrayList<>();
 
-        int hidedStringCount = 0;
-
+        int ledgerElementCount = 0;
         int methodCount = 0;
         MethodNode methodNode = null;
 
         int ledgerLength = 0;
         for (MethodNode method : node.methods)
         {
-            Map<Integer, String> strings = createConstantReferences(
+            List<String> strings = createConstantReferences(
+                    hiddenStrings,
                     node,
                     method,
                     fieldName,
-                    hidedStringCount,
                     ledgerLength
             );
 
             if (!strings.isEmpty())
             {
-                hiddenStrings.putAll(strings);
+                hiddenStrings.addAll(strings);
 
-                hidedStringCount += strings.size();
+                ledgerElementCount += strings.size();
                 methodCount++;
                 methodNode = method;
             }
@@ -270,7 +278,7 @@ public class HideStringsTransformer implements IClassTransformer
             NodeUtils.insertOn(methodNode.instructions, insnNode -> insnNode.getOpcode() >= Opcodes.IRETURN && insnNode.getOpcode() <= Opcodes.RETURN, toAdd);
         }
 
-        if (hidedStringCount <= 0)
+        if (ledgerElementCount <= 0)
             return;
 
         String magicNumber = getOrRandom(V_MAGIC_NUMBER);
@@ -278,7 +286,7 @@ public class HideStringsTransformer implements IClassTransformer
         String magicNumberEnd = getOrRandom(V_MAGIC_NUMBER_END);
 
         node.sourceDebug = null;
-        node.sourceFile = buildLedger(hiddenStrings.values(), magicNumber, magicNumberSplit, magicNumberEnd);
+        node.sourceFile = buildLedger(hiddenStrings, magicNumber, magicNumberSplit, magicNumberEnd);
         node.fields.add(new FieldNode(
                         ((node.access & Opcodes.ACC_INTERFACE) != 0 ? Opcodes.ACC_PUBLIC: Opcodes.ACC_PRIVATE) | Opcodes.ACC_STATIC,
                         fieldName,
