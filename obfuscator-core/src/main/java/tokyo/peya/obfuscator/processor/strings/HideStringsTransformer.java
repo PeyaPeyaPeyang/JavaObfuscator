@@ -232,12 +232,27 @@ public class HideStringsTransformer implements IClassTransformer
         return hiddenStrings;
     }
 
-    private static String getOrRandom(StringValue value)
+    private static String getOrRandom(StringValue value, List<String> strings)
     {
-        if (value.get() == null || value.get().isEmpty())
-            return String.valueOf((char) new Random().nextInt(0xFFFF));
-        else
-            return value.get();
+        String preferred = null;
+        if (!(value.get() == null || value.get().isEmpty()))
+            preferred = value.get();
+
+        boolean contains = false;
+        while (preferred == null || (contains = isStringContainsInListElement(strings, preferred)))
+        {
+            if (contains)
+                log.warn("Magic number " + preferred + " is duplicated in the ledger, regenerating...");
+
+            preferred = String.valueOf((char) new Random().nextInt(0xFFFF));
+        }
+
+        return preferred;
+    }
+
+    private static boolean isStringContainsInListElement(List<String> list, String string)
+    {
+        return list.stream().parallel().anyMatch(s -> s.contains(string));
     }
 
     @Override
@@ -287,9 +302,9 @@ public class HideStringsTransformer implements IClassTransformer
         if (ledgerElementCount <= 0)
             return;
 
-        String magicNumber = getOrRandom(V_MAGIC_NUMBER);
-        String magicNumberSplit = getOrRandom(V_MAGIC_NUMBER_SPLIT);
-        String magicNumberEnd = getOrRandom(V_MAGIC_NUMBER_END);
+        String magicNumber = getOrRandom(V_MAGIC_NUMBER, hiddenStrings);
+        String magicNumberSplit = getOrRandom(V_MAGIC_NUMBER_SPLIT, hiddenStrings);
+        String magicNumberEnd = getOrRandom(V_MAGIC_NUMBER_END, hiddenStrings);
 
         node.sourceDebug = null;
         node.sourceFile = buildLedger(hiddenStrings, magicNumber, magicNumberSplit, magicNumberEnd);
