@@ -35,7 +35,7 @@ public class HideStringsTransformer implements IClassTransformer
 {
     private static final String PROCESSOR_NAME = "HideStrings";
     private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME,
-            "This processor will hide strings in your code in class's debug info. It might break after editing the SourceFile field in the class.",
+            "Might break after editing the SourceFile field in the class.",
             DeprecationLevel.AVAILABLE, true
     );
     private static final EnabledValue V_OPTIMIZE = new EnabledValue(PROCESSOR_NAME,
