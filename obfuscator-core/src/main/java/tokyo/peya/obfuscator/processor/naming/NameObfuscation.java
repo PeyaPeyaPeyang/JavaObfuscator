@@ -239,7 +239,7 @@ public class NameObfuscation implements INameObfuscationProcessor
         String newName = packageName + NameUtils.generateClassName();
         mappings.put(clazz.originalName, newName);
 
-        if (this.obfuscator.getMainClass().equals(clazz.originalName))  // MANIFEST.MFの改変のため
+        if (clazz.originalName.equals(this.obfuscator.getMainClass()))  // MANIFEST.MFの改変のため
             this.obfuscator.setMainClass(newName);
     }
 
