@@ -356,7 +356,7 @@ public class NameObfuscation implements INameObfuscationProcessor
         try (FileOutputStream fos = new FileOutputStream(V_MAPPINGS_TO_SAVE.get()))
         {
             for (Map.Entry<String, String> entry : mappings.entrySet())
-                fos.write((entry.getKey() + " -> " + entry.getValue() + "\n").getBytes());
+                fos.write((entry.getValue() + " " + entry.getKey() + "\n").getBytes());
         }
         catch (IOException e)
         {
