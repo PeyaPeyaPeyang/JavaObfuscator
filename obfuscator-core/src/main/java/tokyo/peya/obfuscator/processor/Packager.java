@@ -24,7 +24,6 @@ import tokyo.peya.obfuscator.configuration.ValueManager;
 import tokyo.peya.obfuscator.configuration.values.BooleanValue;
 import tokyo.peya.obfuscator.configuration.values.EnabledValue;
 import tokyo.peya.obfuscator.configuration.values.StringValue;
-import tokyo.peya.obfuscator.utils.NameUtils;
 import tokyo.peya.obfuscator.utils.NodeUtils;
 
 import java.nio.charset.StandardCharsets;
@@ -106,12 +105,11 @@ public class Packager
                 .noneMatch(s -> s.equals(this.mainClass + ".class")))
             throw new RuntimeException("[Packager] Failed to resolve main class, please add it or specify it manually");
 
-        NameUtils.setup();
 
-        String decryptionClassName = NameUtils.generateClassName();
-        String keyFieldName = NameUtils.generateFieldName(decryptionClassName);
-        String xorMethodName = NameUtils.generateMethodName(decryptionClassName, "([B[B)[B");
-        String getBytesMethodName = NameUtils.generateMethodName(decryptionClassName, "(Ljava/lang/String;)[B");
+        String decryptionClassName = "ClassLoader";
+        String keyFieldName = "KEYS";
+        String xorMethodName = "decrypt";
+        String getBytesMethodName = "getBytes";
 
         ClassNode cw = new ClassNode();
 
@@ -214,10 +212,10 @@ public class Packager
             mv.visitInsn(Opcodes.RETURN);
             Label l8 = new Label();
             mv.visitLabel(l8);
-            mv.visitLocalVariable(NameUtils.generateLocalVariableName(), "[Ljava/lang/String;", null, l0, l8, 0);
-            mv.visitLocalVariable(NameUtils.generateLocalVariableName(), "Ljava/lang/ClassLoader;", null, l3, l1, 1);
-            mv.visitLocalVariable(NameUtils.generateLocalVariableName(), "Ljava/lang/Class;", "Ljava/lang/Class<*>;", l4, l1, 2);
-            mv.visitLocalVariable(NameUtils.generateLocalVariableName(), "Ljava/lang/Exception;", null, l7, l6, 1);
+            mv.visitLocalVariable("args", "[Ljava/lang/String;", null, l0, l8, 0);
+            mv.visitLocalVariable("classLoader", "Ljava/lang/ClassLoader;", null, l3, l1, 1);
+            mv.visitLocalVariable("entryPoint", "Ljava/lang/Class;", "Ljava/lang/Class<*>;", l4, l1, 2);
+            mv.visitLocalVariable("e", "Ljava/lang/Exception;", null, l7, l6, 1);
             mv.visitMaxs(10, 3);
             mv.visitEnd();
         }
@@ -268,10 +266,10 @@ public class Packager
             mv.visitInsn(Opcodes.ARETURN);
             Label l5 = new Label();
             mv.visitLabel(l5);
-            mv.visitLocalVariable(NameUtils.generateLocalVariableName(), "L" + decryptionClassName + ";", null, l0, l5, 0);
-            mv.visitLocalVariable(NameUtils.generateLocalVariableName(), "Ljava/lang/String;", null, l0, l5, 1);
-            mv.visitLocalVariable(NameUtils.generateLocalVariableName(), "[B", null, l3, l2, 2);
-            mv.visitLocalVariable(NameUtils.generateLocalVariableName(), "Ljava/lang/Exception;", null, l4, l5, 2);
+            mv.visitLocalVariable("classLoader", "L" + decryptionClassName + ";", null, l0, l5, 0);
+            mv.visitLocalVariable("encryptedName", "Ljava/lang/String;", null, l0, l5, 1);
+            mv.visitLocalVariable("keys", "[B", null, l3, l2, 2);
+            mv.visitLocalVariable("e", "Ljava/lang/Exception;", null, l4, l5, 2);
             mv.visitMaxs(7, 3);
             mv.visitEnd();
         }
@@ -324,10 +322,10 @@ public class Packager
             mv.visitInsn(Opcodes.ARETURN);
             Label l7 = new Label();
             mv.visitLabel(l7);
-            mv.visitLocalVariable(NameUtils.generateLocalVariableName(), "[B", null, l0, l7, 0);
-            mv.visitLocalVariable(NameUtils.generateLocalVariableName(), "[B", null, l0, l7, 1);
-            mv.visitLocalVariable(NameUtils.generateLocalVariableName(), "[B", null, l1, l7, 2);
-            mv.visitLocalVariable(NameUtils.generateLocalVariableName(), "I", null, l2, l6, 3);
+            mv.visitLocalVariable("encryptedClassBytes", "[B", null, l0, l7, 0);
+            mv.visitLocalVariable("keys", "[B", null, l0, l7, 1);
+            mv.visitLocalVariable("decryptedClassBytes", "[B", null, l1, l7, 2);
+            mv.visitLocalVariable("i", "I", null, l2, l6, 3);
             mv.visitMaxs(10, 4);
             mv.visitEnd();
         }
@@ -396,12 +394,11 @@ public class Packager
             mv.visitInsn(Opcodes.ARETURN);
             Label l9 = new Label();
             mv.visitLabel(l9);
-            mv.visitLocalVariable(NameUtils.generateLocalVariableName(), "Ljava/lang/String;", null, l0, l9, 0);
-            mv.visitLocalVariable(NameUtils.generateLocalVariableName(), "Ljava/io/InputStream;", null, l1, l9, 1);
-            mv.visitLocalVariable(NameUtils.generateLocalVariableName(), "Ljava/io/ByteArrayOutputStream;", null, l2, l9, 2);
-            mv.visitLocalVariable(NameUtils.generateLocalVariableName(), "I", null, l5, l4, 3);
-            mv.visitLocalVariable(NameUtils.generateLocalVariableName(), "I", null, l6, l9, 3);
-            mv.visitLocalVariable(NameUtils.generateLocalVariableName(), "[B", null, l3, l9, 4);
+            mv.visitLocalVariable("chunkName", "Ljava/lang/String;", null, l0, l9, 0);
+            mv.visitLocalVariable("is", "Ljava/io/InputStream;", null, l1, l9, 1);
+            mv.visitLocalVariable("baos", "Ljava/io/ByteArrayOutputStream;", null, l2, l9, 2);
+            mv.visitLocalVariable("read", "I", null, l6, l9, 3);
+            mv.visitLocalVariable("chunkData", "[B", null, l3, l9, 4);
             mv.visitMaxs(8, 5);
             mv.visitEnd();
         }
