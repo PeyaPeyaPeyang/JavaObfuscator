@@ -25,7 +25,6 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import tokyo.peya.obfuscator.configuration.ConfigManager;
 import tokyo.peya.obfuscator.configuration.Configuration;
-import tokyo.peya.obfuscator.processor.Packager;
 import tokyo.peya.obfuscator.processor.Processors;
 import tokyo.peya.obfuscator.templating.Templates;
 import tokyo.peya.obfuscator.ui.GUI;
@@ -151,8 +150,6 @@ public class JavaObfuscator
             }
 
             Templates.loadTemplates();
-
-            Packager.INSTANCE.isEnabled();
 
             gui = new GUI();
         }

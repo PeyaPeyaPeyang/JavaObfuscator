@@ -449,6 +449,8 @@ public class Obfuscator
         }
 
         Map<String, byte[]> toWrite = this.processClasses();
+        if (Packager.INSTANCE.isEnabled())
+            toWrite.putAll(Packager.INSTANCE.generateEncryptionClass());
         finishOutJar(toWrite, outJar, useStore);
     }
 
@@ -550,6 +552,8 @@ public class Obfuscator
         log.info("... Finished after " + Utils.formatTime(System.currentTimeMillis() - startTime));
 
         Map<String, byte[]> toWrite = this.processClasses();
+        if (Packager.INSTANCE.isEnabled())
+            toWrite.putAll(Packager.INSTANCE.generateEncryptionClass());
         finishOutJar(toWrite, outJar, stored);
     }
 
@@ -563,16 +567,6 @@ public class Obfuscator
         log.info("... Finished after " + Utils.formatTime(System.currentTimeMillis() - startTime));
 
         writeResources(outJar, stored);
-
-        startTime = System.currentTimeMillis();
-
-        if (Packager.INSTANCE.isEnabled())
-        {
-            log.info("Packaging...");
-            writeEntry(outJar, Packager.INSTANCE.getDecryptionClassName() + ".class", Packager.INSTANCE.generateEncryptionClass(), stored);
-            outJar.closeEntry();
-            log.info("... Finished after " + Utils.formatTime(System.currentTimeMillis() - startTime));
-        }
     }
 
     private void writeResources(ZipOutputStream outJar, boolean stored) throws IOException
@@ -580,6 +574,7 @@ public class Obfuscator
         long startTime = System.currentTimeMillis();
 
         log.info("Writing resources...");
+        boolean metaInfoProcessed = false;
         for (Map.Entry<String, byte[]> fileEntry : this.files.entrySet())
         {
             String entryName = fileEntry.getKey();
@@ -587,9 +582,8 @@ public class Obfuscator
 
             if (entryName.equals("META-INF/MANIFEST.MF"))
             {
-                if (Packager.INSTANCE.isEnabled())
-                    entryData = Utils.replaceMainClass(new String(entryData, StandardCharsets.UTF_8), Packager.INSTANCE.getDecryptionClassName()).getBytes(StandardCharsets.UTF_8);
-                else if (this.mainClassChanged)
+                metaInfoProcessed = true;
+                if (this.mainClassChanged)
                 {
                     entryData = Utils.replaceMainClass(new String(entryData, StandardCharsets.UTF_8), this.mainClass).getBytes(StandardCharsets.UTF_8);
                     log.info("Replaced Main-Class with " + this.mainClass);
@@ -601,6 +595,14 @@ public class Obfuscator
 
             writeEntry(outJar, entryName, entryData, stored);
         }
+
+        if (!metaInfoProcessed && this.mainClassChanged)
+        {
+            log.info("Adding MANIFEST.MF");
+            String manifest = "Manifest-Version: 1.0\nMain-Class: " + this.mainClass + "\n";
+            writeEntry(outJar, "META-INF/MANIFEST.MF", manifest.getBytes(StandardCharsets.UTF_8), stored);
+        }
+
         log.info("... Finished after " + Utils.formatTime(System.currentTimeMillis() - startTime));
     }
 
