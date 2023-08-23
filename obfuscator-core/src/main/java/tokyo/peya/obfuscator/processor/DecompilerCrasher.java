@@ -27,10 +27,12 @@ import java.util.ArrayList;
 
 public class DecompilerCrasher implements IClassTransformer
 {
+    private static final String PROCESSOR_NAME = "Decompiler Crasher";
+
     private static final String EMPTY_STRINGS;
-    private static final EnabledValue V_ENABLED = new EnabledValue("Crasher", DeprecationLevel.AVAILABLE, false);
-    private static final BooleanValue V_INVALID_SIGNATURES = new BooleanValue("Crasher", "Invalid Signatures", "Adds invalid signatures", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_EMPTY_ANNOTATION = new BooleanValue("Crasher", "Empty annotation spam", "Adds annotations which are repeated newline", DeprecationLevel.AVAILABLE, true);
+    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.AVAILABLE, false);
+    private static final BooleanValue V_INVALID_SIGNATURES = new BooleanValue(PROCESSOR_NAME, "Invalid Signatures", "Adds invalid signatures", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_EMPTY_ANNOTATION = new BooleanValue(PROCESSOR_NAME, "Empty annotation spam", "Adds annotations which are repeated newline", DeprecationLevel.AVAILABLE, true);
 
     static
     {
