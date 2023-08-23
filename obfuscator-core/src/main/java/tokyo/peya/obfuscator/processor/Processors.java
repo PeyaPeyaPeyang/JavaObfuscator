@@ -64,7 +64,7 @@ public class Processors
         processors.add(new FlowObfuscator(instance));
         processors.add(new HideMembers(instance));
         processors.add(new LineNumberRemover());
-        processors.add(new ShuffleMembersTransformer(instance));
+        processors.add(new ShuffleMembersTransformer());
         processors.add(new HideStringsTransformer());  // StringEncryptionTransformer, LineNumberRemover のあと
 
         processors.add(new DecompilerCrasher());

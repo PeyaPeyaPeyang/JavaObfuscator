@@ -16,87 +16,134 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 import tokyo.peya.obfuscator.IClassTransformer;
-import tokyo.peya.obfuscator.Obfuscator;
 import tokyo.peya.obfuscator.ProcessorCallback;
 import tokyo.peya.obfuscator.annotations.ObfuscationTransformer;
 import tokyo.peya.obfuscator.configuration.DeprecationLevel;
+import tokyo.peya.obfuscator.configuration.ValueManager;
+import tokyo.peya.obfuscator.configuration.values.BooleanValue;
 import tokyo.peya.obfuscator.configuration.values.EnabledValue;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Random;
 
 public class ShuffleMembersTransformer implements IClassTransformer
 {
     private static final String PROCESSOR_NAME = "ShuffleMembers";
-    private static final Random random = new Random();
+    private static final Random RANDOM = new Random();
+
+    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_SHUFFLE_CLASS_STRUCTURE = new BooleanValue(
+            PROCESSOR_NAME,
+            "Shuffle class structure",
+            "Shuffle class elements (as definition)",
+            DeprecationLevel.AVAILABLE,
+            true
+    );
+    private static final BooleanValue V_SHUFFLE_METHOD_STRUCTURE = new BooleanValue(
+            PROCESSOR_NAME,
+            "Shuffle method structure",
+            "Shuffle method elements (as definition)",
+            DeprecationLevel.AVAILABLE,
+            true
+    );
+    private static final BooleanValue V_SHUFFLE_FIELD_STRUCTURE = new BooleanValue(
+            PROCESSOR_NAME,
+            "Shuffle field structure",
+            "Shuffle field elements like annotations",
+            DeprecationLevel.AVAILABLE,
+            true
+    );
+    private static final BooleanValue V_SHUFFLE_ANNOTATIONS = new BooleanValue(
+            PROCESSOR_NAME,
+            "Shuffle annotations order in all places",
+            DeprecationLevel.AVAILABLE,
+            true
+    );
+
 
     static
     {
-
+        ValueManager.registerClass(ShuffleMembersTransformer.class);
     }
 
-    private final Obfuscator inst;
-    private final EnabledValue enabled = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.AVAILABLE, true);
-
-    public ShuffleMembersTransformer(Obfuscator inst)
+    private static void shuffleIfPresent(List<?> collection)
     {
-        this.inst = inst;
+        if (collection != null)
+            Collections.shuffle(collection, RANDOM);
+    }
+
+    private static void shuffleIfPresent(List<?> collection, BooleanValue value)
+    {
+        if (collection != null && value.get())
+            Collections.shuffle(collection, RANDOM);
+    }
+
+    private static void processField(FieldNode field)
+    {
+        if (V_SHUFFLE_ANNOTATIONS.get())
+        {
+            shuffleIfPresent(field.invisibleAnnotations);
+            shuffleIfPresent(field.invisibleTypeAnnotations);
+            shuffleIfPresent(field.visibleAnnotations);
+            shuffleIfPresent(field.visibleTypeAnnotations);
+        }
+    }
+
+    private static void processMethod(MethodNode method)
+    {
+        if (V_SHUFFLE_ANNOTATIONS.get())
+        {
+            shuffleIfPresent(method.invisibleAnnotations);
+            shuffleIfPresent(method.invisibleLocalVariableAnnotations);
+            shuffleIfPresent(method.invisibleTypeAnnotations);
+            shuffleIfPresent(method.visibleAnnotations);
+            shuffleIfPresent(method.visibleLocalVariableAnnotations);
+            shuffleIfPresent(method.visibleTypeAnnotations);
+        }
+
+        shuffleIfPresent(method.tryCatchBlocks);
+        shuffleIfPresent(method.exceptions);
+        shuffleIfPresent(method.localVariables);
+        shuffleIfPresent(method.parameters);
+    }
+
+    private static void processClassStructure(ClassNode node)
+    {
+        shuffleIfPresent(node.methods);
+        shuffleIfPresent(node.fields);
+        shuffleIfPresent(node.innerClasses);
+        shuffleIfPresent(node.interfaces);
+
+        if (V_SHUFFLE_ANNOTATIONS.get())
+        {
+            shuffleIfPresent(node.invisibleAnnotations);
+            shuffleIfPresent(node.invisibleTypeAnnotations);
+            shuffleIfPresent(node.visibleAnnotations);
+            shuffleIfPresent(node.visibleTypeAnnotations);
+        }
     }
 
     @Override
     public void process(ProcessorCallback callback, ClassNode node)
     {
-        if (!this.enabled.get()) return;
-
-        if ((node.access & Opcodes.ACC_ENUM) != 0)
-        {
+        if (!V_ENABLED.get())
             return;
-        }
 
-        Collections.shuffle(node.methods, random);
-        Collections.shuffle(node.fields, random);
-        Collections.shuffle(node.innerClasses, random);
-        Collections.shuffle(node.interfaces, random);
+        boolean isEnum = (node.access & Opcodes.ACC_ENUM) != 0;
+        if (isEnum)
+            return;
 
-        if (node.invisibleAnnotations != null) Collections.shuffle(node.invisibleAnnotations, random);
-        if (node.visibleAnnotations != null) Collections.shuffle(node.visibleAnnotations, random);
-        if (node.invisibleTypeAnnotations != null) Collections.shuffle(node.invisibleTypeAnnotations, random);
+        if (V_SHUFFLE_CLASS_STRUCTURE.get())
+            processClassStructure(node);
 
-        for (Object o : node.methods.toArray())
-        {
-            if (o instanceof MethodNode)
-            {
-                MethodNode method = (MethodNode) o;
-                if (method.invisibleAnnotations != null) Collections.shuffle(method.invisibleAnnotations, random);
-                if (method.invisibleLocalVariableAnnotations != null)
-                    Collections.shuffle(method.invisibleLocalVariableAnnotations, random);
-                if (method.invisibleTypeAnnotations != null)
-                    Collections.shuffle(method.invisibleTypeAnnotations, random);
-                if (method.visibleAnnotations != null) Collections.shuffle(method.visibleAnnotations, random);
-                if (method.visibleLocalVariableAnnotations != null)
-                    Collections.shuffle(method.visibleLocalVariableAnnotations, random);
-                if (method.visibleTypeAnnotations != null) Collections.shuffle(method.visibleTypeAnnotations, random);
+        if (V_SHUFFLE_METHOD_STRUCTURE.get())
+            for (MethodNode o : node.methods)
+                processMethod(o);
 
-                Collections.shuffle(method.exceptions, random);
-                if (method.localVariables != null)
-                {
-                    Collections.shuffle(method.localVariables, random);
-                }
-                if (method.parameters != null) Collections.shuffle(method.parameters, random);
-            }
-        }
-        for (Object o : node.methods.toArray())
-        {
-            if (o instanceof FieldNode)
-            {
-                FieldNode method = (FieldNode) o;
-                if (method.invisibleAnnotations != null) Collections.shuffle(method.invisibleAnnotations, random);
-                if (method.invisibleTypeAnnotations != null)
-                    Collections.shuffle(method.invisibleTypeAnnotations, random);
-                if (method.visibleAnnotations != null) Collections.shuffle(method.visibleAnnotations, random);
-                if (method.visibleTypeAnnotations != null) Collections.shuffle(method.visibleTypeAnnotations, random);
-            }
-        }
+        if (V_SHUFFLE_FIELD_STRUCTURE.get())
+            for (FieldNode o : node.fields)
+                processField(o);
     }
 
     @Override
