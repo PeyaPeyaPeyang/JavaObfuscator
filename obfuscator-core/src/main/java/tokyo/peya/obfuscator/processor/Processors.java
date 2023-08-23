@@ -31,7 +31,7 @@ public class Processors
             NameObfuscation.class,
             HideStringsTransformer.class,
             InnerClassRemover.class,
-            CrasherTransformer.class,
+            DecompilerCrasher.class,
             ReferenceProxy.class
     };
 
@@ -63,11 +63,11 @@ public class Processors
         processors.add(new NumberObfuscationTransformer());
         processors.add(new FlowObfuscator(instance));
         processors.add(new HideMembers(instance));
-        processors.add(new LineNumberRemover(instance));
+        processors.add(new LineNumberRemover());
         processors.add(new ShuffleMembersTransformer(instance));
         processors.add(new HideStringsTransformer());  // StringEncryptionTransformer, LineNumberRemover のあと
 
-        processors.add(new CrasherTransformer(instance));
+        processors.add(new DecompilerCrasher());
         processors.add(new ReferenceProxy(instance));
 
         return processors;

@@ -20,7 +20,6 @@ import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.ParameterNode;
 import org.objectweb.asm.tree.VarInsnNode;
 import tokyo.peya.obfuscator.IClassTransformer;
-import tokyo.peya.obfuscator.Obfuscator;
 import tokyo.peya.obfuscator.ProcessorCallback;
 import tokyo.peya.obfuscator.annotations.ObfuscationTransformer;
 import tokyo.peya.obfuscator.configuration.DeprecationLevel;
@@ -66,17 +65,11 @@ public class LineNumberRemover implements IClassTransformer
         ValueManager.registerClass(LineNumberRemover.class);
     }
 
-    private final Obfuscator inst;
-
-    public LineNumberRemover(Obfuscator inst)
-    {
-        this.inst = inst;
-    }
-
     @Override
     public void process(ProcessorCallback callback, ClassNode node)
     {
-        if (!V_ENABLED.get()) return;
+        if (!V_ENABLED.get())
+            return;
 
         for (MethodNode method : node.methods)
         {
@@ -97,18 +90,14 @@ public class LineNumberRemover implements IClassTransformer
                     VarInsnNode insnNode = (VarInsnNode) abstractInsnNode;
 
                     if (!varMap.containsKey(insnNode.var))
-                    {
                         varMap.put(insnNode.var, TYPES.get(random.nextInt(TYPES.size())));
-                    }
                 }
                 if (abstractInsnNode instanceof LabelNode)
                 {
                     LabelNode insnNode = (LabelNode) abstractInsnNode;
 
                     if (firstLabel == null)
-                    {
                         firstLabel = insnNode;
-                    }
 
                     lastLabel = insnNode;
                 }
@@ -116,33 +105,26 @@ public class LineNumberRemover implements IClassTransformer
 
             if (firstLabel != null && V_ADD_LOCAL_VARIABLES.get())
             {
-                if (method.localVariables == null) method.localVariables = new ArrayList<>();
+                if (method.localVariables == null)
+                    method.localVariables = new ArrayList<>();
 
                 for (Map.Entry<Integer, String> integerStringEntry : varMap.entrySet())
-                {
                     method.localVariables.add(new LocalVariableNode(NameUtils.generateLocalVariableName(), integerStringEntry.getValue(), null, firstLabel, lastLabel, integerStringEntry.getKey()));
-                }
             }
 
             if (method.parameters != null && V_RENAME_VALUES.get())
             {
                 for (ParameterNode parameter : method.parameters)
-                {
                     parameter.name = NameUtils.generateLocalVariableName();
-                }
             }
             if (method.localVariables != null && V_RENAME_VALUES.get())
             {
                 for (LocalVariableNode parameter : method.localVariables)
-                {
                     parameter.name = NameUtils.generateLocalVariableName();
-                }
             }
         }
         if (node.sourceFile != null && V_REMOVE_DEBUG_NAMES.get())
-        {
             node.sourceFile = V_NEW_SOURCE_FILE_NAME.get().isEmpty() ? null: V_NEW_SOURCE_FILE_NAME.get();
-        }
 
     }
 

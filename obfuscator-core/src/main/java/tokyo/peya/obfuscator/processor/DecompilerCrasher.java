@@ -14,7 +14,6 @@ package tokyo.peya.obfuscator.processor;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
 import tokyo.peya.obfuscator.IClassTransformer;
-import tokyo.peya.obfuscator.Obfuscator;
 import tokyo.peya.obfuscator.ProcessorCallback;
 import tokyo.peya.obfuscator.annotations.ObfuscationTransformer;
 import tokyo.peya.obfuscator.configuration.DeprecationLevel;
@@ -26,7 +25,7 @@ import tokyo.peya.obfuscator.utils.NameUtils;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 
-public class CrasherTransformer implements IClassTransformer
+public class DecompilerCrasher implements IClassTransformer
 {
     private static final String EMPTY_STRINGS;
     private static final EnabledValue V_ENABLED = new EnabledValue("Crasher", DeprecationLevel.AVAILABLE, false);
@@ -35,24 +34,12 @@ public class CrasherTransformer implements IClassTransformer
 
     static
     {
-        StringBuilder stringBuilder = new StringBuilder();
-
-        for (int j = 0; j < 50000; j++)
-            stringBuilder.append("\n");
-
-        EMPTY_STRINGS = stringBuilder.toString();
+        EMPTY_STRINGS = NameUtils.crazyString(50000);
     }
 
     static
     {
-        ValueManager.registerClass(CrasherTransformer.class);
-    }
-
-    private final Obfuscator inst;
-
-    public CrasherTransformer(Obfuscator inst)
-    {
-        this.inst = inst;
+        ValueManager.registerClass(DecompilerCrasher.class);
     }
 
     @Override
@@ -62,27 +49,17 @@ public class CrasherTransformer implements IClassTransformer
         if (!V_ENABLED.get()) return;
 
         if (V_INVALID_SIGNATURES.get())
-        {
-            /*
-             * By ItzSomebody
-             */
-            if (node.signature == null)
-            {
+            if (node.signature == null)  // By ItzSomebody
                 node.signature = NameUtils.crazyString(10);
-            }
-        }
 
         if (V_EMPTY_ANNOTATION.get())
         {
             node.methods.forEach(method -> {
-
                 if (method.invisibleAnnotations == null)
                     method.invisibleAnnotations = new ArrayList<>();
 
                 for (int i = 0; i < 50; i++)
-                {
                     method.invisibleAnnotations.add(new AnnotationNode(EMPTY_STRINGS));
-                }
             });
         }
 
