@@ -131,8 +131,6 @@ public class GUI extends JFrame
         );
     }
 
-    private static Method $$$cachedGetBundleMethod$$$;
-
     private void showExceptionDetail(Exception e)
     {
         JPanel panel = new JPanel();
@@ -431,43 +429,7 @@ public class GUI extends JFrame
         label2.setLabelFor(outputTextField);
     }
 
-    private void startObfuscator()
-    {
-//        impl.loadConfig(config);
-
-        File in = new File(this.inputTextField.getText());
-
-        if (!in.exists())
-        {
-            JOptionPane.showMessageDialog(this, "Input file doesn't exist!", "ERROR", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-        try
-        {
-            new Thread(() -> {
-                this.obfuscateButton.setEnabled(false);
-
-                JavaObfuscator.VERBOSE = this.verbose.isSelected();
-                Configuration config = new Configuration(
-                        this.libraryList,
-                        this.inputTextField.getText(),
-                        this.outputTextField.getText(),
-                        this.scriptArea.getText(),
-                        this.threadsSlider.getValue()
-                );
-
-                boolean succeed = JavaObfuscator.runObfuscator(config);
-                if (!(succeed || JavaObfuscator.getLastException() == null))
-                    showExceptionDetail(JavaObfuscator.getLastException());
-
-                this.obfuscateButton.setEnabled(true);
-            }, "Obfuscator thread").start();
-        }
-        catch (Exception e)
-        {
-            showExceptionDetail(e);
-        }
-    }
+    private static Method $$$cachedGetBundleMethod$$$ = null;
 
     private String $$$getMessageFromBundle$$$(String path, String key)
     {
@@ -559,6 +521,44 @@ public class GUI extends JFrame
     public JComponent $$$getRootComponent$$$()
     {
         return panel1;
+    }
+
+    private void startObfuscator()
+    {
+//        impl.loadConfig(config);
+
+        File in = new File(this.inputTextField.getText());
+
+        if (!in.exists())
+        {
+            JOptionPane.showMessageDialog(this, "Input file doesn't exist!", "ERROR", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        try
+        {
+            new Thread(() -> {
+                this.obfuscateButton.setEnabled(false);
+
+                JavaObfuscator.VERBOSE = this.verbose.isSelected();
+                Configuration config = new Configuration(
+                        this.libraryList,
+                        this.inputTextField.getText(),
+                        this.outputTextField.getText(),
+                        this.scriptArea.getText(),
+                        this.threadsSlider.getValue()
+                );
+
+                boolean succeed = JavaObfuscator.runObfuscator(config);
+                if (!(succeed || JavaObfuscator.getLastException() == null))
+                    showExceptionDetail(JavaObfuscator.getLastException());
+
+                this.obfuscateButton.setEnabled(true);
+            }, "Obfuscator thread").start();
+        }
+        catch (Exception e)
+        {
+            showExceptionDetail(e);
+        }
     }
 
     private void initValues()

@@ -41,8 +41,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-@Getter
 @Slf4j(topic = "Main")
+@SuppressWarnings("LombokGetterMayBeUsed")
 public class JavaObfuscator
 {
     public static final String SHORT_VERSION = (JavaObfuscator.class.getPackage().getImplementationVersion() == null ? "DEV": "v" + JavaObfuscator.class.getPackage().getImplementationVersion()) + " by superblaubeere27 & Peyang";
@@ -50,6 +50,7 @@ public class JavaObfuscator
 
     public static boolean VERBOSE;
     private static GUI gui;
+    @Getter
     private static Obfuscator currentSession;
     @Setter
     @Getter
