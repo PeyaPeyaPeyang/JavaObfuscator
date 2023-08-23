@@ -63,6 +63,10 @@ public class NameObfuscation implements INameObfuscationProcessor
     private static final BooleanValue V_REMAP_FIELDS = new BooleanValue(PROCESSOR_NAME, "Enabled for field names", DeprecationLevel.AVAILABLE, true);
     private static final BooleanValue V_RANDOM_PACKAGE = new BooleanValue(PROCESSOR_NAME, "Randomise package structure", DeprecationLevel.AVAILABLE, false);
     private static final StringValue V_NEW_PACKAGE = new StringValue(PROCESSOR_NAME, "New Packages(separate by \\n)", null, DeprecationLevel.AVAILABLE, "", 5);
+    private static final BooleanValue V_RANDOM_SOURCE_FILE = new BooleanValue(PROCESSOR_NAME, "Randomise source file names", DeprecationLevel.AVAILABLE, false);
+    private static final BooleanValue V_RANDOM_DEBUG_SOURCE_FILE = new BooleanValue(PROCESSOR_NAME, "Randomise debug source file names", DeprecationLevel.AVAILABLE, false);
+    private static final StringValue V_NEW_SOURCE_FILE = new StringValue(PROCESSOR_NAME, "New source and debug file names(separate by \\n)", null, DeprecationLevel.AVAILABLE, "", 5);
+
     private static final FilePathValue V_MAPPINGS_TO_SAVE = new FilePathValue(PROCESSOR_NAME, "Mappings to save", null, DeprecationLevel.AVAILABLE, null);
 
     static
@@ -76,6 +80,7 @@ public class NameObfuscation implements INameObfuscationProcessor
     private final List<Pattern> excludedFieldsPatterns = new ArrayList<>();
 
     private List<String> packageNames;
+    private List<String> sourceFileNames;
 
     public NameObfuscation(Obfuscator obfuscator)
     {
@@ -87,12 +92,18 @@ public class NameObfuscation implements INameObfuscationProcessor
         return classNode.methods.stream().anyMatch(methodNode -> Modifier.isNative(methodNode.access));
     }
 
-    public void setupPackageRandomizer()
+    public void setupRandomizers()
     {
         if (V_RANDOM_PACKAGE.get())
         {
             String[] newPackages = V_NEW_PACKAGE.get().split("\n");
             this.packageNames = Arrays.asList(newPackages);
+        }
+
+        if (V_RANDOM_SOURCE_FILE.get() || V_RANDOM_DEBUG_SOURCE_FILE.get())
+        {
+            String[] newSourceFiles = V_NEW_SOURCE_FILE.get().split("\n");
+            this.sourceFileNames = Arrays.asList(newSourceFiles);
         }
     }
 
@@ -168,7 +179,7 @@ public class NameObfuscation implements INameObfuscationProcessor
             log.info("Generating mappings...");
 
             NameUtils.setup();
-            this.setupPackageRandomizer();
+            this.setupRandomizers();
 
             this.processClasses(classWrappers, mappings);
 
@@ -190,7 +201,7 @@ public class NameObfuscation implements INameObfuscationProcessor
         }
     }
 
-    private void processClasses(Collection<ClassWrapper> classWrappers, Map<String, String> mappings)
+    private void processClasses(Collection<? extends ClassWrapper> classWrappers, Map<String, String> mappings)
     {
         classWrappers.stream()
                 .filter(classWrapper -> !this.isClassExcluded(classWrapper))
@@ -209,6 +220,9 @@ public class NameObfuscation implements INameObfuscationProcessor
             this.processFields(clazz, mappings);
         if (V_REMAP_METHODS.get())
             this.processMethods(clazz, mappings);
+
+        if (V_RANDOM_SOURCE_FILE.get() || V_RANDOM_DEBUG_SOURCE_FILE.get())
+            assignRandomSourceNameToClass(clazz.classNode);
 
         boolean hasNativeMethod = hasNativeMethodInClass(clazz.classNode);
         boolean enableClassRename = V_REMAP_CLASSES.get();
@@ -241,6 +255,29 @@ public class NameObfuscation implements INameObfuscationProcessor
 
         if (clazz.originalName.equals(this.obfuscator.getMainClass()))  // MANIFEST.MFの改変のため
             this.obfuscator.setMainClass(newName);
+    }
+
+    private void assignRandomSourceNameToClass(ClassNode node)
+    {
+        boolean isSourceNameSpecified = !this.sourceFileNames.isEmpty();
+
+        String newSourceName = node.sourceFile;
+        String newSourceDebugName = node.sourceDebug;
+        if (isSourceNameSpecified)
+        {
+            newSourceName = this.sourceFileNames.get(random.nextInt(this.sourceFileNames.size()));
+            newSourceDebugName = this.sourceFileNames.get(random.nextInt(this.sourceFileNames.size()));
+        }
+        else
+        {
+            newSourceName = NameUtils.generateClassName() + ".java";
+            newSourceDebugName = newSourceName;
+        }
+
+        if (V_RANDOM_SOURCE_FILE.get())
+            node.sourceFile = newSourceName;
+        if (V_RANDOM_DEBUG_SOURCE_FILE.get())
+            node.sourceDebug = newSourceDebugName;
     }
 
     private void processMethods(ClassWrapper classWrapper, Map<String, String> mappings)

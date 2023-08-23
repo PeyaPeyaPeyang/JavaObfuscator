@@ -26,7 +26,6 @@ import tokyo.peya.obfuscator.configuration.DeprecationLevel;
 import tokyo.peya.obfuscator.configuration.ValueManager;
 import tokyo.peya.obfuscator.configuration.values.BooleanValue;
 import tokyo.peya.obfuscator.configuration.values.EnabledValue;
-import tokyo.peya.obfuscator.configuration.values.StringValue;
 import tokyo.peya.obfuscator.utils.NameUtils;
 
 import java.util.ArrayList;
@@ -44,7 +43,6 @@ public class LineNumberRemover implements IClassTransformer
     private static final BooleanValue V_REMOVE_LINE_NUMBERS = new BooleanValue(PROCESSOR_NAME, "Remove Line Numbers", DeprecationLevel.AVAILABLE, true);
     private static final BooleanValue V_REMOVE_DEBUG_NAMES = new BooleanValue(PROCESSOR_NAME, "Remove Debug Names", DeprecationLevel.AVAILABLE, true);
     private static final BooleanValue V_ADD_LOCAL_VARIABLES = new BooleanValue(PROCESSOR_NAME, "Add Local Variables", "Adds random local variables with wrong types. Might break some decompilers", DeprecationLevel.AVAILABLE, true);
-    private static final StringValue V_NEW_SOURCE_FILE_NAME = new StringValue(PROCESSOR_NAME, "New SourceFile Name", DeprecationLevel.AVAILABLE, "");
 
     static
     {
@@ -123,9 +121,6 @@ public class LineNumberRemover implements IClassTransformer
                     parameter.name = NameUtils.generateLocalVariableName();
             }
         }
-        if (node.sourceFile != null && V_REMOVE_DEBUG_NAMES.get())
-            node.sourceFile = V_NEW_SOURCE_FILE_NAME.get().isEmpty() ? null: V_NEW_SOURCE_FILE_NAME.get();
-
     }
 
     @Override

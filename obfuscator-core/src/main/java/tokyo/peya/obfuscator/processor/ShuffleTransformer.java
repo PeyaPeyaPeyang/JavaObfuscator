@@ -16,6 +16,7 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 import tokyo.peya.obfuscator.IClassTransformer;
+import tokyo.peya.obfuscator.Obfuscator;
 import tokyo.peya.obfuscator.ProcessorCallback;
 import tokyo.peya.obfuscator.annotations.ObfuscationTransformer;
 import tokyo.peya.obfuscator.configuration.DeprecationLevel;
@@ -23,13 +24,14 @@ import tokyo.peya.obfuscator.configuration.ValueManager;
 import tokyo.peya.obfuscator.configuration.values.BooleanValue;
 import tokyo.peya.obfuscator.configuration.values.EnabledValue;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
-public class ShuffleMembersTransformer implements IClassTransformer
+public class ShuffleTransformer implements IClassTransformer
 {
-    private static final String PROCESSOR_NAME = "ShuffleMembers";
+    private static final String PROCESSOR_NAME = "Shuffler";
     private static final Random RANDOM = new Random();
 
     private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.AVAILABLE, true);
@@ -61,10 +63,23 @@ public class ShuffleMembersTransformer implements IClassTransformer
             true
     );
 
+    private static final BooleanValue V_SHUFFLE_DEBUG_CLASS_NAMES = new BooleanValue(
+            PROCESSOR_NAME,
+            "Shuffle source file names among other classes",
+            DeprecationLevel.AVAILABLE,
+            true
+    );
 
     static
     {
-        ValueManager.registerClass(ShuffleMembersTransformer.class);
+        ValueManager.registerClass(ShuffleTransformer.class);
+    }
+
+    private final Obfuscator instance;
+
+    public ShuffleTransformer(Obfuscator instance)
+    {
+        this.instance = instance;
     }
 
     private static void shuffleIfPresent(List<?> collection)
@@ -144,6 +159,29 @@ public class ShuffleMembersTransformer implements IClassTransformer
         if (V_SHUFFLE_FIELD_STRUCTURE.get())
             for (FieldNode o : node.fields)
                 processField(o);
+
+        if (V_SHUFFLE_DEBUG_CLASS_NAMES.get())
+            stealDebugNameFromAnotherClass(node);
+    }
+
+    private void stealDebugNameFromAnotherClass(ClassNode myNode)
+    {
+        Collection<ClassNode> classes = this.instance.getClasses().values();
+
+        ClassNode node = classes.stream()
+                .skip(RANDOM.nextInt(classes.size()))
+                .findFirst()
+                .orElse(null);
+        assert node != null;
+
+        String theirSource = node.sourceFile;
+        String theirSourceDebug = node.sourceDebug;
+
+        node.sourceFile = myNode.sourceFile;
+        node.sourceDebug = myNode.sourceDebug;
+
+        myNode.sourceFile = theirSource;
+        myNode.sourceDebug = theirSourceDebug;
     }
 
     @Override
