@@ -26,7 +26,7 @@ public class ScriptBridge
     {
         try
         {
-            this.jsEngine = new ScriptEngineManager().getEngineByName("nashorn");
+            this.jsEngine = new ScriptEngineManager().getEngineByName("rhino");
             this.jsEngine.eval(script);
         }
         catch (Exception e)

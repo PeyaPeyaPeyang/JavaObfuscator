@@ -51,6 +51,7 @@
         <commons-lang3.version>3.11</commons-lang3.version>
         <nashorn.version>15.2</nashorn.version>
         <flatlaf.version>2.1</flatlaf.version>
+        <rhino.version>1.7.14</rhino.version>
     </properties>
 
     <dependencies>
@@ -151,7 +152,16 @@
             <artifactId>flatlaf</artifactId>
             <version>${flatlaf.version}</version>
         </dependency>
-
+        <dependency>
+            <groupId>org.mozilla</groupId>
+            <artifactId>rhino</artifactId>
+            <version>${rhino.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mozilla</groupId>
+            <artifactId>rhino-engine</artifactId>
+            <version>${rhino.version}</version>
+        </dependency>
 
     </dependencies>
 
