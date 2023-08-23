@@ -391,6 +391,7 @@ public class Obfuscator
         ZipInputStream inJar = null;
         this.prepareForProcessing();
 
+
         try
         {
             boolean useStore = SETTINGS.getUseStore().get();
@@ -564,13 +565,6 @@ public class Obfuscator
         for (Map.Entry<String, byte[]> stringEntry : classes.entrySet())
             writeEntry(outJar, stringEntry.getKey(), stringEntry.getValue(), stored);
 
-        if (this.packager.isEnabled())
-        {
-            Map<String, byte[]> packagerClasses = this.packager.generateEncryptionClass();
-            for (Map.Entry<String, byte[]> stringEntry : packagerClasses.entrySet())
-                writeEntry(outJar, stringEntry.getKey(), stringEntry.getValue(), stored);
-        }
-
         log.info("... Finished after " + Utils.formatTime(System.currentTimeMillis() - startTime));
 
         writeResources(outJar, stored);
@@ -615,6 +609,14 @@ public class Obfuscator
 
     private Map<String, byte[]> processClasses() throws Exception
     {
+        Map<String, ClassNode> classes = this.classes;
+
+        if (this.packager.isEnabled())
+        {
+            ClassNode packagerNode = this.packager.generateEncryptionClass();
+            classes.put(packagerNode.name + ".class", packagerNode);
+        }
+
         for (INameObfuscationProcessor nameObfuscationProcessor : this.nameObfuscationProcessors)
             nameObfuscationProcessor.transformPost(this, this.classes);
 
@@ -664,6 +666,7 @@ public class Obfuscator
                 String entryName = stringClassNodeEntry.getKey();
                 byte[] entryData;
                 ClassNode cn = stringClassNodeEntry.getValue();
+                boolean isPackagerClassDecrypter = this.packager.isEnabled() && this.packager.isPackagerClassDecrypter(cn);
 
                 try
                 {
@@ -734,7 +737,7 @@ public class Obfuscator
 
                     entryData = writer.toByteArray();
 
-                    if (this.packager.isEnabled())
+                    if (!isPackagerClassDecrypter)
                     {
                         entryName = this.packager.encryptName(entryName.replace(".class", ""));
                         entryData = this.packager.encryptClass(entryData);

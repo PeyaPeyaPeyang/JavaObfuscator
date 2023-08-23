@@ -28,8 +28,6 @@ import tokyo.peya.obfuscator.utils.NameUtils;
 import tokyo.peya.obfuscator.utils.NodeUtils;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
 
@@ -101,7 +99,7 @@ public class Packager
         return new String(xor(name.replace("/", ".").getBytes(StandardCharsets.UTF_8), this.key));
     }
 
-    public Map<String, byte[]> generateEncryptionClass()
+    public ClassNode generateEncryptionClass()
     {
         if (this.instance.getClasses().keySet()
                 .stream()
@@ -412,11 +410,48 @@ public class Packager
         ClassWriter classWriter1 = new ClassWriter(0);
         cw.accept(classWriter1);
 
-        byte[] clazz = classWriter1.toByteArray();
         // this.instance.getClassPath().put(cw.name, new ClassWrapper(cw, false, clazz));
         this.instance.setMainClass(cw.name);
 
-        return Collections.singletonMap(cw.name + ".class", clazz);
+        return new ClassDecrypterClass(cw);
+    }
+
+    public boolean isPackagerClassDecrypter(ClassNode cn)
+    {
+        return cn instanceof ClassDecrypterClass;
+    }
+
+    private static class ClassDecrypterClass extends ClassNode
+    {
+        public ClassDecrypterClass(ClassNode parent)
+        {
+            super(Opcodes.ASM9);
+            this.version = parent.version;
+            this.access = parent.access;
+            this.name = parent.name;
+            this.signature = parent.signature;
+            this.superName = parent.superName;
+            this.interfaces = parent.interfaces;
+            this.sourceFile = parent.sourceFile;
+            this.sourceDebug = parent.sourceDebug;
+            this.outerClass = parent.outerClass;
+            this.outerMethod = parent.outerMethod;
+            this.outerMethodDesc = parent.outerMethodDesc;
+            this.visibleAnnotations = parent.visibleAnnotations;
+            this.invisibleAnnotations = parent.invisibleAnnotations;
+            this.visibleTypeAnnotations = parent.visibleTypeAnnotations;
+            this.invisibleTypeAnnotations = parent.invisibleTypeAnnotations;
+            this.attrs = parent.attrs;
+
+            this.methods = parent.methods;
+            this.fields = parent.fields;
+            this.innerClasses = parent.innerClasses;
+            this.module = parent.module;
+            this.nestHostClass = parent.nestHostClass;
+            this.nestMembers = parent.nestMembers;
+            this.permittedSubclasses = parent.permittedSubclasses;
+            this.recordComponents = parent.recordComponents;
+        }
     }
 
 }
