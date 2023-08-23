@@ -18,8 +18,7 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
-import tokyo.peya.obfuscator.JavaObfuscator;
-import tokyo.peya.obfuscator.clazz.ClassWrapper;
+import tokyo.peya.obfuscator.Obfuscator;
 import tokyo.peya.obfuscator.configuration.DeprecationLevel;
 import tokyo.peya.obfuscator.configuration.ValueManager;
 import tokyo.peya.obfuscator.configuration.values.BooleanValue;
@@ -54,16 +53,28 @@ public class Packager
             DeprecationLevel.AVAILABLE,
             "org.example.Main"
     );
-    public static Packager INSTANCE = new Packager();
 
-    static
+    private final Obfuscator instance;
+    private final byte[] key;
+    private final String mainClass;
+
+    public Packager(Obfuscator instance)
     {
+        this.instance = instance;
+        this.mainClass = V_AUTO_FIND_MAIN_CLASS.get() ? instance.getMainClass(): V_MAIN_CLASS.get();
 
-        ValueManager.registerClass(Packager.class);
+        if (V_AUTO_FIND_MAIN_CLASS.get() && this.mainClass == null)
+            throw new RuntimeException("[Packager] Failed to resolve main class, please add it or specify it manually");
+
+        this.key = new byte[RANDOM.nextInt(40) + 10];
+        for (int i = 0; i < this.key.length; i++)
+            this.key[i] = (byte) (RANDOM.nextInt(126) + 1);
     }
 
-    private byte[] key;
-    private String mainClass;
+    public static void init()
+    {
+        ValueManager.registerClass(Packager.class);
+    }
 
     private static byte[] xor(byte[] data, byte[] key)
     {
@@ -80,18 +91,6 @@ public class Packager
         return V_ENABLED.get();
     }
 
-    public void init()
-    {
-        this.mainClass = V_AUTO_FIND_MAIN_CLASS.get() ? JavaObfuscator.getCurrentSession().getMainClass(): V_MAIN_CLASS.get();
-
-        if (V_AUTO_FIND_MAIN_CLASS.get() && this.mainClass == null)
-            throw new RuntimeException("[Packager] Failed to resolve main class, please add it or specify it manually");
-
-        this.key = new byte[RANDOM.nextInt(40) + 10];
-        for (int i = 0; i < this.key.length; i++)
-            this.key[i] = (byte) (RANDOM.nextInt(126) + 1);
-    }
-
     public byte[] encryptClass(byte[] data)
     {
         return xor(data, this.key);
@@ -104,8 +103,12 @@ public class Packager
 
     public Map<String, byte[]> generateEncryptionClass()
     {
-        NameUtils.setup();
+        if (this.instance.getClasses().keySet()
+                .stream()
+                .noneMatch(s -> s.equals(this.mainClass + ".class")))
+            throw new RuntimeException("[Packager] Failed to resolve main class, please add it or specify it manually");
 
+        NameUtils.setup();
 
         String decryptionClassName = NameUtils.generateClassName();
         String keyFieldName = NameUtils.generateFieldName(decryptionClassName);
@@ -407,13 +410,11 @@ public class Packager
         cw.visitEnd();
 
         ClassWriter classWriter1 = new ClassWriter(0);
-
         cw.accept(classWriter1);
 
         byte[] clazz = classWriter1.toByteArray();
-        JavaObfuscator.getCurrentSession().getClassPath().put(cw.name, new ClassWrapper(cw, false, clazz));
-
-        JavaObfuscator.getCurrentSession().setMainClass(cw.name);
+        // this.instance.getClassPath().put(cw.name, new ClassWrapper(cw, false, clazz));
+        this.instance.setMainClass(cw.name);
 
         return Collections.singletonMap(cw.name + ".class", clazz);
     }

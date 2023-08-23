@@ -79,6 +79,7 @@ public class Obfuscator
     }
 
     private final Configuration config;
+    private final Packager packager;
     private final HashMap<String, byte[]> files;
     private final Map<String, ClassWrapper> classPath;
     private final HashMap<String, ClassNode> classes;
@@ -86,6 +87,7 @@ public class Obfuscator
     private final Set<ClassWrapper> libraryClassNodes;
     private final List<IClassTransformer> processors;
     private final List<INameObfuscationProcessor> nameObfuscationProcessors;
+
     public ScriptBridge script;
     private boolean mainClassChanged;
     private String mainClass;
@@ -95,6 +97,7 @@ public class Obfuscator
     {
         this.config = config;
 
+        this.packager = new Packager(this);
         this.files = new HashMap<>();
         this.classPath = new HashMap<>();
         this.classes = new HashMap<>();
@@ -449,8 +452,6 @@ public class Obfuscator
         }
 
         Map<String, byte[]> toWrite = this.processClasses();
-        if (Packager.INSTANCE.isEnabled())
-            toWrite.putAll(Packager.INSTANCE.generateEncryptionClass());
         finishOutJar(toWrite, outJar, useStore);
     }
 
@@ -552,18 +553,24 @@ public class Obfuscator
         log.info("... Finished after " + Utils.formatTime(System.currentTimeMillis() - startTime));
 
         Map<String, byte[]> toWrite = this.processClasses();
-        if (Packager.INSTANCE.isEnabled())
-            toWrite.putAll(Packager.INSTANCE.generateEncryptionClass());
         finishOutJar(toWrite, outJar, stored);
     }
 
     private void finishOutJar(Map<String, byte[]> classes, ZipOutputStream outJar, boolean stored) throws IOException
     {
-
         log.info("Writing classes...");
+
         long startTime = System.currentTimeMillis();
         for (Map.Entry<String, byte[]> stringEntry : classes.entrySet())
             writeEntry(outJar, stringEntry.getKey(), stringEntry.getValue(), stored);
+
+        if (this.packager.isEnabled())
+        {
+            Map<String, byte[]> packagerClasses = this.packager.generateEncryptionClass();
+            for (Map.Entry<String, byte[]> stringEntry : packagerClasses.entrySet())
+                writeEntry(outJar, stringEntry.getKey(), stringEntry.getValue(), stored);
+        }
+
         log.info("... Finished after " + Utils.formatTime(System.currentTimeMillis() - startTime));
 
         writeResources(outJar, stored);
@@ -610,9 +617,6 @@ public class Obfuscator
     {
         for (INameObfuscationProcessor nameObfuscationProcessor : this.nameObfuscationProcessors)
             nameObfuscationProcessor.transformPost(this, this.classes);
-
-        if (Packager.INSTANCE.isEnabled())
-            Packager.INSTANCE.init();
 
         long startTime = System.currentTimeMillis();
 
@@ -730,10 +734,10 @@ public class Obfuscator
 
                     entryData = writer.toByteArray();
 
-                    if (Packager.INSTANCE.isEnabled())
+                    if (this.packager.isEnabled())
                     {
-                        entryName = Packager.INSTANCE.encryptName(entryName.replace(".class", ""));
-                        entryData = Packager.INSTANCE.encryptClass(entryData);
+                        entryName = this.packager.encryptName(entryName.replace(".class", ""));
+                        entryData = this.packager.encryptClass(entryData);
                     }
                 }
                 catch (Exception e)
