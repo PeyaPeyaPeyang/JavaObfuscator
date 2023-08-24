@@ -21,6 +21,7 @@ import tokyo.peya.obfuscator.ProcessorCallback;
 import tokyo.peya.obfuscator.annotations.ObfuscationTransformer;
 import tokyo.peya.obfuscator.configuration.DeprecationLevel;
 import tokyo.peya.obfuscator.configuration.ValueManager;
+import tokyo.peya.obfuscator.configuration.values.BooleanValue;
 import tokyo.peya.obfuscator.configuration.values.EnabledValue;
 import tokyo.peya.obfuscator.configuration.values.StringValue;
 import tokyo.peya.obfuscator.utils.NodeUtils;
@@ -34,17 +35,19 @@ import java.util.Random;
 public class HideStringsTransformer implements IClassTransformer
 {
     private static final String PROCESSOR_NAME = "HideStrings";
-    public static final StringValue V_MAGIC_NUMBER = new StringValue(PROCESSOR_NAME, "Magigic number: Start",
-            "Begin marker of the hided string",
-            DeprecationLevel.AVAILABLE, "", 1
-    );
+
     private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME,
             "Might break after editing the SourceFile field in the class.",
             DeprecationLevel.AVAILABLE, true
     );
-    private static final EnabledValue V_OPTIMIZE = new EnabledValue(PROCESSOR_NAME,
+    private static final BooleanValue V_OPTIMIZE = new BooleanValue(PROCESSOR_NAME,
+            "Optimize the ledger",
             "Reuses the same string if it is already in the array",
             DeprecationLevel.AVAILABLE, true
+    );
+    private static final StringValue V_MAGIC_NUMBER = new StringValue(PROCESSOR_NAME, "Magigic number: Start",
+            "Begin marker of the hided string",
+            DeprecationLevel.AVAILABLE, "", 1
     );
     private static final StringValue V_MAGIC_NUMBER_SPLIT = new StringValue(PROCESSOR_NAME, "Split of the magic number",
             "Delimiter of the hided strings",
