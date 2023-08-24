@@ -5,7 +5,7 @@ import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
-import tokyo.peya.obfuscator.UniqueNameProvider;
+import tokyo.peya.obfuscator.utils.NameUtils;
 import tokyo.peya.obfuscator.utils.NodeUtils;
 
 import java.util.ArrayList;
@@ -24,7 +24,7 @@ public enum NumberObfuscationMethod implements INumberObfuscator
                 @Override
                 public void obfuscate(int value, InsnList insns)
                 {
-                    insns.add(new LdcInsnNode(UniqueNameProvider.generateSpaceString(value)));
+                    insns.add(new LdcInsnNode(NameUtils.generateSpaceString(value)));
                     insns.add(new MethodInsnNode(
                                     Opcodes.INVOKEVIRTUAL,
                                     "java/lang/String",

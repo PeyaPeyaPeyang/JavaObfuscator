@@ -15,12 +15,12 @@ import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
 import tokyo.peya.obfuscator.IClassTransformer;
 import tokyo.peya.obfuscator.ProcessorCallback;
-import tokyo.peya.obfuscator.UniqueNameProvider;
 import tokyo.peya.obfuscator.annotations.ObfuscationTransformer;
 import tokyo.peya.obfuscator.configuration.DeprecationLevel;
 import tokyo.peya.obfuscator.configuration.ValueManager;
 import tokyo.peya.obfuscator.configuration.values.BooleanValue;
 import tokyo.peya.obfuscator.configuration.values.EnabledValue;
+import tokyo.peya.obfuscator.utils.NameUtils;
 
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -36,7 +36,7 @@ public class DecompilerCrasher implements IClassTransformer
 
     static
     {
-        EMPTY_STRINGS = UniqueNameProvider.crazyString(50000);
+        EMPTY_STRINGS = NameUtils.crazyString(50000);
     }
 
     static
@@ -52,7 +52,7 @@ public class DecompilerCrasher implements IClassTransformer
 
         if (V_INVALID_SIGNATURES.get())
             if (node.signature == null)  // By ItzSomebody
-                node.signature = UniqueNameProvider.crazyString(10);
+                node.signature = NameUtils.crazyString(10);
 
         if (V_EMPTY_ANNOTATION.get())
         {

@@ -114,18 +114,18 @@ public class LineNumberRemover implements IClassTransformer
                     method.localVariables = new ArrayList<>();
 
                 for (Map.Entry<Integer, String> integerStringEntry : varMap.entrySet())
-                    method.localVariables.add(new LocalVariableNode(this.instance.getNameProvider().generateLocalVariableName(), integerStringEntry.getValue(), null, firstLabel, lastLabel, integerStringEntry.getKey()));
+                    method.localVariables.add(new LocalVariableNode(this.instance.getNameProvider().generateLocalVariableName(method), integerStringEntry.getValue(), null, firstLabel, lastLabel, integerStringEntry.getKey()));
             }
 
             if (method.parameters != null && V_RENAME_VALUES.get())
             {
                 for (ParameterNode parameter : method.parameters)
-                    parameter.name = this.instance.getNameProvider().generateLocalVariableName();
+                    parameter.name = this.instance.getNameProvider().generateLocalVariableName(method);
             }
             if (method.localVariables != null && V_RENAME_VALUES.get())
             {
                 for (LocalVariableNode parameter : method.localVariables)
-                    parameter.name = this.instance.getNameProvider().generateLocalVariableName();
+                    parameter.name = this.instance.getNameProvider().generateLocalVariableName(method);
             }
         }
     }

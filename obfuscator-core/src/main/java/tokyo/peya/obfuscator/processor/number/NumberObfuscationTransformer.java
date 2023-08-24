@@ -178,7 +178,7 @@ public class NumberObfuscationTransformer implements IClassTransformer
             return;
 
         int proceed = 0;
-        String fieldName = this.instance.getNameProvider().generateFieldName(node.name);
+        String fieldName = this.instance.getNameProvider().generateFieldName(node);
         List<Integer> integerList = new ArrayList<>();
         for (MethodNode method : node.methods)
             for (AbstractInsnNode abstractInsnNode : method.instructions.toArray())

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2019 superblaubeere27, Sam Sun, MarcoMC
- * Copyright (c) ${YEAR}      Peyang
+ * Copyright (c) 2023      Peyang
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
  *
@@ -13,6 +13,7 @@ package tokyo.peya.obfuscator;
 
 import com.google.common.io.Files;
 import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.MethodNode;
 import tokyo.peya.obfuscator.utils.Utils;
 
 import java.io.File;
@@ -22,26 +23,18 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
+import java.util.function.Predicate;
 
 public class UniqueNameProvider
 {
-    /**
-     * By ItzSomebody
-     */
-    private static final char[] DICT_SPACES = {
-            '\u2000', '\u2001', '\u2002', '\u2003', '\u2004', '\u2005', '\u2006', '\u2007', '\u2008', '\u2009', '\u200A', '\u200B', '\u200C', '\u200D', '\u200E', '\u200F'
-    };
 
-    private static final Random RANDOM = new Random();
-
-    private static List<String> classNames = new ArrayList<>();
-    private static List<String> names = new ArrayList<>();
     private final String generativeChars;
     private final boolean usingCustomDictionary;
     private final HashMap<String, Integer> packageMap;
     private final Map<String, HashMap<String, Integer>> usedMethods;
     private final Map<String, Integer> usedFields;
+    private final List<String> classNames;
+    private final List<String> names;
 
     private int localVars;
     private int methods;
@@ -49,19 +42,26 @@ public class UniqueNameProvider
 
     public UniqueNameProvider(JObfSettings settings)
     {
+        normalizeSettings(settings);
+
         this.generativeChars = settings.getGeneratorChars().get();
         this.usingCustomDictionary = settings.getUseCustomDictionary().get();
+
         this.usedFields = new HashMap<>();
         this.usedMethods = new HashMap<>();
         this.packageMap = new HashMap<>();
 
+        if (!this.usingCustomDictionary)
+        {
+            this.classNames = new ArrayList<>();
+            this.names = new ArrayList<>();
+            return;
+        }
+
         try
         {
-            if (this.usingCustomDictionary)
-            {
-                classNames = Files.readLines(new File(settings.getClassNameDictionary().get()), StandardCharsets.UTF_8);
-                names = Files.readLines(new File(settings.getNameDictionary().get()), StandardCharsets.UTF_8);
-            }
+            this.classNames = Files.readLines(new File(settings.getClassNameDictionary().get()), StandardCharsets.UTF_8);
+            this.names = Files.readLines(new File(settings.getNameDictionary().get()), StandardCharsets.UTF_8);
         }
         catch (IOException e)
         {
@@ -78,51 +78,19 @@ public class UniqueNameProvider
         }
     }
 
-    @SuppressWarnings("SameParameterValue")
-    private static int randInt(int min, int max)
+    private static String generateUniqueName(String candidate, Predicate<? super String> check)
     {
-        return RANDOM.nextInt(max - min) + min;
-    }
+        String name = candidate;
+        int tryna = 0;
+        while (true)
+        {
+            if (check.test(name))
+                name = candidate + "$" + ++tryna;
+            else
+                break;
+        }
 
-    public static String generateSpaceString(int length)
-    {
-        StringBuilder stringBuilder = new StringBuilder();
-        for (int i = 0; i < length; i++)
-            stringBuilder.append(" ");
-        return stringBuilder.toString();
-    }
-
-    /**
-     * @param len Length of the string to generate.
-     * @return a built {@link String} consisting of DICT_SPACES.
-     * @author ItzSomebody
-     * Generates a {@link String} consisting only of DICT_SPACES.
-     * Stole this idea from NeonObf and Smoke.
-     */
-    public static String crazyString(int len)
-    {
-        char[] buildString = new char[len];
-        for (int i = 0; i < len; i++)
-            buildString[i] = DICT_SPACES[RANDOM.nextInt(DICT_SPACES.length)];
-        return new String(buildString);
-    }
-
-    public static String unicodeString(int length)
-    {
-        StringBuilder stringBuilder = new StringBuilder();
-        for (int i = 0; i < length; i++)
-            stringBuilder.append((char) randInt(128, 250));
-        return stringBuilder.toString();
-    }
-
-    public static String getPackage(String in)
-    {
-        int lin = in.lastIndexOf('/');
-
-        if (lin == 0)
-            throw new IllegalArgumentException("Illegal class name");
-
-        return lin == -1 ? "": in.substring(0, lin);
+        return name;
     }
 
     public String generateClassName()
@@ -138,8 +106,7 @@ public class UniqueNameProvider
         int id = this.packageMap.get(packageName);
         this.packageMap.put(packageName, id + 1);
 
-        return getName(classNames, id);
-//        return ClassNameGenerator.className(Utils.random(2, 5));
+        return getName(this.classNames, id);
     }
 
     private String getName(List<String> dictionary, int id)
@@ -150,48 +117,37 @@ public class UniqueNameProvider
         return Utils.convertToBase(id, this.generativeChars);
     }
 
-    public String generateMethodName(final String className, String desc)
-    {
-        return getName(names, this.methods++);
-    }
-
     public String generateMethodName(final ClassNode classNode, String desc)
     {
-        String nameBase = generateMethodName(classNode.name, desc);
-        String name = nameBase;
-        int tryna = 0;
-        while (true)
-        {
-            String name$ = name;
-            if (classNode.methods.stream().anyMatch(methodNode -> methodNode.name.equals(name$)))
-                name = nameBase + "$" + ++tryna;
-            else
-                break;
-        }
-
-        return name;
-    }
-
-    public String generateFieldName(final String className)
-    {
-        return getName(names, this.fields++);
+        String nameBase = getName(this.names, this.methods++);
+        return generateUniqueName(
+                nameBase,
+                s -> classNode.methods
+                        .stream()
+                        .anyMatch(m -> m.name.equals(s) && m.desc.equals(desc))
+        );
     }
 
     public String generateFieldName(final ClassNode classNode)
     {
-        return generateFieldName(classNode.name);
+        return generateUniqueName(
+                getName(this.names, this.fields++),
+                s -> classNode.fields
+                        .stream()
+                        .anyMatch(f -> f.name.equals(s))
+        );
     }
 
-    public String generateLocalVariableName(final String className, final String methodName)
-    {
-        return generateLocalVariableName();
-    }
-
-    public String generateLocalVariableName()
+    public String generateLocalVariableName(MethodNode node)
     {
         if (this.localVars == 0)
             this.localVars = Short.MAX_VALUE;
-        return Utils.convertToBase(this.localVars--, this.generativeChars);
+        return generateUniqueName(
+                getName(this.names, this.localVars--),
+                s -> node.localVariables
+                        .stream()
+                        .anyMatch(l -> l.name.equals(s))
+        );
     }
 
     public void mapClass(String old, String newName)

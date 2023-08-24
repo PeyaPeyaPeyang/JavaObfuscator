@@ -30,11 +30,11 @@ import org.objectweb.asm.tree.TypeInsnNode;
 import tokyo.peya.obfuscator.IClassTransformer;
 import tokyo.peya.obfuscator.Obfuscator;
 import tokyo.peya.obfuscator.ProcessorCallback;
-import tokyo.peya.obfuscator.UniqueNameProvider;
 import tokyo.peya.obfuscator.annotations.ObfuscationTransformer;
 import tokyo.peya.obfuscator.configuration.DeprecationLevel;
 import tokyo.peya.obfuscator.configuration.ValueManager;
 import tokyo.peya.obfuscator.configuration.values.EnabledValue;
+import tokyo.peya.obfuscator.utils.NameUtils;
 import tokyo.peya.obfuscator.utils.NodeUtils;
 import tokyo.peya.obfuscator.utils.Utils;
 
@@ -141,7 +141,7 @@ public class InvokeDynamic implements IClassTransformer
 
                     if (methodInsnNode.getOpcode() == Opcodes.INVOKEVIRTUAL || methodInsnNode.getOpcode() == Opcodes.INVOKEINTERFACE)
                     {
-                        String name = methodInsnNode.owner.replace('/', '.') + ":" + methodInsnNode.name + ":" + methodInsnNode.desc + ":" + UniqueNameProvider.generateSpaceString(2);
+                        String name = methodInsnNode.owner.replace('/', '.') + ":" + methodInsnNode.name + ":" + methodInsnNode.desc + ":" + NameUtils.generateSpaceString(2);
                         int index;
 
                         if (map.containsKey(name))
@@ -160,7 +160,7 @@ public class InvokeDynamic implements IClassTransformer
                     }
                     if (methodInsnNode.getOpcode() == Opcodes.INVOKESTATIC)
                     {
-                        String name = methodInsnNode.owner.replace('/', '.') + ":" + methodInsnNode.name + ":" + methodInsnNode.desc + ":" + UniqueNameProvider.generateSpaceString(1);
+                        String name = methodInsnNode.owner.replace('/', '.') + ":" + methodInsnNode.name + ":" + methodInsnNode.desc + ":" + NameUtils.generateSpaceString(1);
                         int index;
 
                         if (map.containsKey(name))
@@ -197,7 +197,7 @@ public class InvokeDynamic implements IClassTransformer
 
                     if (fieldInsnNode.getOpcode() == Opcodes.GETFIELD)
                     {
-                        String name = fieldInsnNode.owner.replace('/', '.') + ":" + fieldInsnNode.name + ":" + typeIndex + ":" + UniqueNameProvider.generateSpaceString(3);
+                        String name = fieldInsnNode.owner.replace('/', '.') + ":" + fieldInsnNode.name + ":" + typeIndex + ":" + NameUtils.generateSpaceString(3);
                         int index;
 
                         if (map.containsKey(name))
@@ -216,7 +216,7 @@ public class InvokeDynamic implements IClassTransformer
                     }
                     else if (fieldInsnNode.getOpcode() == Opcodes.GETSTATIC)
                     {
-                        String name = fieldInsnNode.owner.replace('/', '.') + ":" + fieldInsnNode.name + ":" + typeIndex + ":" + UniqueNameProvider.generateSpaceString(4);
+                        String name = fieldInsnNode.owner.replace('/', '.') + ":" + fieldInsnNode.name + ":" + typeIndex + ":" + NameUtils.generateSpaceString(4);
                         int index;
 
                         if (map.containsKey(name))
@@ -250,7 +250,7 @@ public class InvokeDynamic implements IClassTransformer
 
                     if (fieldInsnNode.getOpcode() == Opcodes.PUTFIELD)
                     {
-                        String name = fieldInsnNode.owner.replace('/', '.') + ":" + fieldInsnNode.name + ":" + typeIndex + ":" + UniqueNameProvider.generateSpaceString(5);
+                        String name = fieldInsnNode.owner.replace('/', '.') + ":" + fieldInsnNode.name + ":" + typeIndex + ":" + NameUtils.generateSpaceString(5);
                         int index;
 
                         if (map.containsKey(name))
@@ -269,7 +269,7 @@ public class InvokeDynamic implements IClassTransformer
                     }
                     else if (fieldInsnNode.getOpcode() == Opcodes.PUTSTATIC)
                     {
-                        String name = fieldInsnNode.owner.replace('/', '.') + ":" + fieldInsnNode.name + ":" + typeIndex + ":" + UniqueNameProvider.generateSpaceString(6);
+                        String name = fieldInsnNode.owner.replace('/', '.') + ":" + fieldInsnNode.name + ":" + typeIndex + ":" + NameUtils.generateSpaceString(6);
                         int index;
 
                         if (map.containsKey(name))
@@ -372,7 +372,7 @@ public class InvokeDynamic implements IClassTransformer
 
         MethodNode mv;
         {
-            mv = new MethodNode(Opcodes.ACC_PRIVATE + Opcodes.ACC_STATIC, this.instance.getNameProvider().generateMethodName(node.name, "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;"), "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;", null, new String[]{"java/lang/NoSuchMethodException", "java/lang/IllegalAccessException"});
+            mv = new MethodNode(Opcodes.ACC_PRIVATE + Opcodes.ACC_STATIC, this.instance.getNameProvider().generateMethodName(node, "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;"), "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;", null, new String[]{"java/lang/NoSuchMethodException", "java/lang/IllegalAccessException"});
             mv.visitCode();
             Label l0 = new Label();
             Label l1 = new Label();

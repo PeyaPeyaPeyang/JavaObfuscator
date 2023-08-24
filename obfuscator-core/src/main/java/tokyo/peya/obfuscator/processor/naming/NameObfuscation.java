@@ -20,7 +20,6 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 import tokyo.peya.obfuscator.Obfuscator;
-import tokyo.peya.obfuscator.UniqueNameProvider;
 import tokyo.peya.obfuscator.clazz.ClassTree;
 import tokyo.peya.obfuscator.clazz.ClassWrapper;
 import tokyo.peya.obfuscator.clazz.FieldWrapper;
@@ -32,6 +31,7 @@ import tokyo.peya.obfuscator.configuration.values.EnabledValue;
 import tokyo.peya.obfuscator.configuration.values.FilePathValue;
 import tokyo.peya.obfuscator.configuration.values.StringValue;
 import tokyo.peya.obfuscator.processor.Packager;
+import tokyo.peya.obfuscator.utils.NameUtils;
 import tokyo.peya.obfuscator.utils.NodeUtils;
 import tokyo.peya.obfuscator.utils.Utils;
 
@@ -118,7 +118,7 @@ public class NameObfuscation implements INameObfuscationProcessor
             if (packageName.equalsIgnoreCase("common"))
                 retVal = CommonPackageTrees.getRandomPackage();
             else if (packageName.isEmpty())
-                retVal = UniqueNameProvider.crazyString(random.nextInt(10) + 5);
+                retVal = NameUtils.crazyString(random.nextInt(10) + 5);
             else
                 retVal = packageName;
         }
@@ -293,10 +293,10 @@ public class NameObfuscation implements INameObfuscationProcessor
 
         classWrapper.methods.stream()
                 .filter(isExclude.negate())
-                .forEach(methodWrapper -> this.processMethod(methodWrapper, classWrapper.originalName, mappings));
+                .forEach(methodWrapper -> this.processMethod(methodWrapper, classWrapper, mappings));
     }
 
-    private void processMethod(MethodWrapper methodWrapper, String ownerClassName, Map<String, String> mappings)
+    private void processMethod(MethodWrapper methodWrapper, ClassWrapper ownerClass, Map<String, String> mappings)
     {
         if (Modifier.isPrivate(methodWrapper.methodNode.access) || Modifier.isProtected(methodWrapper.methodNode.access))
         {
@@ -306,14 +306,14 @@ public class NameObfuscation implements INameObfuscationProcessor
         }
 
         if (Modifier.isNative(methodWrapper.methodNode.access))
-            log.warn("Native method found in class " + ownerClassName + " method " + methodWrapper.methodNode.name + methodWrapper.methodNode.desc);
+            log.warn("Native method found in class " + ownerClass.originalName + " method " + methodWrapper.methodNode.name + methodWrapper.methodNode.desc);
         else
             this.renameMethodTree(
                     mappings,
                     new HashSet<>(),
                     methodWrapper,
-                    ownerClassName,
-                    this.obfuscator.getNameProvider().generateMethodName(ownerClassName, methodWrapper.originalDescription)
+                    ownerClass.originalName,
+                    this.obfuscator.getNameProvider().generateMethodName(ownerClass.classNode, methodWrapper.originalDescription)
             );
     }
 
@@ -325,10 +325,10 @@ public class NameObfuscation implements INameObfuscationProcessor
 
         classWrapper.fields.stream()
                 .filter(isExclude.negate())
-                .forEach(fieldWrapper -> processField(fieldWrapper, classWrapper.originalName, mappings));
+                .forEach(fieldWrapper -> processField(fieldWrapper, classWrapper, mappings));
     }
 
-    private void processField(FieldWrapper field, String ownerName, Map<String, String> mappings)
+    private void processField(FieldWrapper field, ClassWrapper ownerClass, Map<String, String> mappings)
     {
         if (Modifier.isPrivate(field.fieldNode.access) || Modifier.isProtected(field.fieldNode.access))
         {
@@ -340,8 +340,8 @@ public class NameObfuscation implements INameObfuscationProcessor
         this.renameFieldTree(
                 new HashSet<>(),
                 field,
-                ownerName,
-                this.obfuscator.getNameProvider().generateFieldName(ownerName),
+                ownerClass.originalName,
+                this.obfuscator.getNameProvider().generateFieldName(ownerClass.classNode),
                 mappings
         );
     }

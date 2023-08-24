@@ -247,7 +247,7 @@ public class ReferenceProxy implements IClassTransformer
 
             for (int i = 0; i < argumentTypes.length; i++)
             {
-                mv.visitLocalVariable(this.inst.getNameProvider().generateLocalVariableName(), argumentTypes[i].toString(), null, l0, l7, i);
+                mv.visitLocalVariable(this.inst.getNameProvider().generateLocalVariableName(mv), argumentTypes[i].toString(), null, l0, l7, i);
             }
 //            mv.visitLocalVariable(NameUtils.generateLocalVariableName(), argumentTypes[i].toString(), null, l0, l7, i);
         }
