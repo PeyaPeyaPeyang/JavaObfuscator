@@ -86,6 +86,7 @@ public enum NumberObfuscationMethod implements INumberObfuscator
                     }
 
                     int toSubtract = sum - value;
+                    boolean subtractionNeeded = toSubtract != 0;
 
                     boolean subtracted = false;
                     insns.add(NodeUtils.generateIntPush(values[0]));
@@ -93,7 +94,7 @@ public enum NumberObfuscationMethod implements INumberObfuscator
                     {
                         insns.add(NodeUtils.generateIntPush(values[i]));
                         insns.add(new InsnNode(Opcodes.IADD));
-                        if (!subtracted && toSubtract > 0 && random.nextInt(10) == 0)
+                        if (subtractionNeeded && !subtracted && random.nextInt(10) == 0)
                         {
                             insns.add(NodeUtils.generateIntPush(toSubtract));
                             insns.add(new InsnNode(Opcodes.ISUB));
@@ -101,7 +102,7 @@ public enum NumberObfuscationMethod implements INumberObfuscator
                         }
                     }
 
-                    if (toSubtract > 0 && !subtracted)
+                    if (subtractionNeeded && !subtracted)
                     {
                         insns.add(NodeUtils.generateIntPush(toSubtract));
                         insns.add(new InsnNode(Opcodes.ISUB));
