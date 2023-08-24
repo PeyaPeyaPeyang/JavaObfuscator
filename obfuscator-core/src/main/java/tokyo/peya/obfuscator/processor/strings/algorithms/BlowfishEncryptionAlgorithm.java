@@ -41,6 +41,12 @@ public class BlowfishEncryptionAlgorithm implements IStringEncryptionAlgorithm
     }
 
     @Override
+    public String getName()
+    {
+        return "Blowfish";
+    }
+
+    @Override
     public String encrypt(String obj, String key)
     {
         try

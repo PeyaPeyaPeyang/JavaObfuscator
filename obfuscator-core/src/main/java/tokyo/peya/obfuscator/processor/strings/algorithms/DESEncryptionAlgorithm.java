@@ -42,6 +42,12 @@ public class DESEncryptionAlgorithm implements IStringEncryptionAlgorithm
     }
 
     @Override
+    public String getName()
+    {
+        return "DES";
+    }
+
+    @Override
     public String encrypt(String obj, String key)
     {
         try

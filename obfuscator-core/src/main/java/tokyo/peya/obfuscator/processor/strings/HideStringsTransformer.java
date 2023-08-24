@@ -251,7 +251,7 @@ public class HideStringsTransformer implements IClassTransformer
 
         MethodNode generateStrings = new MethodNode(
                 ((cn.access & Opcodes.ACC_INTERFACE) != 0 ? Opcodes.ACC_PUBLIC: Opcodes.ACC_PRIVATE) | Opcodes.ACC_STATIC,
-                this.instance.getNameProvider().generateMethodName(cn, "()V"),
+                this.instance.getNameProvider().toUniqueMethodName(cn, "genertateString", "()V"),
                 "()V",
                 null,
                 new String[0]

@@ -119,33 +119,44 @@ public class UniqueNameProvider
 
     public String generateMethodName(final ClassNode classNode, String desc)
     {
-        String nameBase = getName(this.names, this.methods++);
-        return generateUniqueName(
-                nameBase,
-                s -> classNode.methods
-                        .stream()
-                        .anyMatch(m -> m.name.equals(s) && m.desc.equals(desc))
-        );
+        return this.toUniqueMethodName(classNode, getName(this.names, this.methods++), desc);
     }
 
     public String generateFieldName(final ClassNode classNode)
     {
-        return generateUniqueName(
-                getName(this.names, this.fields++),
-                s -> classNode.fields
-                        .stream()
-                        .anyMatch(f -> f.name.equals(s))
-        );
+        return toUniqueFieldName(classNode, getName(this.names, this.fields++));
     }
 
     public String generateLocalVariableName(MethodNode node)
     {
         if (this.localVars == 0)
             this.localVars = Short.MAX_VALUE;
+        return this.toUniqueLocalVariableName(node, getName(this.names, this.localVars--));
+    }
+
+    public String toUniqueMethodName(ClassNode method, String nameCandidate, String desc)
+    {
         return generateUniqueName(
-                getName(this.names, this.localVars--),
-                s -> node.localVariables
-                        .stream()
+                nameCandidate,
+                s -> method.methods.stream()
+                        .anyMatch(m -> m.name.equals(s) && m.desc.equals(desc))
+        );
+    }
+
+    public String toUniqueFieldName(ClassNode method, String nameCandidate)
+    {
+        return generateUniqueName(
+                nameCandidate,
+                s -> method.fields.stream()
+                        .anyMatch(f -> f.name.equals(s))
+        );
+    }
+
+    public String toUniqueLocalVariableName(MethodNode method, String nameCandidate)
+    {
+        return generateUniqueName(
+                nameCandidate,
+                s -> method.localVariables.stream()
                         .anyMatch(l -> l.name.equals(s))
         );
     }

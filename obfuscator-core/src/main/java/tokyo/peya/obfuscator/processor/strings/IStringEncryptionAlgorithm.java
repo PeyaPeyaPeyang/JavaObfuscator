@@ -13,6 +13,7 @@ package tokyo.peya.obfuscator.processor.strings;
 
 public interface IStringEncryptionAlgorithm
 {
+    String getName();
 
     String encrypt(String obj, String key);
 

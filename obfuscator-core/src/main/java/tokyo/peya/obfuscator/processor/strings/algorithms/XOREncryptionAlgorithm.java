@@ -34,6 +34,12 @@ public class XOREncryptionAlgorithm implements IStringEncryptionAlgorithm
     }
 
     @Override
+    public String getName()
+    {
+        return "XOR";
+    }
+
+    @Override
     public String encrypt(String obj, String key)
     {
         StringBuilder sb = new StringBuilder();

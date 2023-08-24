@@ -42,6 +42,12 @@ public class AESEncryptionAlgorithm implements IStringEncryptionAlgorithm
     }
 
     @Override
+    public String getName()
+    {
+        return "AES";
+    }
+
+    @Override
     public String encrypt(String obj, String key)
     {
         try

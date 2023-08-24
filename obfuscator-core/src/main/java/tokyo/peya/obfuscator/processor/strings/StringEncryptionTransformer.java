@@ -204,7 +204,7 @@ public class StringEncryptionTransformer implements IClassTransformer
         MethodNode generateStrings = new MethodNode(
                 ((node.access & Opcodes.ACC_INTERFACE) != 0 ? Opcodes.ACC_PUBLIC: Opcodes.ACC_PRIVATE)
                         | Opcodes.ACC_STATIC,
-                this.instance.getNameProvider().generateMethodName(node, "()V"),
+                this.instance.getNameProvider().toUniqueMethodName(node, "buildLedger", "()V"),
                 "()V",
                 null,
                 new String[0]
@@ -246,7 +246,11 @@ public class StringEncryptionTransformer implements IClassTransformer
         for (IStringEncryptionAlgorithm algorithm : this.algorithms)
             encryptionMethodMap.put(
                     algorithm,
-                    this.instance.getNameProvider().generateMethodName(node, "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;")
+                    this.instance.getNameProvider().toUniqueMethodName(
+                            node,
+                            "decrypt" + algorithm.getName(),
+                            "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;"
+                    )
             );
 
         InsnList encryptedStringConstants = this.createEncryptedStringConstants(
