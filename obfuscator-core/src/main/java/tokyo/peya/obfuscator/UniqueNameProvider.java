@@ -32,30 +32,56 @@ public class UniqueNameProvider
     private static final char[] DICT_SPACES = {
             '\u2000', '\u2001', '\u2002', '\u2003', '\u2004', '\u2005', '\u2006', '\u2007', '\u2008', '\u2009', '\u200A', '\u200B', '\u200C', '\u200D', '\u200E', '\u200F'
     };
-    private static final HashMap<String, Integer> packageMap = new HashMap<>();
-    private static final Map<String, HashMap<String, Integer>> USED_METHODNAMES = new HashMap<>();
-    private static final Map<String, Integer> USED_FIELDNAMES = new HashMap<>();
-    private static final Random random = new Random();
-    //    private static boolean iL = true;
-    private static int localVars = Short.MAX_VALUE;
-    private static int METHODS;
-    private static int FIELDS;
-    private static boolean usingCustomDictionary;
+
+    private static final Random RANDOM = new Random();
+
     private static List<String> classNames = new ArrayList<>();
     private static List<String> names = new ArrayList<>();
-    private static String chars = "Il";
+    private final String generativeChars;
+    private final boolean usingCustomDictionary;
+    private final HashMap<String, Integer> packageMap;
+    private final Map<String, HashMap<String, Integer>> usedMethods;
+    private final Map<String, Integer> usedFields;
+
+    private int localVars;
+    private int methods;
+    private int fields;
+
+    public UniqueNameProvider(JObfSettings settings)
+    {
+        this.generativeChars = settings.getGeneratorChars().get();
+        this.usingCustomDictionary = settings.getUseCustomDictionary().get();
+        this.usedFields = new HashMap<>();
+        this.usedMethods = new HashMap<>();
+        this.packageMap = new HashMap<>();
+
+        try
+        {
+            if (this.usingCustomDictionary)
+            {
+                classNames = Files.readLines(new File(settings.getClassNameDictionary().get()), StandardCharsets.UTF_8);
+                names = Files.readLines(new File(settings.getNameDictionary().get()), StandardCharsets.UTF_8);
+            }
+        }
+        catch (IOException e)
+        {
+            throw new RuntimeException("Failed to load names: " + e.getLocalizedMessage(), e);
+        }
+    }
+
+    private static void normalizeSettings(JObfSettings settings)
+    {
+        if (settings.getGeneratorChars().get().isEmpty())
+        {
+            settings.getGeneratorChars().setValue("Il");
+            throw new IllegalStateException("The generator chars are empty. Changing them to 'Il'");
+        }
+    }
 
     @SuppressWarnings("SameParameterValue")
     private static int randInt(int min, int max)
     {
-        return random.nextInt(max - min) + min;
-    }
-
-    public static void setup()
-    {
-        USED_METHODNAMES.clear();
-        USED_FIELDNAMES.clear();
-        packageMap.clear();
+        return RANDOM.nextInt(max - min) + min;
     }
 
     public static String generateSpaceString(int length)
@@ -64,31 +90,6 @@ public class UniqueNameProvider
         for (int i = 0; i < length; i++)
             stringBuilder.append(" ");
         return stringBuilder.toString();
-    }
-
-    public static String generateClassName()
-    {
-        return generateClassName("");
-    }
-
-    public static String generateClassName(String packageName)
-    {
-        if (!packageMap.containsKey(packageName))
-            packageMap.put(packageName, 0);
-
-        int id = packageMap.get(packageName);
-        packageMap.put(packageName, id + 1);
-
-        return getName(classNames, id);
-//        return ClassNameGenerator.className(Utils.random(2, 5));
-    }
-
-    private static String getName(List<String> dictionary, int id)
-    {
-        if (usingCustomDictionary && id < dictionary.size())
-            return dictionary.get(id);
-
-        return Utils.convertToBase(id, chars);
     }
 
     /**
@@ -102,16 +103,59 @@ public class UniqueNameProvider
     {
         char[] buildString = new char[len];
         for (int i = 0; i < len; i++)
-            buildString[i] = DICT_SPACES[random.nextInt(DICT_SPACES.length)];
+            buildString[i] = DICT_SPACES[RANDOM.nextInt(DICT_SPACES.length)];
         return new String(buildString);
     }
 
-    public static String generateMethodName(final String className, String desc)
+    public static String unicodeString(int length)
     {
-        return getName(names, METHODS++);
+        StringBuilder stringBuilder = new StringBuilder();
+        for (int i = 0; i < length; i++)
+            stringBuilder.append((char) randInt(128, 250));
+        return stringBuilder.toString();
     }
 
-    public static String generateMethodName(final ClassNode classNode, String desc)
+    public static String getPackage(String in)
+    {
+        int lin = in.lastIndexOf('/');
+
+        if (lin == 0)
+            throw new IllegalArgumentException("Illegal class name");
+
+        return lin == -1 ? "": in.substring(0, lin);
+    }
+
+    public String generateClassName()
+    {
+        return generateClassName("");
+    }
+
+    public String generateClassName(String packageName)
+    {
+        if (!this.packageMap.containsKey(packageName))
+            this.packageMap.put(packageName, 0);
+
+        int id = this.packageMap.get(packageName);
+        this.packageMap.put(packageName, id + 1);
+
+        return getName(classNames, id);
+//        return ClassNameGenerator.className(Utils.random(2, 5));
+    }
+
+    private String getName(List<String> dictionary, int id)
+    {
+        if (this.usingCustomDictionary && id < dictionary.size())
+            return dictionary.get(id);
+
+        return Utils.convertToBase(id, this.generativeChars);
+    }
+
+    public String generateMethodName(final String className, String desc)
+    {
+        return getName(names, this.methods++);
+    }
+
+    public String generateMethodName(final ClassNode classNode, String desc)
     {
         String nameBase = generateMethodName(classNode.name, desc);
         String name = nameBase;
@@ -128,88 +172,33 @@ public class UniqueNameProvider
         return name;
     }
 
-    public static String generateFieldName(final String className)
+    public String generateFieldName(final String className)
     {
-        return getName(names, FIELDS++);
+        return getName(names, this.fields++);
     }
 
-    public static String generateFieldName(final ClassNode classNode)
+    public String generateFieldName(final ClassNode classNode)
     {
         return generateFieldName(classNode.name);
     }
 
-    public static String generateLocalVariableName(final String className, final String methodName)
+    public String generateLocalVariableName(final String className, final String methodName)
     {
         return generateLocalVariableName();
     }
 
-    public static String generateLocalVariableName()
+    public String generateLocalVariableName()
     {
-        if (localVars == 0)
-            localVars = Short.MAX_VALUE;
-        return Utils.convertToBase(localVars--, chars);
+        if (this.localVars == 0)
+            this.localVars = Short.MAX_VALUE;
+        return Utils.convertToBase(this.localVars--, this.generativeChars);
     }
 
-    public static String unicodeString(int length)
+    public void mapClass(String old, String newName)
     {
-        StringBuilder stringBuilder = new StringBuilder();
-        for (int i = 0; i < length; i++)
-            stringBuilder.append((char) randInt(128, 250));
-        return stringBuilder.toString();
+        if (this.usedMethods.containsKey(old))
+            this.usedMethods.put(newName, this.usedMethods.get(old));
+        if (this.usedFields.containsKey(old))
+            this.usedFields.put(newName, this.usedFields.get(old));
     }
-
-    public static void mapClass(String old, String newName)
-    {
-        if (USED_METHODNAMES.containsKey(old))
-            USED_METHODNAMES.put(newName, USED_METHODNAMES.get(old));
-        if (USED_FIELDNAMES.containsKey(old))
-            USED_FIELDNAMES.put(newName, USED_FIELDNAMES.get(old));
-    }
-
-    public static String getPackage(String in)
-    {
-        int lin = in.lastIndexOf('/');
-
-        if (lin == 0)
-            throw new IllegalArgumentException("Illegal class name");
-
-        return lin == -1 ? "": in.substring(0, lin);
-    }
-
-    public static void applySettings(JObfSettings settings)
-    {
-        if (settings.getGeneratorChars().get().isEmpty())
-        {
-            settings.getGeneratorChars().setValue("Il");
-            throw new IllegalStateException("The generator chars are empty. Changing them to 'Il'");
-        }
-
-        chars = settings.getGeneratorChars().get();
-
-        usingCustomDictionary = settings.getUseCustomDictionary().get();
-
-        try
-        {
-            if (usingCustomDictionary)
-            {
-                classNames = Files.readLines(new File(settings.getClassNameDictionary().get()), StandardCharsets.UTF_8);
-                names = Files.readLines(new File(settings.getNameDictionary().get()), StandardCharsets.UTF_8);
-            }
-        }
-        catch (IOException e)
-        {
-            throw new RuntimeException("Failed to load names: " + e.getLocalizedMessage(), e);
-        }
-    }
-
-    public static void cleanUp()
-    {
-        classNames.clear();
-        classNames = new ArrayList<>();
-
-        names.clear();
-        names = new ArrayList<>();
-        chars = "Il";
-    }
-
 }

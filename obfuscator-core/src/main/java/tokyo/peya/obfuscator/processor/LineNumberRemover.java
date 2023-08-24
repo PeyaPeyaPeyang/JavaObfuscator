@@ -20,8 +20,8 @@ import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.ParameterNode;
 import org.objectweb.asm.tree.VarInsnNode;
 import tokyo.peya.obfuscator.IClassTransformer;
+import tokyo.peya.obfuscator.Obfuscator;
 import tokyo.peya.obfuscator.ProcessorCallback;
-import tokyo.peya.obfuscator.UniqueNameProvider;
 import tokyo.peya.obfuscator.annotations.ObfuscationTransformer;
 import tokyo.peya.obfuscator.configuration.DeprecationLevel;
 import tokyo.peya.obfuscator.configuration.ValueManager;
@@ -61,6 +61,13 @@ public class LineNumberRemover implements IClassTransformer
     static
     {
         ValueManager.registerClass(LineNumberRemover.class);
+    }
+
+    private final Obfuscator instance;
+
+    public LineNumberRemover(Obfuscator instance)
+    {
+        this.instance = instance;
     }
 
     @Override
@@ -107,18 +114,18 @@ public class LineNumberRemover implements IClassTransformer
                     method.localVariables = new ArrayList<>();
 
                 for (Map.Entry<Integer, String> integerStringEntry : varMap.entrySet())
-                    method.localVariables.add(new LocalVariableNode(UniqueNameProvider.generateLocalVariableName(), integerStringEntry.getValue(), null, firstLabel, lastLabel, integerStringEntry.getKey()));
+                    method.localVariables.add(new LocalVariableNode(this.instance.getNameProvider().generateLocalVariableName(), integerStringEntry.getValue(), null, firstLabel, lastLabel, integerStringEntry.getKey()));
             }
 
             if (method.parameters != null && V_RENAME_VALUES.get())
             {
                 for (ParameterNode parameter : method.parameters)
-                    parameter.name = UniqueNameProvider.generateLocalVariableName();
+                    parameter.name = this.instance.getNameProvider().generateLocalVariableName();
             }
             if (method.localVariables != null && V_RENAME_VALUES.get())
             {
                 for (LocalVariableNode parameter : method.localVariables)
-                    parameter.name = UniqueNameProvider.generateLocalVariableName();
+                    parameter.name = this.instance.getNameProvider().generateLocalVariableName();
             }
         }
     }

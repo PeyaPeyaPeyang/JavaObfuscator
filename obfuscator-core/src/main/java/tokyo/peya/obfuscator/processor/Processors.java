@@ -56,16 +56,16 @@ public class Processors
 
         processors.add(new Optimizer());
         processors.add(new InlineTransformer(instance));
-        processors.add(new InvokeDynamic());
+        processors.add(new InvokeDynamic(instance));
 
-        processors.add(new StringEncryptionTransformer());
+        processors.add(new StringEncryptionTransformer(instance));
 
-        processors.add(new NumberObfuscationTransformer());
+        processors.add(new NumberObfuscationTransformer(instance));
         processors.add(new FlowObfuscator(instance));
         processors.add(new HideMembers(instance));
-        processors.add(new LineNumberRemover());
+        processors.add(new LineNumberRemover(instance));
         processors.add(new ShuffleTransformer(instance));
-        processors.add(new HideStringsTransformer());  // StringEncryptionTransformer, LineNumberRemover, ShuffleTransformer のあと
+        processors.add(new HideStringsTransformer(instance));  // StringEncryptionTransformer, LineNumberRemover, ShuffleTransformer のあと
 
         processors.add(new DecompilerCrasher());
         processors.add(new ReferenceProxy(instance));

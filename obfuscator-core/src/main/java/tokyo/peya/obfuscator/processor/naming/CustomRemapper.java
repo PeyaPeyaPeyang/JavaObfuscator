@@ -13,7 +13,7 @@ package tokyo.peya.obfuscator.processor.naming;
 
 import lombok.extern.slf4j.Slf4j;
 import org.objectweb.asm.commons.Remapper;
-import tokyo.peya.obfuscator.UniqueNameProvider;
+import tokyo.peya.obfuscator.Obfuscator;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -22,14 +22,30 @@ import java.util.Objects;
 @Slf4j(topic = "Remapper")
 class CustomRemapper extends Remapper
 {
-    private final Map<String, String> map = new HashMap<>();
-    private final Map<String, String> mapReversed = new HashMap<>();
-    private final Map<String, String> packageMap = new HashMap<>();
-    private final Map<String, String> packageMapReversed = new HashMap<>();
-    private final Map<String, Map<String, String>> mapField = new HashMap<>(); //name + desc
-    private final Map<String, Map<String, String>> mapFieldReversed = new HashMap<>(); //name + desc
-    private final Map<String, Map<String, String>> mapMethod = new HashMap<>(); //name + desc
-    private final Map<String, Map<String, String>> mapMethodReversed = new HashMap<>(); //name + desc
+    private final Map<String, String> map;
+    private final Map<String, String> mapReversed;
+    private final Map<String, String> packageMap;
+    private final Map<String, String> packageMapReversed;
+    private final Map<String, Map<String, String>> mapField;
+    private final Map<String, Map<String, String>> mapFieldReversed;
+    private final Map<String, Map<String, String>> mapMethod;
+    private final Map<String, Map<String, String>> mapMethodReversed;
+
+    private final Obfuscator obfuscator;
+
+    public CustomRemapper(Obfuscator obfuscator)
+    {
+        this.obfuscator = obfuscator;
+
+        this.map = new HashMap<>();
+        this.mapReversed = new HashMap<>();
+        this.packageMap = new HashMap<>();
+        this.packageMapReversed = new HashMap<>();
+        this.mapField = new HashMap<>(); //name + desc
+        this.mapFieldReversed = new HashMap<>(); //name + desc
+        this.mapMethod = new HashMap<>(); //name + desc
+        this.mapMethodReversed = new HashMap<>(); //name + desc
+    }
 
     /**
      * Map method name to the new name. Subclasses can override.
@@ -210,7 +226,7 @@ class CustomRemapper extends Remapper
 
         this.map.put(old, newName);
         this.mapReversed.put(newName, old);
-        UniqueNameProvider.mapClass(old, newName);
+        this.obfuscator.getNameProvider().mapClass(old, newName);
         log.info("Mapped " + old + " to " + newName);
 //        System.out.println(map(old));
         return true;

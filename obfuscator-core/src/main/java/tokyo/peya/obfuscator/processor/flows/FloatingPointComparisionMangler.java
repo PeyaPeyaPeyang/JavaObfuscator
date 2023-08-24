@@ -27,8 +27,7 @@ import java.util.HashMap;
 
 class FloatingPointComparisionMangler
 {
-
-    static Collection<MethodNode> mangleComparisions(ClassNode cn, MethodNode node)
+    static Collection<MethodNode> mangleComparisions(UniqueNameProvider nameProvider, ClassNode cn, MethodNode node)
     {
         HashMap<Integer, MethodNode> comparisionMethodMap = new HashMap<>();
 
@@ -38,7 +37,7 @@ class FloatingPointComparisionMangler
             {
                 if (!comparisionMethodMap.containsKey(insnNode.getOpcode()))
                 {
-                    comparisionMethodMap.put(insnNode.getOpcode(), generateComparisionMethod(cn, insnNode.getOpcode()));
+                    comparisionMethodMap.put(insnNode.getOpcode(), generateComparisionMethod(nameProvider, cn, insnNode.getOpcode()));
                 }
 
                 MethodNode comparisionMethod = comparisionMethodMap.get(insnNode.getOpcode());
@@ -69,7 +68,7 @@ class FloatingPointComparisionMangler
      * @param opcode the comparision opcode. Allowed opcodes: LCMP, FCMPL, FCMPG, DCMPL, DCMPG
      * @return The method node
      */
-    private static MethodNode generateComparisionMethod(ClassNode cn, int opcode)
+    private static MethodNode generateComparisionMethod(UniqueNameProvider nameProvider, ClassNode cn, int opcode)
     {
         if (!(opcode >= Opcodes.LCMP && opcode <= Opcodes.DCMPG))
             throw new IllegalArgumentException("The opcode must be LCMP, FCMPL, FCMPG, DCMPL or DCMPG");
@@ -78,7 +77,7 @@ class FloatingPointComparisionMangler
         Type type = opcode == Opcodes.LCMP ? Type.LONG_TYPE: (opcode == Opcodes.FCMPG || opcode == Opcodes.FCMPL) ? Type.FLOAT_TYPE: Type.DOUBLE_TYPE;
         String desc = "(" + type + type + ")I";
 
-        MethodNode methodNode = new MethodNode(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC, UniqueNameProvider.generateMethodName(cn, desc), desc, null, new String[0]);
+        MethodNode methodNode = new MethodNode(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC, nameProvider.generateMethodName(cn, desc), desc, null, new String[0]);
 
         methodNode.instructions = new InsnList();
 

@@ -17,7 +17,6 @@ import org.objectweb.asm.tree.ClassNode;
 import tokyo.peya.obfuscator.IClassTransformer;
 import tokyo.peya.obfuscator.Obfuscator;
 import tokyo.peya.obfuscator.ProcessorCallback;
-import tokyo.peya.obfuscator.UniqueNameProvider;
 import tokyo.peya.obfuscator.annotations.ObfuscationTransformer;
 import tokyo.peya.obfuscator.configuration.DeprecationLevel;
 import tokyo.peya.obfuscator.configuration.ValueManager;
@@ -69,7 +68,7 @@ public class InnerClassRemover implements INameObfuscationProcessor, IClassTrans
             classNode.access &= ~Opcodes.ACC_STATIC;  // Inner は static にできない
     }
 
-    private static boolean generateAndRegisterRandomName(ClassNode classNode, CustomRemapper remapper)
+    private boolean generateAndRegisterRandomName(ClassNode classNode, CustomRemapper remapper)
     {
         if (!isInnerClass(classNode.name))
             return false;
@@ -79,9 +78,9 @@ public class InnerClassRemover implements INameObfuscationProcessor, IClassTrans
         if (classNode.name.contains("/"))
         {
             String packageName = classNode.name.substring(0, classNode.name.lastIndexOf('/'));
-            newName = packageName + "/" + UniqueNameProvider.generateClassName(packageName);
+            newName = packageName + "/" + this.obfuscator.getNameProvider().generateClassName(packageName);
         }
-        else newName = UniqueNameProvider.generateClassName();
+        else newName = this.obfuscator.getNameProvider().generateClassName();
 
         String mappedName;
         do
@@ -102,10 +101,10 @@ public class InnerClassRemover implements INameObfuscationProcessor, IClassTrans
         final List<ClassNode> classNodes = new ArrayList<>(this.obfuscator.getClasses().values());
 
         final Map<String, ClassNode> updatedClasses = new HashMap<>();
-        final CustomRemapper remapper = new CustomRemapper();
+        final CustomRemapper remapper = new CustomRemapper(this.obfuscator);
 
         for (ClassNode classNode : classNodes)
-            generateAndRegisterRandomName(classNode, remapper);
+            this.generateAndRegisterRandomName(classNode, remapper);
 
         for (final ClassNode classNode : classNodes)
         {

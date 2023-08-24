@@ -22,8 +22,8 @@ import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.IntInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import tokyo.peya.obfuscator.IClassTransformer;
+import tokyo.peya.obfuscator.Obfuscator;
 import tokyo.peya.obfuscator.ProcessorCallback;
-import tokyo.peya.obfuscator.UniqueNameProvider;
 import tokyo.peya.obfuscator.annotations.ObfuscationTransformer;
 import tokyo.peya.obfuscator.configuration.DeprecationLevel;
 import tokyo.peya.obfuscator.configuration.ValueManager;
@@ -55,6 +55,13 @@ public class NumberObfuscationTransformer implements IClassTransformer
     static
     {
         ValueManager.registerClass(NumberObfuscationTransformer.class);
+    }
+
+    private final Obfuscator instance;
+
+    public NumberObfuscationTransformer(Obfuscator instance)
+    {
+        this.instance = instance;
     }
 
     private static InsnList getInstructionsMultipleTimes(int value, int iterations)
@@ -171,7 +178,7 @@ public class NumberObfuscationTransformer implements IClassTransformer
             return;
 
         int proceed = 0;
-        String fieldName = UniqueNameProvider.generateFieldName(node.name);
+        String fieldName = this.instance.getNameProvider().generateFieldName(node.name);
         List<Integer> integerList = new ArrayList<>();
         for (MethodNode method : node.methods)
             for (AbstractInsnNode abstractInsnNode : method.instructions.toArray())
@@ -247,7 +254,14 @@ public class NumberObfuscationTransformer implements IClassTransformer
             toAdd.add(new InsnNode(Opcodes.IASTORE));
         }
 
-        MethodNode generateIntegers = new MethodNode(((node.access & Opcodes.ACC_INTERFACE) != 0 ? Opcodes.ACC_PUBLIC: Opcodes.ACC_PRIVATE) | Opcodes.ACC_STATIC, UniqueNameProvider.generateMethodName(node, "()V"), "()V", null, new String[0]);
+        MethodNode generateIntegers = new MethodNode(
+                ((node.access & Opcodes.ACC_INTERFACE) != 0 ? Opcodes.ACC_PUBLIC: Opcodes.ACC_PRIVATE)
+                        | Opcodes.ACC_STATIC,
+                this.instance.getNameProvider().generateMethodName(node, "()V"),
+                "()V",
+                null,
+                new String[0]
+        );
         generateIntegers.instructions = toAdd;
         generateIntegers.instructions.add(new InsnNode(Opcodes.RETURN));
         generateIntegers.maxStack = 6;

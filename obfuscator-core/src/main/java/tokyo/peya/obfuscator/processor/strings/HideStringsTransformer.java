@@ -16,8 +16,8 @@ import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TypeInsnNode;
 import org.objectweb.asm.tree.VarInsnNode;
 import tokyo.peya.obfuscator.IClassTransformer;
+import tokyo.peya.obfuscator.Obfuscator;
 import tokyo.peya.obfuscator.ProcessorCallback;
-import tokyo.peya.obfuscator.UniqueNameProvider;
 import tokyo.peya.obfuscator.annotations.ObfuscationTransformer;
 import tokyo.peya.obfuscator.configuration.DeprecationLevel;
 import tokyo.peya.obfuscator.configuration.ValueManager;
@@ -63,99 +63,11 @@ public class HideStringsTransformer implements IClassTransformer
         ValueManager.registerClass(HideStringsTransformer.class);
     }
 
-    private static MethodNode getGenerateStringsMethod(ClassNode cn, String ledgerFieldName,
-                                                       String magicNumber, String magicNumberSplit, String magicNumberEnd)
+    private final Obfuscator instance;
+
+    public HideStringsTransformer(Obfuscator instance)
     {
-
-        MethodNode generateStrings = new MethodNode(
-                ((cn.access & Opcodes.ACC_INTERFACE) != 0 ? Opcodes.ACC_PUBLIC: Opcodes.ACC_PRIVATE) | Opcodes.ACC_STATIC,
-                UniqueNameProvider.generateMethodName(cn, "()V"),
-                "()V",
-                null,
-                new String[0]
-        );
-
-        LabelNode start = new LabelNode(new Label());
-        LabelNode end = new LabelNode(new Label());
-        InsnList toAdd = new InsnList();
-        toAdd.add(start);
-
-        /// astore(&object = [Lj//String;, &var = 0) {
-        /// invokevirtual(&object = j/l/StackTraceElement, method = getFileName, descriptor = ()Ljava/lang/String;) {
-        /// aaload (&arrayref = [Lj/l/StackTraceElement;, &index = 0) {
-        /// invokevirtual(&object = j/l/Exception, method = getStackTrace, descriptor = ()[Lj/l/StackTraceElement;) {
-        /// invokespecial(&object = j/l/Exception, method = <init>, descriptor = ()V) {
-
-        /// dup(value) {
-        toAdd.add(new TypeInsnNode(Opcodes.NEW, "java/lang/Exception"));
-        toAdd.add(new InsnNode(Opcodes.DUP));
-        /// }
-
-        toAdd.add(new MethodInsnNode(Opcodes.INVOKESPECIAL,
-                        "java/lang/Exception", "<init>", "()V", false
-                )
-        );
-        /// }
-
-        toAdd.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL,
-                        "java/lang/Exception", "getStackTrace", "()[Ljava/lang/StackTraceElement;", false
-                )
-        );
-        /// }
-
-        /// iconst_0 {
-        toAdd.add(new InsnNode(Opcodes.ICONST_0));
-        /// }
-
-        toAdd.add(new InsnNode(Opcodes.AALOAD));
-        /// }
-
-        toAdd.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL,
-                        "java/lang/StackTraceElement", "getFileName", "()Ljava/lang/String;", false
-                )
-        );
-        /// }
-
-        toAdd.add(new VarInsnNode(Opcodes.ASTORE, 0));
-        /// };
-
-        /// putstatic(&object = j/l/Class, field = ledgerFieldName, descriptor = [Lj/l/String;) {
-        /// invokevirtual(&object = j/l/String, method = substring, descriptor = (II)Lj/l/String; {
-        toAdd.add(new VarInsnNode(Opcodes.ALOAD, 0));
-        /// iadd(I, I) {
-        /// invokevirtual(&object = j/l/String, method = indexOf, descriptor = (Lj/l/String)I, args = V_MAGIC_NUMBER) {
-        toAdd.add(new VarInsnNode(Opcodes.ALOAD, 0));  // さっきのファイル名
-        toAdd.add(new LdcInsnNode(magicNumber));
-        toAdd.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/String", "indexOf", "(Ljava/lang/String;)I", false));
-        /// }
-        toAdd.add(new InsnNode(Opcodes.ICONST_1));
-        toAdd.add(new InsnNode(Opcodes.IADD));
-        /// }
-
-        /// invokevirtual(&object = j/l/String, method = lastIndexOf, descriptor = (Lj/l/String)I, args = V_MAGIC_NUMBER_END) {
-        toAdd.add(new VarInsnNode(Opcodes.ALOAD, 0));  // さっきのファイル名
-        toAdd.add(new LdcInsnNode(magicNumberEnd));
-        toAdd.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/String", "lastIndexOf", "(Ljava/lang/String;)I", false));
-        /// }
-
-        toAdd.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/String", "substring", "(II)Ljava/lang/String;", false));
-        /// }
-
-        /// invokevirtual(&object = j/l/String, method = split, descriptor = (Lj/l/String;)[Lj/l/String;, args = V_MAGIC_NUMBER_SPLIT) {
-        toAdd.add(new LdcInsnNode(magicNumberSplit));
-        toAdd.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/String", "split", "(Ljava/lang/String;)[Ljava/lang/String;", false));
-        /// }
-
-        toAdd.add(new FieldInsnNode(Opcodes.PUTSTATIC, cn.name, ledgerFieldName, "[Ljava/lang/String;"));
-        /// }
-
-        toAdd.add(end);
-        toAdd.add(new InsnNode(Opcodes.RETURN));
-        generateStrings.instructions = toAdd;
-        generateStrings.maxStack = 4;
-        generateStrings.maxLocals = 4;
-
-        return generateStrings;
+        this.instance = instance;
     }
 
     private static String buildLedger(Collection<String> values, String magicNumber, String magicNumberSplit, String magicNumberEnd)
@@ -261,7 +173,7 @@ public class HideStringsTransformer implements IClassTransformer
         if (!V_ENABLED.get())
             return;
 
-        String fieldName = UniqueNameProvider.generateFieldName(node);
+        String fieldName = this.instance.getNameProvider().generateFieldName(node);
         List<String> hiddenStrings = new ArrayList<>();
 
         int ledgerElementCount = 0;
@@ -328,6 +240,101 @@ public class HideStringsTransformer implements IClassTransformer
                 clInit.instructions.getFirst(),
                 NodeUtils.methodCall(node, mGenerateStrings)
         );
+    }
+
+    private MethodNode getGenerateStringsMethod(ClassNode cn, String ledgerFieldName,
+                                                String magicNumber, String magicNumberSplit, String magicNumberEnd)
+    {
+
+        MethodNode generateStrings = new MethodNode(
+                ((cn.access & Opcodes.ACC_INTERFACE) != 0 ? Opcodes.ACC_PUBLIC: Opcodes.ACC_PRIVATE) | Opcodes.ACC_STATIC,
+                this.instance.getNameProvider().generateMethodName(cn, "()V"),
+                "()V",
+                null,
+                new String[0]
+        );
+
+        LabelNode start = new LabelNode(new Label());
+        LabelNode end = new LabelNode(new Label());
+        InsnList toAdd = new InsnList();
+        toAdd.add(start);
+
+        /// astore(&object = [Lj//String;, &var = 0) {
+        /// invokevirtual(&object = j/l/StackTraceElement, method = getFileName, descriptor = ()Ljava/lang/String;) {
+        /// aaload (&arrayref = [Lj/l/StackTraceElement;, &index = 0) {
+        /// invokevirtual(&object = j/l/Exception, method = getStackTrace, descriptor = ()[Lj/l/StackTraceElement;) {
+        /// invokespecial(&object = j/l/Exception, method = <init>, descriptor = ()V) {
+
+        /// dup(value) {
+        toAdd.add(new TypeInsnNode(Opcodes.NEW, "java/lang/Exception"));
+        toAdd.add(new InsnNode(Opcodes.DUP));
+        /// }
+
+        toAdd.add(new MethodInsnNode(Opcodes.INVOKESPECIAL,
+                        "java/lang/Exception", "<init>", "()V", false
+                )
+        );
+        /// }
+
+        toAdd.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL,
+                        "java/lang/Exception", "getStackTrace", "()[Ljava/lang/StackTraceElement;", false
+                )
+        );
+        /// }
+
+        /// iconst_0 {
+        toAdd.add(new InsnNode(Opcodes.ICONST_0));
+        /// }
+
+        toAdd.add(new InsnNode(Opcodes.AALOAD));
+        /// }
+
+        toAdd.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL,
+                        "java/lang/StackTraceElement", "getFileName", "()Ljava/lang/String;", false
+                )
+        );
+        /// }
+
+        toAdd.add(new VarInsnNode(Opcodes.ASTORE, 0));
+        /// };
+
+        /// putstatic(&object = j/l/Class, field = ledgerFieldName, descriptor = [Lj/l/String;) {
+        /// invokevirtual(&object = j/l/String, method = substring, descriptor = (II)Lj/l/String; {
+        toAdd.add(new VarInsnNode(Opcodes.ALOAD, 0));
+        /// iadd(I, I) {
+        /// invokevirtual(&object = j/l/String, method = indexOf, descriptor = (Lj/l/String)I, args = V_MAGIC_NUMBER) {
+        toAdd.add(new VarInsnNode(Opcodes.ALOAD, 0));  // さっきのファイル名
+        toAdd.add(new LdcInsnNode(magicNumber));
+        toAdd.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/String", "indexOf", "(Ljava/lang/String;)I", false));
+        /// }
+        toAdd.add(new InsnNode(Opcodes.ICONST_1));
+        toAdd.add(new InsnNode(Opcodes.IADD));
+        /// }
+
+        /// invokevirtual(&object = j/l/String, method = lastIndexOf, descriptor = (Lj/l/String)I, args = V_MAGIC_NUMBER_END) {
+        toAdd.add(new VarInsnNode(Opcodes.ALOAD, 0));  // さっきのファイル名
+        toAdd.add(new LdcInsnNode(magicNumberEnd));
+        toAdd.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/String", "lastIndexOf", "(Ljava/lang/String;)I", false));
+        /// }
+
+        toAdd.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/String", "substring", "(II)Ljava/lang/String;", false));
+        /// }
+
+        /// invokevirtual(&object = j/l/String, method = split, descriptor = (Lj/l/String;)[Lj/l/String;, args = V_MAGIC_NUMBER_SPLIT) {
+        toAdd.add(new LdcInsnNode(magicNumberSplit));
+        toAdd.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/String", "split", "(Ljava/lang/String;)[Ljava/lang/String;", false));
+        /// }
+
+        toAdd.add(new FieldInsnNode(Opcodes.PUTSTATIC, cn.name, ledgerFieldName, "[Ljava/lang/String;"));
+        /// }
+
+        toAdd.add(end);
+        toAdd.add(new InsnNode(Opcodes.RETURN));
+        generateStrings.instructions = toAdd;
+        generateStrings.maxStack = 4;
+        generateStrings.maxLocals = 4;
+
+        return generateStrings;
     }
 
     @Override

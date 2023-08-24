@@ -78,6 +78,7 @@ public class Obfuscator
     }
 
     private final Configuration config;
+    private final UniqueNameProvider nameProvider;
     private final Packager packager;
     private final HashMap<String, byte[]> files;
     private final Map<String, ClassWrapper> classPath;
@@ -96,6 +97,7 @@ public class Obfuscator
     {
         this.config = config;
 
+        this.nameProvider = new UniqueNameProvider(SETTINGS);
         this.packager = new Packager(this);
         this.files = new HashMap<>();
         this.classPath = new HashMap<>();
@@ -364,9 +366,6 @@ public class Obfuscator
 
     private void prepareForProcessing()
     {
-        UniqueNameProvider.applySettings(SETTINGS);
-        UniqueNameProvider.setup();
-
         try
         {
             this.script = StringUtils.isBlank(this.config.getScript()) ? null:
@@ -417,8 +416,6 @@ public class Obfuscator
         }
         finally
         {
-            UniqueNameProvider.cleanUp();
-
             System.gc();
 
             if (outJar != null)

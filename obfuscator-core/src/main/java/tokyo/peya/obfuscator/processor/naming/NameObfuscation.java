@@ -252,7 +252,7 @@ public class NameObfuscation implements INameObfuscationProcessor
                 packageName = packageName + "/";
         }
 
-        String newName = packageName + UniqueNameProvider.generateClassName();
+        String newName = packageName + this.obfuscator.getNameProvider().generateClassName();
         mappings.put(clazz.originalName, newName);
 
         Packager packager = this.obfuscator.getPackager();
@@ -275,7 +275,7 @@ public class NameObfuscation implements INameObfuscationProcessor
         }
         else
         {
-            newSourceName = UniqueNameProvider.generateClassName() + ".java";
+            newSourceName = this.obfuscator.getNameProvider().generateClassName() + ".java";
             newSourceDebugName = newSourceName;
         }
 
@@ -308,7 +308,13 @@ public class NameObfuscation implements INameObfuscationProcessor
         if (Modifier.isNative(methodWrapper.methodNode.access))
             log.warn("Native method found in class " + ownerClassName + " method " + methodWrapper.methodNode.name + methodWrapper.methodNode.desc);
         else
-            this.renameMethodTree(mappings, new HashSet<>(), methodWrapper, ownerClassName, UniqueNameProvider.generateMethodName(ownerClassName, methodWrapper.originalDescription));
+            this.renameMethodTree(
+                    mappings,
+                    new HashSet<>(),
+                    methodWrapper,
+                    ownerClassName,
+                    this.obfuscator.getNameProvider().generateMethodName(ownerClassName, methodWrapper.originalDescription)
+            );
     }
 
     private void processFields(ClassWrapper classWrapper, Map<String, String> mappings)
@@ -331,10 +337,16 @@ public class NameObfuscation implements INameObfuscationProcessor
             field.fieldNode.access |= Opcodes.ACC_PUBLIC;
         }
 
-        this.renameFieldTree(new HashSet<>(), field, ownerName, UniqueNameProvider.generateFieldName(ownerName), mappings);
+        this.renameFieldTree(
+                new HashSet<>(),
+                field,
+                ownerName,
+                this.obfuscator.getNameProvider().generateFieldName(ownerName),
+                mappings
+        );
     }
 
-    private void writeClasses(HashMap<String, String> mappings, List<? extends ClassWrapper> classWrappers, Map<String, ClassNode> ledger)
+    private void writeClasses(HashMap<String, String> mappings, List<? extends ClassWrapper> classWrappers, Map<? super String, ? super ClassNode> ledger)
     {
         Remapper simpleRemapper = new MemberRemapper(mappings);
 

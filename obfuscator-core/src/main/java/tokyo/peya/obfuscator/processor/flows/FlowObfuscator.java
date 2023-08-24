@@ -27,7 +27,6 @@ import org.objectweb.asm.tree.VarInsnNode;
 import tokyo.peya.obfuscator.IClassTransformer;
 import tokyo.peya.obfuscator.Obfuscator;
 import tokyo.peya.obfuscator.ProcessorCallback;
-import tokyo.peya.obfuscator.UniqueNameProvider;
 import tokyo.peya.obfuscator.annotations.ObfuscationTransformer;
 import tokyo.peya.obfuscator.configuration.DeprecationLevel;
 import tokyo.peya.obfuscator.configuration.ValueManager;
@@ -364,7 +363,7 @@ public class FlowObfuscator implements IClassTransformer
             if (V_MANGLE_RETURN.get()) ReturnMangler.mangleReturn(callback, method);
             if (V_MANGLE_SWITCHES_ENABLED.get()) SwitchMangler.mangleSwitches(method);
             if (V_MANGLE_COMPARISIONS.get())
-                toAdd.addAll(FloatingPointComparisionMangler.mangleComparisions(node, method));
+                toAdd.addAll(FloatingPointComparisionMangler.mangleComparisions(this.inst.getNameProvider(), node, method));
             //JumpReplacer.process(node, method);
 
 
@@ -413,7 +412,7 @@ public class FlowObfuscator implements IClassTransformer
 
                         if (wrapper != null)
                         {
-                            wrapper.name = UniqueNameProvider.generateMethodName(node, wrapper.desc);
+                            wrapper.name = this.inst.getNameProvider().generateMethodName(node, wrapper.desc);
                             jumpMethodMap.put(insnNode.getOpcode(), wrapper);
                         }
                     }
