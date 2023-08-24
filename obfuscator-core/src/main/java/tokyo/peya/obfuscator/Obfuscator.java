@@ -748,7 +748,7 @@ public class Obfuscator
 
                     entryData = writer.toByteArray();
 
-                    if (!isPackagerClassDecrypter)
+                    if (this.packager.isEnabled() && !isPackagerClassDecrypter)
                     {
                         entryName = this.packager.encryptName(entryName.replace(".class", ""));
                         entryData = this.packager.encryptClass(entryData);
