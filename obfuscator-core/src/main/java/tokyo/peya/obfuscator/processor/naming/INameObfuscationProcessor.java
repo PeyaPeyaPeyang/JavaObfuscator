@@ -14,9 +14,9 @@ package tokyo.peya.obfuscator.processor.naming;
 import org.objectweb.asm.tree.ClassNode;
 import tokyo.peya.obfuscator.Obfuscator;
 
-import java.util.HashMap;
+import java.util.Map;
 
 public interface INameObfuscationProcessor
 {
-    void transformPost(Obfuscator inst, HashMap<String, ClassNode> nodes);
+    void transformPost(Obfuscator inst, Map<String, ClassNode> nodes);
 }

@@ -11,6 +11,8 @@
 
 package tokyo.peya.obfuscator.processor;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.Label;
@@ -53,7 +55,9 @@ public class Packager
 
     private final Obfuscator instance;
     private final byte[] key;
-    private final String mainClass;
+    @Getter
+    @Setter
+    private String mainClass;
 
     public Packager(Obfuscator instance)
     {
@@ -416,6 +420,11 @@ public class Packager
     public boolean isPackagerClassDecrypter(ClassNode cn)
     {
         return cn instanceof ClassDecrypterClass;
+    }
+
+    public ClassNode asPackagerClassDecrypter(ClassNode cn)
+    {
+        return new ClassDecrypterClass(cn);
     }
 
     private static class ClassDecrypterClass extends ClassNode

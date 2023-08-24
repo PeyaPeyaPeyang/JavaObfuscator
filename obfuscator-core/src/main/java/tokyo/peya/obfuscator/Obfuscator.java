@@ -452,7 +452,7 @@ public class Obfuscator
             registerClassBytes(fileName, bytes);
         }
 
-        Map<String, byte[]> toWrite = this.processClasses();
+        Map<String, byte[]> toWrite = this.processClasses(this.classes);
         finishOutJar(toWrite, outJar, useStore);
     }
 
@@ -553,16 +553,36 @@ public class Obfuscator
 
         log.info("... Finished after " + Utils.formatTime(System.currentTimeMillis() - startTime));
 
-        Map<String, byte[]> toWrite = this.processClasses();
+        Map<String, byte[]> toWrite = this.processClasses(this.classes);
         finishOutJar(toWrite, outJar, stored);
+    }
+
+    private Map<String, byte[]> generatePackageDecrypter()
+    {
+        log.info("[Packager] Generating decrypter class...");
+        long startTime = System.currentTimeMillis();
+
+        ClassNode packagerNode = this.packager.generateEncryptionClass();
+        Map<String, ClassNode> packagerMap = new HashMap<>();
+        packagerMap.put(packagerNode.name + ".class", packagerNode);
+        Map<String, byte[]> toWrite = new HashMap<>(this.processClasses(packagerMap));
+
+        log.info("... Finished after " + Utils.formatTime(System.currentTimeMillis() - startTime));
+
+        return toWrite;
     }
 
     private void finishOutJar(Map<String, byte[]> classes, ZipOutputStream outJar, boolean stored) throws IOException
     {
         log.info("Writing classes...");
-
         long startTime = System.currentTimeMillis();
-        for (Map.Entry<String, byte[]> stringEntry : classes.entrySet())
+        Map<String, byte[]> toWrite = new HashMap<>(classes);
+
+        if (this.packager.isEnabled())
+            toWrite.putAll(generatePackageDecrypter());
+
+
+        for (Map.Entry<String, byte[]> stringEntry : toWrite.entrySet())
             writeEntry(outJar, stringEntry.getKey(), stringEntry.getValue(), stored);
 
         log.info("... Finished after " + Utils.formatTime(System.currentTimeMillis() - startTime));
@@ -607,24 +627,16 @@ public class Obfuscator
         log.info("... Finished after " + Utils.formatTime(System.currentTimeMillis() - startTime));
     }
 
-    private Map<String, byte[]> processClasses() throws Exception
+    private Map<String, byte[]> processClasses(Map<String, ClassNode> classes)
     {
-        Map<String, ClassNode> classes = this.classes;
-
-        if (this.packager.isEnabled())
-        {
-            ClassNode packagerNode = this.packager.generateEncryptionClass();
-            classes.put(packagerNode.name + ".class", packagerNode);
-        }
-
         for (INameObfuscationProcessor nameObfuscationProcessor : this.nameObfuscationProcessors)
-            nameObfuscationProcessor.transformPost(this, this.classes);
+            nameObfuscationProcessor.transformPost(this, classes);
 
         long startTime = System.currentTimeMillis();
 
         int threadCount = this.config.getNThreads();
         log.info("Transforming with " + threadCount + " threads...");
-        Map<String, byte[]> toWrite = this.transformClasses(threadCount);
+        Map<String, byte[]> toWrite = this.transformClasses(classes, threadCount);
         log.info("... Finished after " + Utils.formatTime(System.currentTimeMillis() - startTime));
 
         return toWrite;
@@ -634,16 +646,19 @@ public class Obfuscator
     {
         log.info("!!! Changing the main class to " + newMainClass + " !!!");
 
+        if (this.packager.isEnabled() && this.packager.getMainClass().equals(this.mainClass))
+            this.packager.setMainClass(newMainClass);
+
         this.mainClass = newMainClass;
         this.mainClassChanged = true;
 
     }
 
-    private Map<String, byte[]> transformClasses(int threadCount)
+    private Map<String, byte[]> transformClasses(Map<String, ClassNode> classes, int threadCount)
     {
         ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
 
-        LinkedList<Map.Entry<String, ClassNode>> classQueue = new LinkedList<>(this.classes.entrySet());
+        LinkedList<Map.Entry<String, ClassNode>> classQueue = new LinkedList<>(classes.entrySet());
         Map<String, byte[]> toWrite = new HashMap<>();
 
         AtomicInteger processed = new AtomicInteger(0);
@@ -679,7 +694,7 @@ public class Obfuscator
                                 "[%s] (%s/%s), Processing %s",
                                 Thread.currentThread().getName(),
                                 processed.get(),
-                                this.classes.size(),
+                                classes.size(),
                                 entryName
                         ));
 
@@ -693,7 +708,7 @@ public class Obfuscator
                                 log.error(String.format(
                                         "[%s] (%s/%s), Error transforming %s",
                                         Thread.currentThread().getName(),
-                                        this.classes.size(),
+                                        classes.size(),
                                         processed.get(),
                                         entryName
                                 ), e);
@@ -706,7 +721,7 @@ public class Obfuscator
                                 "[%s] (%s/%s), Skipping %s",
                                 Thread.currentThread().getName(),
                                 processed.get(),
-                                this.classes.size(),
+                                classes.size(),
                                 entryName
                         ));
 
@@ -749,7 +764,7 @@ public class Obfuscator
                             "[%s] (%s/%s), Error processing %s",
                             Thread.currentThread().getName(),
                             processed.get(),
-                            this.classes.size(),
+                            classes.size(),
                             entryName
                     ), e);
 

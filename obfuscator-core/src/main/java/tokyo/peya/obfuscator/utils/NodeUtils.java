@@ -456,6 +456,20 @@ public class NodeUtils
 
     }
 
+    public static boolean isEntryPoint(MethodNode method)
+    {
+        return method.name.equals("main")
+                && method.desc.equals("([Ljava/lang/String;)V")
+                && (method.access & Opcodes.ACC_STATIC) != 0
+                && (method.access & Opcodes.ACC_PUBLIC) != 0;
+    }
+
+    public static boolean hasEntryPoint(ClassNode node)
+    {
+        return node.methods.stream().anyMatch(NodeUtils::isEntryPoint);
+    }
+
+
 //    public static int getTypeLoad(Type argumentType) {
 //        if (argumentType.getOpcode()) {
 //

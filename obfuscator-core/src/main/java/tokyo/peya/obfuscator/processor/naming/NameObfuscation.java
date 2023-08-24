@@ -30,7 +30,9 @@ import tokyo.peya.obfuscator.configuration.values.BooleanValue;
 import tokyo.peya.obfuscator.configuration.values.EnabledValue;
 import tokyo.peya.obfuscator.configuration.values.FilePathValue;
 import tokyo.peya.obfuscator.configuration.values.StringValue;
+import tokyo.peya.obfuscator.processor.Packager;
 import tokyo.peya.obfuscator.utils.NameUtils;
+import tokyo.peya.obfuscator.utils.NodeUtils;
 import tokyo.peya.obfuscator.utils.Utils;
 
 import java.io.FileOutputStream;
@@ -160,7 +162,7 @@ public class NameObfuscation implements INameObfuscationProcessor
     }
 
     @Override
-    public void transformPost(Obfuscator inst, HashMap<String, ClassNode> nodes)
+    public void transformPost(Obfuscator inst, Map<String, ClassNode> nodes)
     {
         if (!V_ENABLED.get())
             return;
@@ -178,7 +180,7 @@ public class NameObfuscation implements INameObfuscationProcessor
             long current = System.currentTimeMillis();
             log.info("Generating mappings...");
 
-            NameUtils.setup();
+            //NameUtils.setup();
             this.setupRandomizers();
 
             this.processClasses(classWrappers, mappings);
@@ -190,7 +192,7 @@ public class NameObfuscation implements INameObfuscationProcessor
 
             log.info("Applying mappings...");
             current = System.currentTimeMillis();
-            this.writeClasses(mappings, classWrappers);
+            this.writeClasses(mappings, classWrappers, nodes);
             log.info(String.format("... Finished applying mappings (%s)", Utils.formatTime(System.currentTimeMillis() - current)));
         }
         finally
@@ -253,16 +255,19 @@ public class NameObfuscation implements INameObfuscationProcessor
         String newName = packageName + NameUtils.generateClassName();
         mappings.put(clazz.originalName, newName);
 
+        Packager packager = this.obfuscator.getPackager();
         if (clazz.originalName.equals(this.obfuscator.getMainClass()))  // MANIFEST.MFの改変のため
             this.obfuscator.setMainClass(newName);
+        if (packager.isEnabled() && packager.getMainClass().equals(clazz.originalName))
+            packager.setMainClass(newName);
     }
 
     private void assignRandomSourceNameToClass(ClassNode node)
     {
         boolean isSourceNameSpecified = !this.sourceFileNames.isEmpty();
 
-        String newSourceName = node.sourceFile;
-        String newSourceDebugName = node.sourceDebug;
+        String newSourceName;
+        String newSourceDebugName;
         if (isSourceNameSpecified)
         {
             newSourceName = this.sourceFileNames.get(random.nextInt(this.sourceFileNames.size()));
@@ -329,17 +334,18 @@ public class NameObfuscation implements INameObfuscationProcessor
         this.renameFieldTree(new HashSet<>(), field, ownerName, NameUtils.generateFieldName(ownerName), mappings);
     }
 
-    private void writeClasses(HashMap<String, String> mappings, List<ClassWrapper> classWrappers)
+    private void writeClasses(HashMap<String, String> mappings, List<? extends ClassWrapper> classWrappers, Map<String, ClassNode> ledger)
     {
         Remapper simpleRemapper = new MemberRemapper(mappings);
 
         for (ClassWrapper classWrapper : classWrappers)
-            writeClass(classWrapper, simpleRemapper);
+            writeClass(classWrapper, simpleRemapper, ledger);
     }
 
-    private void writeClass(ClassWrapper classWrapper, Remapper simpleRemapper)
+    private void writeClass(ClassWrapper classWrapper, Remapper simpleRemapper, Map<? super String, ? super ClassNode> ledger)
     {
         ClassNode classNode = classWrapper.classNode;
+        boolean isPackagerRelatedClass = this.obfuscator.getPackager().isPackagerClassDecrypter(classNode);
 
         ClassNode copy = new ClassNode();
         for (int i = 0; i < copy.methods.size(); i++)
@@ -375,9 +381,12 @@ public class NameObfuscation implements INameObfuscationProcessor
             for (int i = 0; i < copy.fields.size(); i++)
                 classWrapper.fields.get(i).fieldNode = copy.fields.get(i);
 
-        this.obfuscator.getClasses().remove(classWrapper.originalName + ".class");
+        if (isPackagerRelatedClass)
+            copy = this.obfuscator.getPackager().asPackagerClassDecrypter(copy);
+
+        ledger.remove(classWrapper.originalName + ".class");
         classWrapper.classNode = copy;
-        this.obfuscator.getClasses().put(classWrapper.classNode.name + ".class", classWrapper.classNode);
+        ledger.put(classWrapper.classNode.name + ".class", classWrapper.classNode);
         //            JObfImpl.INSTANCE.getClassPath().put();
         //            this.getClasses().put(classWrapper.classNode.name, classWrapper);
 
@@ -454,6 +463,12 @@ public class NameObfuscation implements INameObfuscationProcessor
         for (Pattern excludedMethodsPattern : this.excludedMethodsPatterns)
             if (excludedMethodsPattern.matcher(str).matches())
                 return true;
+
+        if (NodeUtils.isEntryPoint(methodWrapper.methodNode))
+        {
+            log.info("Method '" + methodWrapper.methodNode.name + "' was automatically excluded from name obfuscation because it is an entry point.");
+            return true;
+        }
 
         return false;
     }

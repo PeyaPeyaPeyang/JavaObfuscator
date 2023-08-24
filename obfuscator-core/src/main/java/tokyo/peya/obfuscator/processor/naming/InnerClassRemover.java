@@ -94,7 +94,7 @@ public class InnerClassRemover implements INameObfuscationProcessor, IClassTrans
     }
 
     @Override
-    public void transformPost(Obfuscator inst, HashMap<String, ClassNode> nodes)
+    public void transformPost(Obfuscator inst, Map<String, ClassNode> nodes)
     {
         if (!(V_ENABLED.get() && V_REMAP.get()))
             return;
@@ -126,7 +126,7 @@ public class InnerClassRemover implements INameObfuscationProcessor, IClassTrans
     @Override
     public void process(ProcessorCallback callback, ClassNode node)
     {
-        if (!this.V_ENABLED.get() || !this.V_REMOVE_METADATA.get()) return;
+        if (!V_ENABLED.get() || !V_REMOVE_METADATA.get()) return;
 
         node.outerClass = null;
         node.innerClasses.clear();
