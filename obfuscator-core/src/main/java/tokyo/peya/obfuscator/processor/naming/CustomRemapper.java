@@ -13,7 +13,7 @@ package tokyo.peya.obfuscator.processor.naming;
 
 import lombok.extern.slf4j.Slf4j;
 import org.objectweb.asm.commons.Remapper;
-import tokyo.peya.obfuscator.utils.NameUtils;
+import tokyo.peya.obfuscator.UniqueNameProvider;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -210,7 +210,7 @@ class CustomRemapper extends Remapper
 
         this.map.put(old, newName);
         this.mapReversed.put(newName, old);
-        NameUtils.mapClass(old, newName);
+        UniqueNameProvider.mapClass(old, newName);
         log.info("Mapped " + old + " to " + newName);
 //        System.out.println(map(old));
         return true;

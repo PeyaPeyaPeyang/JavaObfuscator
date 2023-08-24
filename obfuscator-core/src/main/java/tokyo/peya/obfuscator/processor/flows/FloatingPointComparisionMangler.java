@@ -20,7 +20,7 @@ import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.VarInsnNode;
-import tokyo.peya.obfuscator.utils.NameUtils;
+import tokyo.peya.obfuscator.UniqueNameProvider;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -78,7 +78,7 @@ class FloatingPointComparisionMangler
         Type type = opcode == Opcodes.LCMP ? Type.LONG_TYPE: (opcode == Opcodes.FCMPG || opcode == Opcodes.FCMPL) ? Type.FLOAT_TYPE: Type.DOUBLE_TYPE;
         String desc = "(" + type + type + ")I";
 
-        MethodNode methodNode = new MethodNode(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC, NameUtils.generateMethodName(cn, desc), desc, null, new String[0]);
+        MethodNode methodNode = new MethodNode(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC, UniqueNameProvider.generateMethodName(cn, desc), desc, null, new String[0]);
 
         methodNode.instructions = new InsnList();
 

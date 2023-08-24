@@ -23,12 +23,12 @@ import org.objectweb.asm.tree.IntInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import tokyo.peya.obfuscator.IClassTransformer;
 import tokyo.peya.obfuscator.ProcessorCallback;
+import tokyo.peya.obfuscator.UniqueNameProvider;
 import tokyo.peya.obfuscator.annotations.ObfuscationTransformer;
 import tokyo.peya.obfuscator.configuration.DeprecationLevel;
 import tokyo.peya.obfuscator.configuration.ValueManager;
 import tokyo.peya.obfuscator.configuration.values.BooleanValue;
 import tokyo.peya.obfuscator.configuration.values.EnabledValue;
-import tokyo.peya.obfuscator.utils.NameUtils;
 import tokyo.peya.obfuscator.utils.NodeUtils;
 
 import java.lang.reflect.Modifier;
@@ -171,7 +171,7 @@ public class NumberObfuscationTransformer implements IClassTransformer
             return;
 
         int proceed = 0;
-        String fieldName = NameUtils.generateFieldName(node.name);
+        String fieldName = UniqueNameProvider.generateFieldName(node.name);
         List<Integer> integerList = new ArrayList<>();
         for (MethodNode method : node.methods)
             for (AbstractInsnNode abstractInsnNode : method.instructions.toArray())
@@ -247,7 +247,7 @@ public class NumberObfuscationTransformer implements IClassTransformer
             toAdd.add(new InsnNode(Opcodes.IASTORE));
         }
 
-        MethodNode generateIntegers = new MethodNode(((node.access & Opcodes.ACC_INTERFACE) != 0 ? Opcodes.ACC_PUBLIC: Opcodes.ACC_PRIVATE) | Opcodes.ACC_STATIC, NameUtils.generateMethodName(node, "()V"), "()V", null, new String[0]);
+        MethodNode generateIntegers = new MethodNode(((node.access & Opcodes.ACC_INTERFACE) != 0 ? Opcodes.ACC_PUBLIC: Opcodes.ACC_PRIVATE) | Opcodes.ACC_STATIC, UniqueNameProvider.generateMethodName(node, "()V"), "()V", null, new String[0]);
         generateIntegers.instructions = toAdd;
         generateIntegers.instructions.add(new InsnNode(Opcodes.RETURN));
         generateIntegers.maxStack = 6;

@@ -28,6 +28,7 @@ import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TypeInsnNode;
 import tokyo.peya.obfuscator.IClassTransformer;
 import tokyo.peya.obfuscator.ProcessorCallback;
+import tokyo.peya.obfuscator.UniqueNameProvider;
 import tokyo.peya.obfuscator.annotations.ObfuscationTransformer;
 import tokyo.peya.obfuscator.configuration.DeprecationLevel;
 import tokyo.peya.obfuscator.configuration.ValueManager;
@@ -37,7 +38,6 @@ import tokyo.peya.obfuscator.processor.strings.algorithms.AESEncryptionAlgorithm
 import tokyo.peya.obfuscator.processor.strings.algorithms.BlowfishEncryptionAlgorithm;
 import tokyo.peya.obfuscator.processor.strings.algorithms.DESEncryptionAlgorithm;
 import tokyo.peya.obfuscator.processor.strings.algorithms.XOREncryptionAlgorithm;
-import tokyo.peya.obfuscator.utils.NameUtils;
 import tokyo.peya.obfuscator.utils.NodeUtils;
 import tokyo.peya.obfuscator.utils.StringManipulationUtils;
 
@@ -74,13 +74,12 @@ public class StringEncryptionTransformer implements IClassTransformer
         this.algorithms = getAlgorithms();
     }
 
-
     private static MethodNode createInitStringsMethod(ClassNode node, InsnList stringArrayInstructions)
     {
         MethodNode generateStrings = new MethodNode(
                 ((node.access & Opcodes.ACC_INTERFACE) != 0 ? Opcodes.ACC_PUBLIC: Opcodes.ACC_PRIVATE)
                         | Opcodes.ACC_STATIC,
-                NameUtils.generateMethodName(node, "()V"),
+                UniqueNameProvider.generateMethodName(node, "()V"),
                 "()V",
                 null,
                 new String[0]
@@ -223,7 +222,7 @@ public class StringEncryptionTransformer implements IClassTransformer
             return;
         else if (Modifier.isInterface(node.access))
             return;
-        String encryptedStringsFieldName = NameUtils.generateFieldName(node);
+        String encryptedStringsFieldName = "stringsLedger";
         String[] constantReferences = createStringConstantReferences(node, encryptedStringsFieldName);
 
         int constants = constantReferences.length;
@@ -245,7 +244,7 @@ public class StringEncryptionTransformer implements IClassTransformer
         for (IStringEncryptionAlgorithm algorithm : this.algorithms)
             encryptionMethodMap.put(
                     algorithm,
-                    NameUtils.generateMethodName(node, "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;")
+                    UniqueNameProvider.generateMethodName(node, "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;")
             );
 
         InsnList encryptedStringConstants = this.createEncryptedStringConstants(

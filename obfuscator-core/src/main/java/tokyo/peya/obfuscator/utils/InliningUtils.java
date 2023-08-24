@@ -32,6 +32,7 @@ import org.objectweb.asm.tree.VarInsnNode;
 import org.objectweb.asm.tree.analysis.Frame;
 import org.objectweb.asm.tree.analysis.SourceValue;
 import tokyo.peya.obfuscator.JavaObfuscator;
+import tokyo.peya.obfuscator.UniqueNameProvider;
 
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -355,7 +356,7 @@ public class InliningUtils
             return false;
         }
 
-        return NameUtils.getPackage(from.name).equals(NameUtils.getPackage(node.name));
+        return UniqueNameProvider.getPackage(from.name).equals(UniqueNameProvider.getPackage(node.name));
     }
 
     private static boolean canAccessMethod(ClassNode from, MethodNode method, ClassNode node, MethodNode thing)
@@ -379,7 +380,7 @@ public class InliningUtils
             return isSuperClass(from, node);
         }
 
-        return NameUtils.getPackage(from.name).equals(NameUtils.getPackage(node.name));
+        return UniqueNameProvider.getPackage(from.name).equals(UniqueNameProvider.getPackage(node.name));
     }
 
     private static boolean cantAccess(ClassNode from, ClassNode node)
@@ -404,7 +405,7 @@ public class InliningUtils
         {
             return true;
         }
-        return !NameUtils.getPackage(from.name).equals(NameUtils.getPackage(node.name));
+        return !UniqueNameProvider.getPackage(from.name).equals(UniqueNameProvider.getPackage(node.name));
     }
 
     private static boolean isInnerClass(ClassNode node, ClassNode of)

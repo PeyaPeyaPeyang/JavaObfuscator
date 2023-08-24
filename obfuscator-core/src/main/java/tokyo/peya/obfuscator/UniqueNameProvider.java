@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2019 superblaubeere27, Sam Sun, MarcoMC
- * Copyright (c) 2023      Peyang
+ * Copyright (c) ${YEAR}      Peyang
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
  *
@@ -9,11 +9,11 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package tokyo.peya.obfuscator.utils;
+package tokyo.peya.obfuscator;
 
 import com.google.common.io.Files;
 import org.objectweb.asm.tree.ClassNode;
-import tokyo.peya.obfuscator.JObfSettings;
+import tokyo.peya.obfuscator.utils.Utils;
 
 import java.io.File;
 import java.io.IOException;
@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-public class NameUtils
+public class UniqueNameProvider
 {
     /**
      * By ItzSomebody
@@ -62,9 +62,7 @@ public class NameUtils
     {
         StringBuilder stringBuilder = new StringBuilder();
         for (int i = 0; i < length; i++)
-        {
             stringBuilder.append(" ");
-        }
         return stringBuilder.toString();
     }
 
@@ -88,9 +86,7 @@ public class NameUtils
     private static String getName(List<String> dictionary, int id)
     {
         if (usingCustomDictionary && id < dictionary.size())
-        {
             return dictionary.get(id);
-        }
 
         return Utils.convertToBase(id, chars);
     }
@@ -106,35 +102,12 @@ public class NameUtils
     {
         char[] buildString = new char[len];
         for (int i = 0; i < len; i++)
-        {
             buildString[i] = DICT_SPACES[random.nextInt(DICT_SPACES.length)];
-        }
         return new String(buildString);
     }
 
     public static String generateMethodName(final String className, String desc)
     {
-//        if (!USED_METHODNAMES.containsKey(className)) {
-//            USED_METHODNAMES.put(className, new HashMap<>());
-//        }
-//
-//        HashMap<String, Integer> descMap = USED_METHODNAMES.get(className);
-//
-//        if (!descMap.containsKey(desc)) {
-//            descMap.put(desc, 0);
-//        }
-////        System.out.println("0 " + className + "/" + desc + ":" + descMap);
-//
-//        int i = descMap.get(desc);
-//
-//        descMap.put(desc, i + 1);
-//
-////        System.out.println(USED_METHODNAMES);
-//
-//
-//        String name = getName(names, i);
-//
-//        return name;
         return getName(names, METHODS++);
     }
 
@@ -157,14 +130,6 @@ public class NameUtils
 
     public static String generateFieldName(final String className)
     {
-//        if (!USED_FIELDNAMES.containsKey(className)) {
-//            USED_FIELDNAMES.put(className, 0);
-//        }
-//
-//        int i = USED_FIELDNAMES.get(className);
-//        USED_FIELDNAMES.put(className, i + 1);
-//
-//        return getName(names, i);
         return getName(names, FIELDS++);
     }
 
@@ -181,9 +146,7 @@ public class NameUtils
     public static String generateLocalVariableName()
     {
         if (localVars == 0)
-        {
             localVars = Short.MAX_VALUE;
-        }
         return Utils.convertToBase(localVars--, chars);
     }
 
@@ -191,29 +154,24 @@ public class NameUtils
     {
         StringBuilder stringBuilder = new StringBuilder();
         for (int i = 0; i < length; i++)
-        {
             stringBuilder.append((char) randInt(128, 250));
-        }
         return stringBuilder.toString();
     }
 
     public static void mapClass(String old, String newName)
     {
         if (USED_METHODNAMES.containsKey(old))
-        {
             USED_METHODNAMES.put(newName, USED_METHODNAMES.get(old));
-        }
         if (USED_FIELDNAMES.containsKey(old))
-        {
             USED_FIELDNAMES.put(newName, USED_FIELDNAMES.get(old));
-        }
     }
 
     public static String getPackage(String in)
     {
         int lin = in.lastIndexOf('/');
 
-        if (lin == 0) throw new IllegalArgumentException("Illegal class name");
+        if (lin == 0)
+            throw new IllegalArgumentException("Illegal class name");
 
         return lin == -1 ? "": in.substring(0, lin);
     }

@@ -20,6 +20,7 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 import tokyo.peya.obfuscator.Obfuscator;
+import tokyo.peya.obfuscator.UniqueNameProvider;
 import tokyo.peya.obfuscator.clazz.ClassTree;
 import tokyo.peya.obfuscator.clazz.ClassWrapper;
 import tokyo.peya.obfuscator.clazz.FieldWrapper;
@@ -31,7 +32,6 @@ import tokyo.peya.obfuscator.configuration.values.EnabledValue;
 import tokyo.peya.obfuscator.configuration.values.FilePathValue;
 import tokyo.peya.obfuscator.configuration.values.StringValue;
 import tokyo.peya.obfuscator.processor.Packager;
-import tokyo.peya.obfuscator.utils.NameUtils;
 import tokyo.peya.obfuscator.utils.NodeUtils;
 import tokyo.peya.obfuscator.utils.Utils;
 
@@ -118,7 +118,7 @@ public class NameObfuscation implements INameObfuscationProcessor
             if (packageName.equalsIgnoreCase("common"))
                 retVal = CommonPackageTrees.getRandomPackage();
             else if (packageName.isEmpty())
-                retVal = NameUtils.crazyString(random.nextInt(10) + 5);
+                retVal = UniqueNameProvider.crazyString(random.nextInt(10) + 5);
             else
                 retVal = packageName;
         }
@@ -252,7 +252,7 @@ public class NameObfuscation implements INameObfuscationProcessor
                 packageName = packageName + "/";
         }
 
-        String newName = packageName + NameUtils.generateClassName();
+        String newName = packageName + UniqueNameProvider.generateClassName();
         mappings.put(clazz.originalName, newName);
 
         Packager packager = this.obfuscator.getPackager();
@@ -275,7 +275,7 @@ public class NameObfuscation implements INameObfuscationProcessor
         }
         else
         {
-            newSourceName = NameUtils.generateClassName() + ".java";
+            newSourceName = UniqueNameProvider.generateClassName() + ".java";
             newSourceDebugName = newSourceName;
         }
 
@@ -308,7 +308,7 @@ public class NameObfuscation implements INameObfuscationProcessor
         if (Modifier.isNative(methodWrapper.methodNode.access))
             log.warn("Native method found in class " + ownerClassName + " method " + methodWrapper.methodNode.name + methodWrapper.methodNode.desc);
         else
-            this.renameMethodTree(mappings, new HashSet<>(), methodWrapper, ownerClassName, NameUtils.generateMethodName(ownerClassName, methodWrapper.originalDescription));
+            this.renameMethodTree(mappings, new HashSet<>(), methodWrapper, ownerClassName, UniqueNameProvider.generateMethodName(ownerClassName, methodWrapper.originalDescription));
     }
 
     private void processFields(ClassWrapper classWrapper, Map<String, String> mappings)
@@ -331,7 +331,7 @@ public class NameObfuscation implements INameObfuscationProcessor
             field.fieldNode.access |= Opcodes.ACC_PUBLIC;
         }
 
-        this.renameFieldTree(new HashSet<>(), field, ownerName, NameUtils.generateFieldName(ownerName), mappings);
+        this.renameFieldTree(new HashSet<>(), field, ownerName, UniqueNameProvider.generateFieldName(ownerName), mappings);
     }
 
     private void writeClasses(HashMap<String, String> mappings, List<? extends ClassWrapper> classWrappers, Map<String, ClassNode> ledger)

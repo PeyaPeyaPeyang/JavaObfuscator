@@ -21,11 +21,11 @@ import org.objectweb.asm.tree.MethodNode;
 import tokyo.peya.obfuscator.IClassTransformer;
 import tokyo.peya.obfuscator.Obfuscator;
 import tokyo.peya.obfuscator.ProcessorCallback;
+import tokyo.peya.obfuscator.UniqueNameProvider;
 import tokyo.peya.obfuscator.annotations.ObfuscationTransformer;
 import tokyo.peya.obfuscator.configuration.DeprecationLevel;
 import tokyo.peya.obfuscator.configuration.ValueManager;
 import tokyo.peya.obfuscator.configuration.values.EnabledValue;
-import tokyo.peya.obfuscator.utils.NameUtils;
 import tokyo.peya.obfuscator.utils.NodeUtils;
 
 import java.util.ArrayList;
@@ -112,7 +112,7 @@ public class ReferenceProxy implements IClassTransformer
 
     private MethodNode getProxyNode(ClassNode node, MethodInsnNode insnNode, boolean isVirtual)
     {
-        String name = NameUtils.generateMethodName(node, insnNode.desc);
+        String name = UniqueNameProvider.generateMethodName(node, insnNode.desc);
         MethodNode mv;
 
         Type[] argumentTypes = Type.getArgumentTypes(insnNode.desc);
@@ -248,7 +248,7 @@ public class ReferenceProxy implements IClassTransformer
 
             for (int i = 0; i < argumentTypes.length; i++)
             {
-                mv.visitLocalVariable(NameUtils.generateLocalVariableName(), argumentTypes[i].toString(), null, l0, l7, i);
+                mv.visitLocalVariable(UniqueNameProvider.generateLocalVariableName(), argumentTypes[i].toString(), null, l0, l7, i);
             }
 //            mv.visitLocalVariable(NameUtils.generateLocalVariableName(), argumentTypes[i].toString(), null, l0, l7, i);
         }

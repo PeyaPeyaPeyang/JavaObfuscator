@@ -17,12 +17,12 @@ import org.objectweb.asm.tree.TypeInsnNode;
 import org.objectweb.asm.tree.VarInsnNode;
 import tokyo.peya.obfuscator.IClassTransformer;
 import tokyo.peya.obfuscator.ProcessorCallback;
+import tokyo.peya.obfuscator.UniqueNameProvider;
 import tokyo.peya.obfuscator.annotations.ObfuscationTransformer;
 import tokyo.peya.obfuscator.configuration.DeprecationLevel;
 import tokyo.peya.obfuscator.configuration.ValueManager;
 import tokyo.peya.obfuscator.configuration.values.EnabledValue;
 import tokyo.peya.obfuscator.configuration.values.StringValue;
-import tokyo.peya.obfuscator.utils.NameUtils;
 import tokyo.peya.obfuscator.utils.NodeUtils;
 
 import java.util.ArrayList;
@@ -34,6 +34,10 @@ import java.util.Random;
 public class HideStringsTransformer implements IClassTransformer
 {
     private static final String PROCESSOR_NAME = "HideStrings";
+    public static final StringValue V_MAGIC_NUMBER = new StringValue(PROCESSOR_NAME, "Magigic number: Start",
+            "Begin marker of the hided string",
+            DeprecationLevel.AVAILABLE, "", 1
+    );
     private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME,
             "Might break after editing the SourceFile field in the class.",
             DeprecationLevel.AVAILABLE, true
@@ -41,10 +45,6 @@ public class HideStringsTransformer implements IClassTransformer
     private static final EnabledValue V_OPTIMIZE = new EnabledValue(PROCESSOR_NAME,
             "Reuses the same string if it is already in the array",
             DeprecationLevel.AVAILABLE, true
-    );
-    public static final StringValue V_MAGIC_NUMBER = new StringValue(PROCESSOR_NAME, "Magigic number: Start",
-            "Begin marker of the hided string",
-            DeprecationLevel.AVAILABLE, "", 1
     );
     private static final StringValue V_MAGIC_NUMBER_SPLIT = new StringValue(PROCESSOR_NAME, "Split of the magic number",
             "Delimiter of the hided strings",
@@ -69,7 +69,7 @@ public class HideStringsTransformer implements IClassTransformer
 
         MethodNode generateStrings = new MethodNode(
                 ((cn.access & Opcodes.ACC_INTERFACE) != 0 ? Opcodes.ACC_PUBLIC: Opcodes.ACC_PRIVATE) | Opcodes.ACC_STATIC,
-                NameUtils.generateMethodName(cn, "()V"),
+                UniqueNameProvider.generateMethodName(cn, "()V"),
                 "()V",
                 null,
                 new String[0]
@@ -261,7 +261,7 @@ public class HideStringsTransformer implements IClassTransformer
         if (!V_ENABLED.get())
             return;
 
-        String fieldName = NameUtils.generateFieldName(node);
+        String fieldName = UniqueNameProvider.generateFieldName(node);
         List<String> hiddenStrings = new ArrayList<>();
 
         int ledgerElementCount = 0;

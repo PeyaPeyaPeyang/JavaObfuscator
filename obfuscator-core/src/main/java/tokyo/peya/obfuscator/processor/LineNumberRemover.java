@@ -21,12 +21,12 @@ import org.objectweb.asm.tree.ParameterNode;
 import org.objectweb.asm.tree.VarInsnNode;
 import tokyo.peya.obfuscator.IClassTransformer;
 import tokyo.peya.obfuscator.ProcessorCallback;
+import tokyo.peya.obfuscator.UniqueNameProvider;
 import tokyo.peya.obfuscator.annotations.ObfuscationTransformer;
 import tokyo.peya.obfuscator.configuration.DeprecationLevel;
 import tokyo.peya.obfuscator.configuration.ValueManager;
 import tokyo.peya.obfuscator.configuration.values.BooleanValue;
 import tokyo.peya.obfuscator.configuration.values.EnabledValue;
-import tokyo.peya.obfuscator.utils.NameUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -107,18 +107,18 @@ public class LineNumberRemover implements IClassTransformer
                     method.localVariables = new ArrayList<>();
 
                 for (Map.Entry<Integer, String> integerStringEntry : varMap.entrySet())
-                    method.localVariables.add(new LocalVariableNode(NameUtils.generateLocalVariableName(), integerStringEntry.getValue(), null, firstLabel, lastLabel, integerStringEntry.getKey()));
+                    method.localVariables.add(new LocalVariableNode(UniqueNameProvider.generateLocalVariableName(), integerStringEntry.getValue(), null, firstLabel, lastLabel, integerStringEntry.getKey()));
             }
 
             if (method.parameters != null && V_RENAME_VALUES.get())
             {
                 for (ParameterNode parameter : method.parameters)
-                    parameter.name = NameUtils.generateLocalVariableName();
+                    parameter.name = UniqueNameProvider.generateLocalVariableName();
             }
             if (method.localVariables != null && V_RENAME_VALUES.get())
             {
                 for (LocalVariableNode parameter : method.localVariables)
-                    parameter.name = NameUtils.generateLocalVariableName();
+                    parameter.name = UniqueNameProvider.generateLocalVariableName();
             }
         }
     }

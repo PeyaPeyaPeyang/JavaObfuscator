@@ -27,7 +27,6 @@ import tokyo.peya.obfuscator.processor.Packager;
 import tokyo.peya.obfuscator.processor.Processors;
 import tokyo.peya.obfuscator.processor.naming.INameObfuscationProcessor;
 import tokyo.peya.obfuscator.utils.MissingClassException;
-import tokyo.peya.obfuscator.utils.NameUtils;
 import tokyo.peya.obfuscator.utils.Utils;
 
 import java.io.BufferedInputStream;
@@ -365,8 +364,8 @@ public class Obfuscator
 
     private void prepareForProcessing()
     {
-        NameUtils.applySettings(SETTINGS);
-        NameUtils.setup();
+        UniqueNameProvider.applySettings(SETTINGS);
+        UniqueNameProvider.setup();
 
         try
         {
@@ -418,7 +417,7 @@ public class Obfuscator
         }
         finally
         {
-            NameUtils.cleanUp();
+            UniqueNameProvider.cleanUp();
 
             System.gc();
 

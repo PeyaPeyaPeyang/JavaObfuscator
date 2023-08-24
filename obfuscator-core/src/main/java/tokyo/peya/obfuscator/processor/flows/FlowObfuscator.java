@@ -27,13 +27,13 @@ import org.objectweb.asm.tree.VarInsnNode;
 import tokyo.peya.obfuscator.IClassTransformer;
 import tokyo.peya.obfuscator.Obfuscator;
 import tokyo.peya.obfuscator.ProcessorCallback;
+import tokyo.peya.obfuscator.UniqueNameProvider;
 import tokyo.peya.obfuscator.annotations.ObfuscationTransformer;
 import tokyo.peya.obfuscator.configuration.DeprecationLevel;
 import tokyo.peya.obfuscator.configuration.ValueManager;
 import tokyo.peya.obfuscator.configuration.values.BooleanValue;
 import tokyo.peya.obfuscator.configuration.values.EnabledValue;
 import tokyo.peya.obfuscator.processor.number.NumberObfuscationTransformer;
-import tokyo.peya.obfuscator.utils.NameUtils;
 import tokyo.peya.obfuscator.utils.NodeUtils;
 
 import java.util.ArrayList;
@@ -413,7 +413,7 @@ public class FlowObfuscator implements IClassTransformer
 
                         if (wrapper != null)
                         {
-                            wrapper.name = NameUtils.generateMethodName(node, wrapper.desc);
+                            wrapper.name = UniqueNameProvider.generateMethodName(node, wrapper.desc);
                             jumpMethodMap.put(insnNode.getOpcode(), wrapper);
                         }
                     }

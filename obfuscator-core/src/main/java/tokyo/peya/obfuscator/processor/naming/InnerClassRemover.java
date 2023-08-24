@@ -17,12 +17,12 @@ import org.objectweb.asm.tree.ClassNode;
 import tokyo.peya.obfuscator.IClassTransformer;
 import tokyo.peya.obfuscator.Obfuscator;
 import tokyo.peya.obfuscator.ProcessorCallback;
+import tokyo.peya.obfuscator.UniqueNameProvider;
 import tokyo.peya.obfuscator.annotations.ObfuscationTransformer;
 import tokyo.peya.obfuscator.configuration.DeprecationLevel;
 import tokyo.peya.obfuscator.configuration.ValueManager;
 import tokyo.peya.obfuscator.configuration.values.BooleanValue;
 import tokyo.peya.obfuscator.configuration.values.EnabledValue;
-import tokyo.peya.obfuscator.utils.NameUtils;
 
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -79,9 +79,9 @@ public class InnerClassRemover implements INameObfuscationProcessor, IClassTrans
         if (classNode.name.contains("/"))
         {
             String packageName = classNode.name.substring(0, classNode.name.lastIndexOf('/'));
-            newName = packageName + "/" + NameUtils.generateClassName(packageName);
+            newName = packageName + "/" + UniqueNameProvider.generateClassName(packageName);
         }
-        else newName = NameUtils.generateClassName();
+        else newName = UniqueNameProvider.generateClassName();
 
         String mappedName;
         do
