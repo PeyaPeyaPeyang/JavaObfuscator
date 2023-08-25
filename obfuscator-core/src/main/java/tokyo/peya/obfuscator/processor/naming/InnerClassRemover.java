@@ -33,7 +33,7 @@ import java.util.regex.Pattern;
 public class InnerClassRemover implements INameObfuscationProcessor, IClassTransformer
 {
     private static final String PROCESSOR_NAME = "InnerClassRemover";
-    private static final Pattern innerClasses = Pattern.compile(".*[A-Za-z0-9]+\\$[0-9]+");
+    private static final Pattern innerClasses = Pattern.compile(".*[A-Za-z0-9]+\\$[A-Za-z0-9]+");
     private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.AVAILABLE, true);
     private static final BooleanValue V_REMAP = new BooleanValue(PROCESSOR_NAME, "Remap", DeprecationLevel.SOME_DEPRECATION, false);
     private static final BooleanValue V_REMOVE_METADATA = new BooleanValue(PROCESSOR_NAME, "Remove Metadata", DeprecationLevel.AVAILABLE, true);
@@ -98,7 +98,7 @@ public class InnerClassRemover implements INameObfuscationProcessor, IClassTrans
         if (!(V_ENABLED.get() && V_REMAP.get()))
             return;
 
-        final List<ClassNode> classNodes = new ArrayList<>(this.obfuscator.getClasses().values());
+        final List<ClassNode> classNodes = new ArrayList<>(nodes.values());
 
         final Map<String, ClassNode> updatedClasses = new HashMap<>();
         final CustomRemapper remapper = new CustomRemapper(this.obfuscator);
@@ -108,7 +108,7 @@ public class InnerClassRemover implements INameObfuscationProcessor, IClassTrans
 
         for (final ClassNode classNode : classNodes)
         {
-            this.obfuscator.getClasses().remove(classNode.name + ".class");
+            nodes.remove(classNode.name + ".class");
 
             ClassNode newNode = new ClassNode();
             ClassRemapper classRemapper = new ClassRemapper(newNode, remapper);
@@ -119,7 +119,7 @@ public class InnerClassRemover implements INameObfuscationProcessor, IClassTrans
             updatedClasses.put(newNode.name + ".class", newNode);
         }
 
-        this.obfuscator.getClasses().putAll(updatedClasses);
+        nodes.putAll(updatedClasses);
     }
 
     @Override
