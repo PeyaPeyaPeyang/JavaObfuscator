@@ -36,9 +36,10 @@ class FloatingPointComparisionMangler
             if (insnNode.getOpcode() >= Opcodes.LCMP && insnNode.getOpcode() <= Opcodes.DCMPG)
             {
                 if (!comparisionMethodMap.containsKey(insnNode.getOpcode()))
-                {
-                    comparisionMethodMap.put(insnNode.getOpcode(), generateComparisionMethod(nameProvider, cn, insnNode.getOpcode()));
-                }
+                    comparisionMethodMap.put(
+                            insnNode.getOpcode(),
+                            generateComparisionMethod(nameProvider, cn, insnNode.getOpcode())
+                    );
 
                 MethodNode comparisionMethod = comparisionMethodMap.get(insnNode.getOpcode());
 
@@ -77,7 +78,12 @@ class FloatingPointComparisionMangler
         Type type = opcode == Opcodes.LCMP ? Type.LONG_TYPE: (opcode == Opcodes.FCMPG || opcode == Opcodes.FCMPL) ? Type.FLOAT_TYPE: Type.DOUBLE_TYPE;
         String desc = "(" + type + type + ")I";
 
-        MethodNode methodNode = new MethodNode(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC, nameProvider.generateMethodName(cn, desc), desc, null, new String[0]);
+        MethodNode methodNode = new MethodNode(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC,
+                nameProvider.toUniqueMethodName(cn,
+                        "compare" + opCodeToName(opcode), desc
+                ),
+                desc, null, new String[0]
+        );
 
         methodNode.instructions = new InsnList();
 
@@ -87,6 +93,25 @@ class FloatingPointComparisionMangler
         methodNode.instructions.add(new InsnNode(Opcodes.IRETURN));
 
         return methodNode;
+    }
+
+    private static String opCodeToName(int code)
+    {
+        switch (code)
+        {
+            case Opcodes.LCMP:
+                return "LCMP";
+            case Opcodes.FCMPL:
+                return "FCMPL";
+            case Opcodes.FCMPG:
+                return "FCMPG";
+            case Opcodes.DCMPL:
+                return "DCMPL";
+            case Opcodes.DCMPG:
+                return "DCMPG";
+            default:
+                return "UNKNOWN";
+        }
     }
 
 }

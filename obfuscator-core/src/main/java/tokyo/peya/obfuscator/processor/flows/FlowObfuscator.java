@@ -351,7 +351,8 @@ public class FlowObfuscator implements IClassTransformer
     @Override
     public void process(ProcessorCallback callback, ClassNode node)
     {
-        if (!V_ENABLED.get()) return;
+        if (!V_ENABLED.get())
+            return;
 
         HashMap<Integer, MethodNode> jumpMethodMap = new HashMap<>();
 
@@ -359,13 +360,15 @@ public class FlowObfuscator implements IClassTransformer
 
         for (MethodNode method : node.methods)
         {
-            if (V_MANGLE_LOCALS.get()) LocalVariableMangler.mangleLocalVariables(callback, node, method);
-            if (V_MANGLE_RETURN.get()) ReturnMangler.mangleReturn(callback, method);
-            if (V_MANGLE_SWITCHES_ENABLED.get()) SwitchMangler.mangleSwitches(method);
+            if (V_MANGLE_LOCALS.get())
+                LocalVariableMangler.mangleLocalVariables(callback, node, method);
+            if (V_MANGLE_RETURN.get())
+                ReturnMangler.mangleReturn(callback, method);
+            if (V_MANGLE_SWITCHES_ENABLED.get())
+                SwitchMangler.mangleSwitches(method);
             if (V_MANGLE_COMPARISIONS.get())
                 toAdd.addAll(FloatingPointComparisionMangler.mangleComparisions(this.inst.getNameProvider(), node, method));
             //JumpReplacer.process(node, method);
-
 
             for (AbstractInsnNode abstractInsnNode : method.instructions.toArray())
             {
@@ -412,7 +415,11 @@ public class FlowObfuscator implements IClassTransformer
 
                         if (wrapper != null)
                         {
-                            wrapper.name = this.inst.getNameProvider().generateMethodName(node, wrapper.desc);
+                            wrapper.name = this.inst.getNameProvider().toUniqueMethodName(
+                                    node,
+                                    "compareOf" + insnNode.getOpcode(),
+                                    wrapper.desc
+                            );
                             jumpMethodMap.put(insnNode.getOpcode(), wrapper);
                         }
                     }

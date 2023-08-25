@@ -728,7 +728,7 @@ public class Obfuscator
 
 
                     int mode = this.computeMode
-                            | (callback.isForceComputeFrames() ? ModifiedClassWriter.COMPUTE_FRAMES: 0);
+                            | (callback.isForceComputeFrames() ? ModifiedClassWriter.COMPUTE_MAXS: 0);
 
                     log.debug(String.format(
                             "[%s] (%s/%s), Writing (computeMode = %s) %s",

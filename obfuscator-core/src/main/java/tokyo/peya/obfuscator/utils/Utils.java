@@ -83,7 +83,7 @@ public class Utils
 
         if (a != null) return a.classNode;
 
-        return JavaObfuscator.getCurrentSession().getClasses().get(name);
+        return JavaObfuscator.getCurrentSession().getClasses().get(name + ".class");
     }
 
     public static boolean isWindows()
