@@ -38,7 +38,7 @@ public enum NumberObfuscationMethod implements INumberObfuscator
                 @Override
                 public boolean canApply(int value)
                 {
-                    return value <= 65535; // String の長さは 65535 まで
+                    return Math.abs(value) <= 65535;  // 100 こえたらやばいっす
                 }
             },
     /**
