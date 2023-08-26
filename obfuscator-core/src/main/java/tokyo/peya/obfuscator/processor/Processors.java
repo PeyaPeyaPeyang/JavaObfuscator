@@ -60,12 +60,12 @@ public class Processors
 
         processors.add(new StringEncryptionTransformer(instance));
 
-        processors.add(new NumberObfuscationTransformer(instance));
         processors.add(new FlowObfuscator(instance));
         processors.add(new HideMembers(instance));
         processors.add(new LineNumberRemover(instance));
         processors.add(new ShuffleTransformer(instance));
         processors.add(new HideStringsTransformer(instance));  // StringEncryptionTransformer, LineNumberRemover, ShuffleTransformer のあと
+        processors.add(new NumberObfuscationTransformer(instance));  // HideStringsTransformer のあと
 
         processors.add(new DecompilerCrasher());
         processors.add(new ReferenceProxy(instance));
