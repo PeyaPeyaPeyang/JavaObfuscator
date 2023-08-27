@@ -18,6 +18,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FrameNode;
+import tokyo.peya.obfuscator.annotations.ObfuscateRule;
+import tokyo.peya.obfuscator.annotations.ObfuscationTransformer;
 import tokyo.peya.obfuscator.clazz.ClassTree;
 import tokyo.peya.obfuscator.clazz.ClassWrapper;
 import tokyo.peya.obfuscator.clazz.ModifiedClassWriter;
@@ -39,6 +41,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.annotation.Annotation;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -148,6 +151,14 @@ public class Obfuscator
     private static boolean isClass(String name)
     {
         return name.endsWith(".class");
+    }
+
+    private static void removeObfuscateRuleAnnotations(ClassNode node)
+    {
+        String obfuscateRulePath = ObfuscateRule.class.getName().replace('.', '/');
+
+        if (node.invisibleTypeAnnotations != null)
+            node.invisibleTypeAnnotations.removeIf(typeAnnotationNode -> typeAnnotationNode.desc.equals("L" + obfuscateRulePath + ";"));
     }
 
     public ClassTree getTree(String ref)
@@ -681,7 +692,6 @@ public class Obfuscator
 
                 try
                 {
-
                     this.computeMode = ModifiedClassWriter.COMPUTE_MAXS;
 
                     if (this.script == null || this.script.isObfuscatorEnabled(cn))
@@ -695,6 +705,20 @@ public class Obfuscator
                         ));
 
                         for (IClassTransformer proc : this.processors)
+                        {
+                            boolean shouldProcess = shouldProcess(cn, proc);
+                            if (!shouldProcess)
+                            {
+                                log.info(String.format(
+                                        "[%s] (%s/%s), Skipping %s by annotation",
+                                        Thread.currentThread().getName(),
+                                        processed.get(),
+                                        classes.size(),
+                                        entryName
+                                ));
+                                continue;
+                            }
+
                             try
                             {
                                 proc.process(callback, cn);
@@ -711,6 +735,7 @@ public class Obfuscator
 
                                 throw e;
                             }
+                        }
                     }
                     else
                         log.info(String.format(
@@ -738,6 +763,8 @@ public class Obfuscator
                             mode,
                             entryName
                     ));
+
+                    removeObfuscateRuleAnnotations(cn);
 
                     ModifiedClassWriter writer = new ModifiedClassWriter(
                             mode
@@ -818,5 +845,58 @@ public class Obfuscator
 
         outJar.putNextEntry(newEntry);
         outJar.write(value);
+    }
+
+    private boolean shouldProcess(ClassNode node, IClassTransformer processor)
+    {
+        String obfuscateRulePath = ObfuscateRule.class.getName().replace('.', '/');
+
+        ObfuscateRule[] rules = null;
+        if (node.invisibleTypeAnnotations != null)
+            rules = node.invisibleTypeAnnotations.stream()
+                    .filter(typeAnnotationNode -> typeAnnotationNode.desc.equals("L" + obfuscateRulePath + ";"))
+                    .map(typeAnnotationNode -> {
+                        Object[] values = typeAnnotationNode.values.toArray();
+                        if (values.length != 2)
+                            throw new RuntimeException("Invalid ObfuscateRule annotation");
+
+                        return new ObfuscateRule()
+                        {
+
+                            @Override
+                            public Class<? extends Annotation> annotationType()
+                            {
+                                return ObfuscateRule.class;
+                            }
+
+                            @Override
+                            public Action value()
+                            {
+                                return (Action) values[1];
+                            }
+
+                            @Override
+                            public ObfuscationTransformer[] processors()
+                            {
+                                return (ObfuscationTransformer[]) values[0];
+                            }
+                        };
+                    })
+                    .toArray(ObfuscateRule[]::new);
+
+        if (rules == null)
+            return true;
+
+        for (ObfuscateRule rule : rules)
+        {
+            if (rule.value() == ObfuscateRule.Action.ALLOW)
+                continue;
+
+            for (ObfuscationTransformer transformer : rule.processors())
+                if (processor.getType() == transformer)
+                    return false;
+        }
+
+        return true;
     }
 }

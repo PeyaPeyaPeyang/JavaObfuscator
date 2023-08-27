@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2017-2019 superblaubeere27, Sam Sun, MarcoMC
- * Copyright (c) 2023      Peyang 
+ * Copyright (c) 2023      Peyang
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
  *
@@ -11,7 +11,34 @@
 
 package tokyo.peya.obfuscator.annotations;
 
-public @interface ObfuscatorRules
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+@Retention(RetentionPolicy.CLASS)
+@Target(ElementType.TYPE)
+public @interface ObfuscateRule
 {
-    Rule[] value();
+    Action value();
+
+    ObfuscationTransformer[] processors() default {ObfuscationTransformer.FLOW_OBFUSCATION,
+            ObfuscationTransformer.LINE_NUMBER_REMOVER,
+            ObfuscationTransformer.NUMBER_OBFUSCATION,
+            ObfuscationTransformer.STRING_ENCRYPTION,
+            ObfuscationTransformer.PEEPHOLE_OPTIMIZER,
+            ObfuscationTransformer.CRASHER,
+            ObfuscationTransformer.INVOKE_DYNAMIC,
+            ObfuscationTransformer.REFERENCE_PROXY,
+            ObfuscationTransformer.SHUFFLE_MEMBERS,
+            ObfuscationTransformer.INNER_CLASS_REMOVER,
+            ObfuscationTransformer.NAME_OBFUSCATION,
+            ObfuscationTransformer.HIDE_MEMBERS,
+            ObfuscationTransformer.INLINING};
+
+    enum Action
+    {
+        ALLOW,
+        DISALLOW
+    }
 }
