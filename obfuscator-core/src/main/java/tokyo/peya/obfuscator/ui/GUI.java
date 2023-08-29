@@ -113,7 +113,7 @@ public class GUI extends JFrame
     {
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setContentPane(this.panel1);
-        setSize(900, 855);
+        setSize(1010, 755);
         setLocationRelativeTo(null);
         setTitle(JavaObfuscator.VERSION);
 
