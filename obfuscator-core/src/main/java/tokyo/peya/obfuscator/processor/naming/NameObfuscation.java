@@ -335,12 +335,9 @@ public class NameObfuscation implements INameObfuscationProcessor
 
     private void processField(FieldWrapper field, ClassWrapper ownerClass, Map<String, String> mappings)
     {
-        if (Modifier.isPrivate(field.fieldNode.access) || Modifier.isProtected(field.fieldNode.access))
-        {
-            field.fieldNode.access &= ~Opcodes.ACC_PRIVATE;
-            field.fieldNode.access &= ~Opcodes.ACC_PROTECTED;
-            field.fieldNode.access |= Opcodes.ACC_PUBLIC;
-        }
+        field.fieldNode.access &= ~Opcodes.ACC_PRIVATE;
+        field.fieldNode.access &= ~Opcodes.ACC_PROTECTED;
+        field.fieldNode.access |= Opcodes.ACC_PUBLIC;
 
         this.renameFieldTree(
                 new HashSet<>(),
