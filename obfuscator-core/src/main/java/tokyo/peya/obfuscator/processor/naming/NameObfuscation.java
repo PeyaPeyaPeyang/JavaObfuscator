@@ -96,6 +96,34 @@ public class NameObfuscation implements INameObfuscationProcessor
         return classNode.methods.stream().anyMatch(methodNode -> Modifier.isNative(methodNode.access));
     }
 
+    private static String normalizeMappnigEntry(HashMap<String, String> mappings, String original, String mapped)
+    {
+        String[] entryContents = original.split("\\.");
+        if (entryContents.length <= 1)
+            return "CL: " + mapped + " " + original;
+
+        String className = entryContents[0];
+        String methodORFieldName = entryContents[1];
+        String fieldDesc = entryContents.length > 2 ? entryContents[2]: null;
+
+        String mappedClass = mappings.get(className);
+
+        if (fieldDesc != null)
+            return "FD: " + mappedClass + "/" + mapped + " " + className + "/" + methodORFieldName + " " + fieldDesc;
+        else
+        {
+            int descStart = methodORFieldName.indexOf('(');
+            if (descStart != -1)
+            {
+                String methodDesc = methodORFieldName.substring(descStart);
+                methodORFieldName = methodORFieldName.substring(0, descStart);
+                return "MD: " + mappedClass + "/" + mapped + " " + methodDesc + " " + className + "/" + methodORFieldName + " " + methodDesc;
+            }
+            else
+                return "# MD: " + mappedClass + "/" + methodORFieldName + " " + mapped;
+        }
+    }
+
     public void setupRandomizers()
     {
         if (V_RANDOM_PACKAGE.get())
@@ -413,10 +441,15 @@ public class NameObfuscation implements INameObfuscationProcessor
 
     private void saveMappingsFile(String file, HashMap<String, String> mappings)
     {
+        String[] mappingEntries = mappings.entrySet().stream()
+                .map(entry -> normalizeMappnigEntry(mappings, entry.getKey(), entry.getValue()))
+                .distinct()
+                .toArray(String[]::new);
+
         try (FileOutputStream fos = new FileOutputStream(file))
         {
-            for (Map.Entry<String, String> entry : mappings.entrySet())
-                fos.write((entry.getValue() + " " + entry.getKey() + "\n").getBytes(StandardCharsets.UTF_8));
+            for (String mappingEntry : mappingEntries)
+                fos.write((mappingEntry + '\n').getBytes(StandardCharsets.UTF_8));
         }
         catch (IOException e)
         {
