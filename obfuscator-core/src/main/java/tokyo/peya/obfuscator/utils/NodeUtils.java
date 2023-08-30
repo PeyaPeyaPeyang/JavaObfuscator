@@ -28,6 +28,7 @@ import org.objectweb.asm.util.Printer;
 import org.objectweb.asm.util.Textifier;
 import org.objectweb.asm.util.TraceMethodVisitor;
 import tokyo.peya.obfuscator.JavaObfuscator;
+import tokyo.peya.obfuscator.clazz.ClassTree;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -406,6 +407,15 @@ public class NodeUtils
     public static boolean isSpecialMethod(MethodNode method)
     {
         return method.name.equals("<init>") || method.name.equals("<clinit>");
+    }
+
+    public static boolean isSpecialMethod(MethodNode method, ClassTree tree)
+    {
+        if (isSpecialMethod(method))
+            return true;
+
+        return tree.parentClasses.contains("java/lang/Enum")
+                && (method.name.equals("valueOf") || method.name.equals("values"));
     }
 
     public static MethodNode getOrCreateCLInit(ClassNode node)

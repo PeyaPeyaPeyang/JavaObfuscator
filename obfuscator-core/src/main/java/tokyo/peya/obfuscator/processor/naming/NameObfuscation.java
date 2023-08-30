@@ -498,12 +498,12 @@ public class NameObfuscation implements INameObfuscationProcessor
 
     private boolean canRenameMethodTree(Map<String, String> mappings, Set<ClassTree> visited, MethodWrapper methodWrapper, String owner)
     {
-        if (NodeUtils.isSpecialMethod(methodWrapper.methodNode))
-            return false;
-
         ClassTree tree = this.obfuscator.getTree(owner);
 
         if (tree == null)
+            return false;
+
+        if (NodeUtils.isSpecialMethod(methodWrapper.methodNode, tree))
             return false;
 
         if (visited.contains(tree))
