@@ -30,6 +30,7 @@ public class Configuration
     private String output;
     private String script;
     private int nThreads;
+    private String mapping;
 
     public static Configuration fromJsonObject(JsonObject obj)
     {
@@ -38,6 +39,7 @@ public class Configuration
         String script = null;
         int nThreads = -1;
         List<String> libraries = new ArrayList<>();
+        String mapping = null;
 
         if (obj.has("input"))
             input = obj.get("input").getAsString();
@@ -54,8 +56,10 @@ public class Configuration
             for (JsonElement jsonElement : jsonArray)
                 libraries.add(jsonElement.getAsString());
         }
+        if (obj.has("mapping"))
+            mapping = obj.get("mapping").getAsString();
 
-        return new Configuration(libraries, input, output, script, nThreads);
+        return new Configuration(libraries, input, output, script, nThreads, mapping);
     }
 
     public void addToJsonObject(JsonObject jsonObject)
@@ -63,6 +67,7 @@ public class Configuration
         jsonObject.addProperty("input", this.input);
         jsonObject.addProperty("output", this.output);
         jsonObject.addProperty("script", this.script);
+        jsonObject.addProperty("threads", this.nThreads);
 
         JsonArray array = new JsonArray();
 

@@ -39,6 +39,7 @@ import tokyo.peya.obfuscator.utils.Utils;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Modifier;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -186,8 +187,11 @@ public class NameObfuscation implements INameObfuscationProcessor
 
             this.processClasses(classWrappers, mappings);
 
-            if (V_MAPPINGS_TO_SAVE.get() != null)
-                this.saveMappingsFile(mappings);
+            String mappingFile = V_MAPPINGS_TO_SAVE.get();
+            if (mappingFile == null)
+                mappingFile = this.obfuscator.getConfig().getMapping();
+            if (mappingFile != null)
+                this.saveMappingsFile(mappingFile, mappings);
 
             log.info(String.format("... Finished generating mappings (%s)", Utils.formatTime(System.currentTimeMillis() - current)));
 
@@ -410,12 +414,12 @@ public class NameObfuscation implements INameObfuscationProcessor
         this.obfuscator.getClassPath().put(classWrapper.classNode.name, classWrapper);
     }
 
-    private void saveMappingsFile(HashMap<String, String> mappings)
+    private void saveMappingsFile(String file, HashMap<String, String> mappings)
     {
-        try (FileOutputStream fos = new FileOutputStream(V_MAPPINGS_TO_SAVE.get()))
+        try (FileOutputStream fos = new FileOutputStream(file))
         {
             for (Map.Entry<String, String> entry : mappings.entrySet())
-                fos.write((entry.getValue() + " " + entry.getKey() + "\n").getBytes());
+                fos.write((entry.getValue() + " " + entry.getKey() + "\n").getBytes(StandardCharsets.UTF_8));
         }
         catch (IOException e)
         {

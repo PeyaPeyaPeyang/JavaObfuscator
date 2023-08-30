@@ -82,6 +82,7 @@ public class Obfuscator
         ValueManager.registerClass(SETTINGS);
     }
 
+    @Getter
     private final Configuration config;
     private final UniqueNameProvider nameProvider;
     private final Packager packager;

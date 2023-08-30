@@ -271,7 +271,8 @@ public class GUI extends JFrame
                                 this.inputTextField.getText(),
                                 this.outputTextField.getText(),
                                 this.scriptArea.getText(),
-                                this.threadsSlider.getValue()
+                                this.threadsSlider.getValue(),
+                                null
                         ),
                         this.prettyPrintCheckBox.isSelected()
                 )
@@ -544,7 +545,8 @@ public class GUI extends JFrame
                         this.inputTextField.getText(),
                         this.outputTextField.getText(),
                         this.scriptArea.getText(),
-                        this.threadsSlider.getValue()
+                        this.threadsSlider.getValue(),
+                        null
                 );
 
                 boolean succeed = JavaObfuscator.runObfuscator(config);

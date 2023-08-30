@@ -77,6 +77,7 @@ public class JavaObfuscator
         parser.accepts("cp").withOptionalArg().describedAs("ClassPath").ofType(File.class);
         parser.accepts("scriptFile").withOptionalArg().describedAs("[Not documented] JS script file").ofType(File.class);
         parser.accepts("threads").withOptionalArg().ofType(Integer.class).defaultsTo(Runtime.getRuntime().availableProcessors()).describedAs("Thread count; Please don't use more threads than you have cores. It might hang up your system");
+        parser.accepts("mapping").withOptionalArg().ofType(File.class).describedAs("Mapping file");
         parser.accepts("verbose").withOptionalArg();
         parser.accepts("help").forHelp();
         parser.accepts("version").forHelp();
@@ -110,6 +111,7 @@ public class JavaObfuscator
 
             boolean embedded = false;
             int threads = Math.max(1, (Integer) options.valueOf("threads"));
+            File mapping = options.has("mapping") ? (File) options.valueOf("mapping"): null;
 
             List<String> libraries = new ArrayList<>();
 
@@ -118,7 +120,7 @@ public class JavaObfuscator
                     libraries.add(cp.toString());
 
             printHeader(embedded);
-            runObfuscator(jarIn, jarOut, configPath, libraries, embedded, scriptContent, threads);
+            runObfuscator(jarIn, jarOut, configPath, libraries, embedded, scriptContent, threads, mapping);
         }
         catch (OptionException e)
         {
@@ -177,7 +179,8 @@ public class JavaObfuscator
                                         List<String> libraries,
                                         boolean embedded,
                                         String scriptContent,
-                                        int threads) throws IOException, InterruptedException
+                                        int threads,
+                                        File mapping) throws IOException, InterruptedException
     {
         log.info("\n" + ConsoleUtils.formatBox("Configuration", false, Arrays.asList(
                 "Input:      " + jarIn,
@@ -186,7 +189,14 @@ public class JavaObfuscator
                 "Script?:     " + (scriptContent != null ? "Yes": "No")
         )));
 
-        Configuration config = new Configuration(libraries, jarIn, jarOut, scriptContent, threads);
+        Configuration config = new Configuration(
+                libraries,
+                jarIn,
+                jarOut,
+                scriptContent,
+                threads,
+                mapping != null ? mapping.getPath(): null
+        );
 
         if (configPath != null)
         {
@@ -214,7 +224,7 @@ public class JavaObfuscator
                 Thread.sleep(2000);
         }
 
-        return runObfuscator(jarIn, jarOut, config, libraries, scriptContent, threads);
+        return runObfuscator(jarIn, jarOut, config, libraries, scriptContent, threads, mapping);
     }
 
     public static boolean runObfuscator(String jarIn,
@@ -222,7 +232,8 @@ public class JavaObfuscator
                                         Configuration config,
                                         List<String> libraries,
                                         String scriptContent,
-                                        int threads)
+                                        int threads,
+                                        File mapping)
     {
         if (StringUtils.isEmpty(config.getInput()))
             config.setInput(jarIn);
@@ -230,6 +241,8 @@ public class JavaObfuscator
             config.setOutput(jarOut);
         if (config.getNThreads() == -1)
             config.setNThreads(threads);
+        if (config.getMapping() == null)
+            config.setMapping(mapping != null ? mapping.getPath(): null);
 
         config.getLibraries().addAll(libraries);
 
