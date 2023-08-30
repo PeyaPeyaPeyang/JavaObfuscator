@@ -409,13 +409,31 @@ public class NodeUtils
         return method.name.equals("<init>") || method.name.equals("<clinit>");
     }
 
+    public static boolean isEnumSpecialMethod(MethodNode node)
+    {
+        return node.name.equals("valueOf") || node.name.equals("values");
+    }
+
     public static boolean isSpecialMethod(MethodNode method, ClassTree tree)
     {
         if (isSpecialMethod(method))
             return true;
 
-        return tree.parentClasses.contains("java/lang/Enum")
-                && (method.name.equals("valueOf") || method.name.equals("values"));
+        boolean isEnum = tree.parentClasses.contains("java/lang/Enum");
+        if (isEnum)
+            return isEnumSpecialMethod(method);
+
+        return isAnnotationSpecialMethod(method, tree.classWrapper.classNode);
+    }
+
+    public static boolean isAnnotationSpecialMethod(MethodNode field, ClassNode clazz)
+    {
+        boolean isInterface = Modifier.isInterface(clazz.access);
+        if (!isInterface)
+            return false;
+
+        boolean isAnnotation = (clazz.access & Opcodes.ACC_ANNOTATION) != 0;
+        return isAnnotation && field.name.equals("value");
     }
 
     public static MethodNode getOrCreateCLInit(ClassNode node)
