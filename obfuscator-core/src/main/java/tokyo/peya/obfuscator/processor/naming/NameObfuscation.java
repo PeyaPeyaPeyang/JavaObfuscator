@@ -31,6 +31,7 @@ import tokyo.peya.obfuscator.configuration.values.EnabledValue;
 import tokyo.peya.obfuscator.configuration.values.FilePathValue;
 import tokyo.peya.obfuscator.configuration.values.StringValue;
 import tokyo.peya.obfuscator.processor.Packager;
+import tokyo.peya.obfuscator.utils.ExcludePattern;
 import tokyo.peya.obfuscator.utils.NameUtils;
 import tokyo.peya.obfuscator.utils.NodeUtils;
 import tokyo.peya.obfuscator.utils.Utils;
@@ -139,11 +140,11 @@ public class NameObfuscation implements INameObfuscationProcessor
     private void compileExcludePatterns()
     {
         for (String s : V_EXCLUDED_CLASSES.get().split("\n"))
-            this.excludedClassesPatterns.add(compileExcludePattern(s));
+            this.excludedClassesPatterns.add(ExcludePattern.compileExcludePattern(s));
         for (String s : V_EXCLUDED_METHODS.get().split("\n"))
-            this.excludedMethodsPatterns.add(compileExcludePattern(s));
+            this.excludedMethodsPatterns.add(ExcludePattern.compileExcludePattern(s));
         for (String s : V_EXCLUDED_FIELDS.get().split("\n"))
-            this.excludedFieldsPatterns.add(compileExcludePattern(s));
+            this.excludedFieldsPatterns.add(ExcludePattern.compileExcludePattern(s));
     }
 
     private List<ClassWrapper> buildHierarchies(Collection<? extends ClassNode> nodes, boolean ifAcceptMissingLib)
@@ -420,38 +421,6 @@ public class NameObfuscation implements INameObfuscationProcessor
         {
             e.printStackTrace();
         }
-    }
-
-    private Pattern compileExcludePattern(String s)
-    {
-        StringBuilder sb = new StringBuilder();
-        // s.replace('.', '/').replace("**", ".*").replace("*", "[^/]*")
-
-        char[] chars = s.toCharArray();
-
-        for (int i = 0; i < chars.length; i++)
-        {
-            char c = chars[i];
-
-            if (c == '*')
-            {
-                if (chars.length - 1 != i && chars[i + 1] == '*')
-                {
-                    sb.append(".*");  // Linux風の Glob に対応
-                    i++;
-                }
-                else
-                {
-                    sb.append("[^/]*");
-                }
-            }
-            else if (c == '.')
-                sb.append('/');  // パッケージ名は . ではなく / で区切る
-            else
-                sb.append(c);
-        }
-
-        return Pattern.compile(sb.toString());
     }
 
     private boolean isClassExcluded(ClassWrapper classWrapper)

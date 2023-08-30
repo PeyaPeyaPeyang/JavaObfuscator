@@ -21,12 +21,11 @@ import tokyo.peya.obfuscator.configuration.values.StringValue;
 public class JObfSettings
 {
     private static final String PROCESSOR_NAME = "General Settings";
-
+    private final StringValue excludedClasses = new StringValue(PROCESSOR_NAME, "Excluded classes", null, DeprecationLevel.AVAILABLE, "me.name.Class\nme.name.*\nio.netty.**", 5);
     private final StringValue generatorChars = new StringValue(PROCESSOR_NAME, "Generator characters", DeprecationLevel.AVAILABLE, "Il");
     private final BooleanValue useCustomDictionary = new BooleanValue(PROCESSOR_NAME, "Custom dictionary", DeprecationLevel.AVAILABLE, false);
     private final FilePathValue classNameDictionary = new FilePathValue(PROCESSOR_NAME, "Class Name dictionary", DeprecationLevel.AVAILABLE, "");
     private final FilePathValue nameDictionary = new FilePathValue(PROCESSOR_NAME, "Name dictionary", DeprecationLevel.AVAILABLE, "");
     private final BooleanValue useStore = new BooleanValue(PROCESSOR_NAME, "Use STORE instead of DEFLATE (For e.g. SpringBoot)", DeprecationLevel.AVAILABLE, false);
-
 }
 

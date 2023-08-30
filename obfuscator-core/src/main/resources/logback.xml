@@ -49,7 +49,7 @@
     <!-- Turn on debug logging connection pool. -->
     <logger name="tokyo.peya" level="DEBUG"/>
 
-    <root level="${logging.level}">
+    <root level="DEBUG">
         <appender-ref ref="ASYNC"/>
     </root>
 

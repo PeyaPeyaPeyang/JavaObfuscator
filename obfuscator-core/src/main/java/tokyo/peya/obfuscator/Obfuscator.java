@@ -28,6 +28,7 @@ import tokyo.peya.obfuscator.configuration.ValueManager;
 import tokyo.peya.obfuscator.processor.Packager;
 import tokyo.peya.obfuscator.processor.Processors;
 import tokyo.peya.obfuscator.processor.naming.INameObfuscationProcessor;
+import tokyo.peya.obfuscator.utils.ExcludePattern;
 import tokyo.peya.obfuscator.utils.MissingClassException;
 import tokyo.peya.obfuscator.utils.Utils;
 
@@ -61,6 +62,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import java.util.zip.CRC32;
 import java.util.zip.Deflater;
@@ -90,6 +92,7 @@ public class Obfuscator
     private final Set<ClassWrapper> libraryClassNodes;
     private final List<IClassTransformer> processors;
     private final List<INameObfuscationProcessor> nameObfuscationProcessors;
+    private final List<Pattern> excludePatterns;
 
     public ScriptBridge script;
     private boolean mainClassChanged;
@@ -107,6 +110,7 @@ public class Obfuscator
         this.classes = new HashMap<>();
         this.hierarchy = new HashMap<>();
         this.libraryClassNodes = new HashSet<>();
+        this.excludePatterns = compileExcludePatterns();
 
         this.mainClass = null;
 
@@ -115,6 +119,15 @@ public class Obfuscator
 
         this.processors.addAll(Processors.createProcessors(this));
         this.nameObfuscationProcessors.addAll(Processors.createNameProcessors(this));
+    }
+
+    private static List<Pattern> compileExcludePatterns()
+    {
+        List<Pattern> result = new ArrayList<>();
+        for (String s : SETTINGS.getExcludedClasses().get().split("\n"))
+            result.add(ExcludePattern.compileExcludePattern(s));
+
+        return result;
     }
 
     private static ZipInputStream getInJarStream(String inputJarPath) throws FileNotFoundException
@@ -159,6 +172,15 @@ public class Obfuscator
 
         if (node.invisibleTypeAnnotations != null)
             node.invisibleTypeAnnotations.removeIf(typeAnnotationNode -> typeAnnotationNode.desc.equals("L" + obfuscateRulePath + ";"));
+    }
+
+    private boolean isExcludedClass(String name)
+    {
+        for (Pattern pattern : this.excludePatterns)
+            if (pattern.matcher(name).matches())
+                return true;
+
+        return false;
     }
 
     public ClassTree getTree(String ref)
@@ -694,7 +716,7 @@ public class Obfuscator
                 {
                     this.computeMode = ModifiedClassWriter.COMPUTE_MAXS;
 
-                    if (this.script == null || this.script.isObfuscatorEnabled(cn))
+                    if ((this.script == null || this.script.isObfuscatorEnabled(cn)) && !this.isExcludedClass(cn.name))
                     {
                         log.info(String.format(
                                 "[%s] (%s/%s), Processing %s",
