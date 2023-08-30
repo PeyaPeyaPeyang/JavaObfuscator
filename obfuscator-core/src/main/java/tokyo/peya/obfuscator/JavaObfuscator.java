@@ -67,6 +67,8 @@ public class JavaObfuscator
             VERBOSE = true;
 
         Class.forName(Obfuscator.class.getCanonicalName());
+        Processors.loadProcessors();
+        Packager.init();
 
         OptionParser parser = new OptionParser();
         parser.accepts("jarIn").withRequiredArg().required();
@@ -129,8 +131,6 @@ public class JavaObfuscator
             }
 
             log.info("Starting in GUI Mode");
-            Processors.loadProcessors();
-            Packager.init();
 
             try
             {
@@ -228,7 +228,7 @@ public class JavaObfuscator
             config.setInput(jarIn);
         if (StringUtils.isEmpty(config.getOutput()))
             config.setOutput(jarOut);
-        if (config.getNThreads() != -1)
+        if (config.getNThreads() == -1)
             config.setNThreads(threads);
 
         config.getLibraries().addAll(libraries);

@@ -288,7 +288,7 @@ public class NameObfuscation implements INameObfuscationProcessor
     private void processMethods(ClassWrapper classWrapper, Map<String, String> mappings)
     {
         Predicate<MethodWrapper> isExclude = method ->
-                !isMethodExcluded(classWrapper.originalName, method)
+                isMethodExcluded(classWrapper.originalName, method)
                         || !canRenameMethodTree(mappings, new HashSet<>(), method, classWrapper.originalName);
 
         classWrapper.methods.stream()
@@ -498,6 +498,9 @@ public class NameObfuscation implements INameObfuscationProcessor
 
     private boolean canRenameMethodTree(Map<String, String> mappings, Set<ClassTree> visited, MethodWrapper methodWrapper, String owner)
     {
+        if (NodeUtils.isSpecialMethod(methodWrapper.methodNode))
+            return false;
+
         ClassTree tree = this.obfuscator.getTree(owner);
 
         if (tree == null)
@@ -536,7 +539,7 @@ public class NameObfuscation implements INameObfuscationProcessor
     {
         ClassTree tree = this.obfuscator.getTree(className);
 
-        if (!(tree.classWrapper.libraryNode || visited.contains(tree)))
+        if (tree.classWrapper.libraryNode || visited.contains(tree))
             return;
 
         mappings.put(className + '.' + MethodWrapper.originalName + MethodWrapper.originalDescription, newName);
