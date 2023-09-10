@@ -15,35 +15,22 @@ import java.util.regex.Pattern;
 
 public class ExcludePattern
 {
-    public static Pattern compileExcludePattern(String s)
+    public static Pattern compileExcludePattern(String pattern)
     {
-        StringBuilder sb = new StringBuilder();
-        // s.replace('.', '/').replace("**", ".*").replace("*", "[^/]*")
+        // パッケージ名の基礎を変える。(内部では / で扱うため)
+        String convertedPattern = pattern.replace(".", "/");
 
-        char[] chars = s.toCharArray();
+        // ワイルドカードを正規表現に変換
+        convertedPattern = convertedPattern
+                .replaceAll("\\*\\*\\.", ".*")  // **. => .*
+                .replaceAll("\\*\\*", ".+")   // ** => .+
+                .replaceAll("\\*", "[^/]+");  // * => [^/]*
 
-        for (int i = 0; i < chars.length; i++)
-        {
-            char c = chars[i];
+        // バックスラッシュがあるとバグるので。
+        convertedPattern = convertedPattern.replace("\\", "\\\\");
 
-            if (c == '*')
-            {
-                if (chars.length - 1 != i && chars[i + 1] == '*')
-                {
-                    sb.append(".*");  // Linux風の Glob に対応
-                    i++;
-                }
-                else
-                {
-                    sb.append("[^/]*");
-                }
-            }
-            else if (c == '.')
-                sb.append('/');  // パッケージ名は . ではなく / で区切る
-            else
-                sb.append(c);
-        }
+        convertedPattern = "^" + convertedPattern + "$"; // 完全一致にする
 
-        return Pattern.compile(sb.toString());
+        return Pattern.compile(convertedPattern);
     }
 }
