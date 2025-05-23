@@ -11,6 +11,8 @@
 
 package tokyo.peya.obfuscator;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
 import com.formdev.flatlaf.FlatDarculaLaf;
 import com.formdev.flatlaf.util.StringUtils;
 import com.google.common.io.ByteStreams;
@@ -23,6 +25,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.LoggerFactory;
 import tokyo.peya.obfuscator.configuration.ConfigManager;
 import tokyo.peya.obfuscator.configuration.Configuration;
 import tokyo.peya.obfuscator.processor.Packager;
@@ -42,7 +45,6 @@ import java.util.Arrays;
 import java.util.List;
 
 @Slf4j(topic = "Main")
-@SuppressWarnings("LombokGetterMayBeUsed")
 public class JavaObfuscator
 {
     public static final String SHORT_VERSION = (JavaObfuscator.class.getPackage().getImplementationVersion() == null ? "DEV": "v" + JavaObfuscator.class.getPackage().getImplementationVersion()) + " by superblaubeere27 & Peyang";
@@ -68,7 +70,6 @@ public class JavaObfuscator
 
         Class.forName(Obfuscator.class.getCanonicalName());
         Processors.loadProcessors();
-        Packager.init();
 
         OptionParser parser = new OptionParser();
         parser.accepts("jarIn").withRequiredArg().required();
@@ -255,6 +256,7 @@ public class JavaObfuscator
     @SneakyThrows(InterruptedException.class)
     public static boolean runObfuscator(Configuration config)
     {
+        syncLogger();
         int threads = config.getNThreads();
         if (threads > Runtime.getRuntime().availableProcessors())
         {
@@ -288,4 +290,16 @@ public class JavaObfuscator
         JavaObfuscator.currentSession = null;
         return succeed;
     }
+
+
+    private static void syncLogger()
+    {
+        Level logLevel = Level.INFO;
+        if (JavaObfuscator.VERBOSE)
+            logLevel = Level.DEBUG;
+
+        Logger root = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+        root.setLevel(logLevel);
+    }
+
 }

@@ -20,6 +20,7 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
+import tokyo.peya.obfuscator.Localisation;
 import tokyo.peya.obfuscator.Obfuscator;
 import tokyo.peya.obfuscator.configuration.DeprecationLevel;
 import tokyo.peya.obfuscator.configuration.ValueManager;
@@ -45,10 +46,11 @@ public class Packager
             DeprecationLevel.AVAILABLE,
             false
     );
-    private static final BooleanValue V_AUTO_FIND_MAIN_CLASS = new BooleanValue(PROCESSOR_NAME, "Use MainClass from the JAR manifest", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_AUTO_FIND_MAIN_CLASS = new BooleanValue(PROCESSOR_NAME, "Auto find Main class", "ui.transformers.packager.auto_find_main_class", DeprecationLevel.AVAILABLE, true);
     private static final StringValue V_MAIN_CLASS = new StringValue(
             PROCESSOR_NAME,
-            "Main class(To use Packager, you must specify the main class which contains the entry point)",
+            "Main class",
+            "ui.transformers.packager.main_class",
             DeprecationLevel.AVAILABLE,
             "org.example.Main"
     );
@@ -64,16 +66,19 @@ public class Packager
         this.instance = instance;
         this.mainClass = V_AUTO_FIND_MAIN_CLASS.get() ? instance.getMainClass(): V_MAIN_CLASS.get();
 
-        if (V_AUTO_FIND_MAIN_CLASS.get() && this.mainClass == null)
-            throw new RuntimeException("[Packager] Failed to resolve main class, please add it or specify it manually");
-
         this.key = new byte[RANDOM.nextInt(40) + 10];
         for (int i = 0; i < this.key.length; i++)
             this.key[i] = (byte) (RANDOM.nextInt(126) + 1);
+
+        if (!V_ENABLED.get())
+            return;
+
+        if (V_AUTO_FIND_MAIN_CLASS.get() && this.mainClass == null)
+            throw new RuntimeException("[Packager] Failed to resolve main class, please add it or specify it manually");
     }
 
-    public static void init()
-    {
+    static {
+        ValueManager.registerOwner(PROCESSOR_NAME, "ui.transformers.packager");
         ValueManager.registerClass(Packager.class);
     }
 

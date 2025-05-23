@@ -121,7 +121,6 @@ public class ConfigManager
     public static Map<String, ArrayList<Value<?>>> buildValueMap()
     {
         HashMap<String, ArrayList<Value<?>>> ownerValueMap = new HashMap<>();
-
         for (Value<?> value : ValueManager.getValues())
         {
             if (!ownerValueMap.containsKey(value.getOwner()))

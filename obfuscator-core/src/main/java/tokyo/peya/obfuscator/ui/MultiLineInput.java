@@ -8,6 +8,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rsyntaxtextarea.Theme;
+import tokyo.peya.obfuscator.Localisation;
 import tokyo.peya.obfuscator.configuration.values.StringValue;
 
 import java.awt.Frame;
@@ -24,7 +25,7 @@ public class MultiLineInput extends JDialog
 
     public MultiLineInput(Frame owner, StringValue stringContainer)
     {
-        super(owner, "Editing: " + stringContainer.getName());
+        super(owner, Localisation.access("ui.multi_line.editing").set("containerName", stringContainer.getName()).get());
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setContentPane(this.contentPane);
         setModal(true);

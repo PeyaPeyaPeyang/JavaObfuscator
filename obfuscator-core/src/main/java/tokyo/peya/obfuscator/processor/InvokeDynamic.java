@@ -78,10 +78,11 @@ public class InvokeDynamic implements IClassTransformer
 {
     private static final String PROCESSOR_NAME = "InvokeDynamic";
     private static final Random random = new Random();
-    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, "Hides method calls", DeprecationLevel.SOME_DEPRECATION, false);
+    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, "ui.transformers.invoke_dynamic.description", DeprecationLevel.SOME_DEPRECATION, false);
 
     static
     {
+        ValueManager.registerOwner(PROCESSOR_NAME, "ui.transformers.invoke_dynamic");
         ValueManager.registerClass(InvokeDynamic.class);
     }
 
@@ -98,9 +99,7 @@ public class InvokeDynamic implements IClassTransformer
         if (!V_ENABLED.get()) return;
 
         if (!NodeUtils.isClassValid(classNode))
-        {
             return;
-        }
         if (classNode.version == Opcodes.V1_1 || classNode.version < Opcodes.V1_4)
         {
             log.warn("!!! WARNING !!! " + classNode.name + "'s lang level is too low (VERSION < V1_4)");
@@ -129,9 +128,7 @@ public class InvokeDynamic implements IClassTransformer
         for (MethodNode method : classNode.methods)
         {
             if (!NodeUtils.isMethodValid(method))
-            {
                 continue;
-            }
 
             for (AbstractInsnNode abstractInsnNode : method.instructions.toArray())
             {
@@ -145,9 +142,7 @@ public class InvokeDynamic implements IClassTransformer
                         int index;
 
                         if (map.containsKey(name))
-                        {
                             index = map.get(name);
-                        }
                         else
                         {
                             index = indexCount++;
@@ -164,9 +159,7 @@ public class InvokeDynamic implements IClassTransformer
                         int index;
 
                         if (map.containsKey(name))
-                        {
                             index = map.get(name);
-                        }
                         else
                         {
                             index = indexCount++;
@@ -185,9 +178,7 @@ public class InvokeDynamic implements IClassTransformer
                     int typeIndex;
 
                     if (typeMap.containsKey(fieldType))
-                    {
                         typeIndex = typeMap.get(fieldType);
-                    }
                     else
                     {
                         typeIndex = typeCount++;
@@ -201,9 +192,7 @@ public class InvokeDynamic implements IClassTransformer
                         int index;
 
                         if (map.containsKey(name))
-                        {
                             index = map.get(name);
-                        }
                         else
                         {
                             index = indexCount++;
@@ -220,9 +209,7 @@ public class InvokeDynamic implements IClassTransformer
                         int index;
 
                         if (map.containsKey(name))
-                        {
                             index = map.get(name);
-                        }
                         else
                         {
                             index = indexCount++;
@@ -244,9 +231,7 @@ public class InvokeDynamic implements IClassTransformer
                         continue;
                     }
                     if (Modifier.isFinal(field.access))
-                    {
                         continue;
-                    }
 
                     if (fieldInsnNode.getOpcode() == Opcodes.PUTFIELD)
                     {
@@ -254,9 +239,7 @@ public class InvokeDynamic implements IClassTransformer
                         int index;
 
                         if (map.containsKey(name))
-                        {
                             index = map.get(name);
-                        }
                         else
                         {
                             index = indexCount++;
@@ -273,9 +256,7 @@ public class InvokeDynamic implements IClassTransformer
                         int index;
 
                         if (map.containsKey(name))
-                        {
                             index = map.get(name);
-                        }
                         else
                         {
                             index = indexCount++;
@@ -289,15 +270,11 @@ public class InvokeDynamic implements IClassTransformer
                 }
             }
         }
-//        System.out.println(count);
-
 
         if (count > 0)
         {
             if (classNode.version < Opcodes.V1_7)
-            {
                 callback.setForceComputeFrames();
-            }
             classNode.version = Math.max(Opcodes.V1_7, classNode.version);
 
             MethodNode generatorMethod = new MethodNode(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC, this.instance.getNameProvider().generateMethodName(classNode, "()V"), "()V", null, new String[0]);
@@ -335,13 +312,9 @@ public class InvokeDynamic implements IClassTransformer
                     generatorMethodNodes.add(NodeUtils.generateIntPush(integerStringEntry.getValue()));
 
                     if (integerStringEntry.getKey().getSort() == Type.ARRAY || integerStringEntry.getKey().getSort() == Type.OBJECT)
-                    {
                         generatorMethodNodes.add(new LdcInsnNode(integerStringEntry.getKey()));
-                    }
                     else
-                    {
                         generatorMethodNodes.add(NodeUtils.getTypeNode(integerStringEntry.getKey()));
-                    }
                     generatorMethodNodes.add(new InsnNode(Opcodes.AASTORE));
                 }
             }

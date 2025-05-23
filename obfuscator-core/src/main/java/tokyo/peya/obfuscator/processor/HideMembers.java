@@ -29,10 +29,11 @@ public class HideMembers implements IClassTransformer
 {
     private static final String PROCESSOR_NAME = "HideMembers";
     private static final Random random = new Random();
-    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.AVAILABLE, true);
+    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, "ui.transformers.hide_members.description", DeprecationLevel.AVAILABLE, true);
 
     static
     {
+        ValueManager.registerOwner(PROCESSOR_NAME, "ui.transformers.hide_members");
         ValueManager.registerClass(HideMembers.class);
     }
 
@@ -59,9 +60,8 @@ public class HideMembers implements IClassTransformer
                 if (method.name.startsWith("<"))
                     continue;
                 if ((method.access & Opcodes.ACC_NATIVE) == 0)
-                {
                     continue;
-                }
+
                 method.access = method.access | Opcodes.ACC_BRIDGE;
                 method.access = method.access | Opcodes.ACC_SYNTHETIC;
 //            }

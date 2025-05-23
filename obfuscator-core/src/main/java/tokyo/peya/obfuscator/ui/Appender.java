@@ -48,19 +48,19 @@ public class Appender extends AppenderBase<ILoggingEvent>
         WARN_ATT = new SimpleAttributeSet();
         WARN_ATT.addAttribute(StyleConstants.CharacterConstants.Bold, Boolean.FALSE);
         WARN_ATT.addAttribute(StyleConstants.CharacterConstants.Italic, Boolean.FALSE);
-        WARN_ATT.addAttribute(StyleConstants.CharacterConstants.Foreground, new Color(153, 76, 0));
+        WARN_ATT.addAttribute(StyleConstants.CharacterConstants.Foreground, new Color(163, 96, 10));
 
         // INFO
         INFO_ATT = new SimpleAttributeSet();
         INFO_ATT.addAttribute(StyleConstants.CharacterConstants.Bold, Boolean.FALSE);
         INFO_ATT.addAttribute(StyleConstants.CharacterConstants.Italic, Boolean.FALSE);
-        INFO_ATT.addAttribute(StyleConstants.CharacterConstants.Foreground, new Color(0, 170, 170));
+        INFO_ATT.addAttribute(StyleConstants.CharacterConstants.Foreground, new Color(0, 160, 170));
 
         // DEBUG
         DEBUG_ATT = new SimpleAttributeSet();
         DEBUG_ATT.addAttribute(StyleConstants.CharacterConstants.Bold, Boolean.FALSE);
         DEBUG_ATT.addAttribute(StyleConstants.CharacterConstants.Italic, Boolean.TRUE);
-        DEBUG_ATT.addAttribute(StyleConstants.CharacterConstants.Foreground, new Color(128, 128, 128));
+        DEBUG_ATT.addAttribute(StyleConstants.CharacterConstants.Foreground, new Color(160, 160, 160));
 
         // TRACE
         TRACE_ATT = new SimpleAttributeSet();

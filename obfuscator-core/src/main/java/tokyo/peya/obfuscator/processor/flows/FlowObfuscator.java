@@ -25,6 +25,7 @@ import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.VarInsnNode;
 import tokyo.peya.obfuscator.IClassTransformer;
+import tokyo.peya.obfuscator.Localisation;
 import tokyo.peya.obfuscator.Obfuscator;
 import tokyo.peya.obfuscator.ProcessorCallback;
 import tokyo.peya.obfuscator.annotations.ObfuscationTransformer;
@@ -44,18 +45,19 @@ public class FlowObfuscator implements IClassTransformer
 {
     private static final String PROCESSOR_NAME = "FlowObfuscator";
     private static final Random random = new Random();
-    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_MANGLE_COMPARISIONS = new BooleanValue(PROCESSOR_NAME, "Mangle Comparisons", "Replaces long, float and double comparisons with method calls", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_REPLACE_GOTO = new BooleanValue(PROCESSOR_NAME, "Replace GOTO", "Replaces unconditional jumps with conditionals", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_REPLACE_IF = new BooleanValue(PROCESSOR_NAME, "Replace If", "Replaces comparisions with method calls", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_BAD_POP = new BooleanValue(PROCESSOR_NAME, "Bad POP", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_BAD_CONCAT = new BooleanValue(PROCESSOR_NAME, "Bad Concat", "Breaks string concatenations", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_MANGLE_SWITCHES_ENABLED = new BooleanValue(PROCESSOR_NAME, "Mangle Switches", "Replaces switch statements with if-else statements", DeprecationLevel.SOME_DEPRECATION, false);
-    private static final BooleanValue V_MANGLE_RETURN = new BooleanValue(PROCESSOR_NAME, "Mangle Return", "!! Needs COMPUTE_FRAMES (See documentation) !!", DeprecationLevel.DEPRECATED, false);
-    private static final BooleanValue V_MANGLE_LOCALS = new BooleanValue(PROCESSOR_NAME, "Mangle Local Variables", "!! Needs COMPUTE_FRAMES (See documentation) !!", DeprecationLevel.DEPRECATED, false);
+    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME,  "ui.transformers.flow_obfuscator.description", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_MANGLE_COMPARISONS = new BooleanValue(PROCESSOR_NAME, "Mangle Comparisons",  "ui.transformers.flow_obfuscator.mangle_comparisons", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_REPLACE_GOTO = new BooleanValue(PROCESSOR_NAME, "Replace GOTO", "ui.transformers.flow_obfuscator.replace_goto", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_REPLACE_IF = new BooleanValue(PROCESSOR_NAME, "Replace If", "ui.transformers.flow_obfuscator.replace_if", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_BAD_POP = new BooleanValue(PROCESSOR_NAME, "Bad POP", "ui.transformers.flow_obfuscator.bad_pop", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_BAD_CONCAT = new BooleanValue(PROCESSOR_NAME, "Bad Concat", "ui.transformers.flow_obfuscator.bad_concat", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_MANGLE_SWITCHES_ENABLED = new BooleanValue(PROCESSOR_NAME, "Mangle Switches", "ui.transformers.flow_obfuscator.mangle_switches", DeprecationLevel.SOME_DEPRECATION, false);
+    private static final BooleanValue V_MANGLE_RETURN = new BooleanValue(PROCESSOR_NAME, "Mangle Return", "ui.transformers.flow_obfuscator.mangle_return", DeprecationLevel.SOME_DEPRECATION, false);
+    private static final BooleanValue V_MANGLE_LOCALS = new BooleanValue(PROCESSOR_NAME, "Mangle Local Variables", "ui.transformers.flow_obfuscator.mangle_local_variables", DeprecationLevel.SOME_DEPRECATION, false);
 
     static
     {
+        ValueManager.registerOwner(PROCESSOR_NAME, "ui.transformers.flow_obfuscator");
         ValueManager.registerClass(FlowObfuscator.class);
     }
 
@@ -366,24 +368,28 @@ public class FlowObfuscator implements IClassTransformer
                 ReturnMangler.mangleReturn(callback, method);
             if (V_MANGLE_SWITCHES_ENABLED.get())
                 SwitchMangler.mangleSwitches(method);
-            if (V_MANGLE_COMPARISIONS.get())
+            if (V_MANGLE_COMPARISONS.get())
                 toAdd.addAll(FloatingPointComparisionMangler.mangleComparisions(this.inst.getNameProvider(), node, method));
             //JumpReplacer.process(node, method);
 
             for (AbstractInsnNode abstractInsnNode : method.instructions.toArray())
             {
-                if (V_BAD_POP.get() && abstractInsnNode instanceof JumpInsnNode && abstractInsnNode.getOpcode() == Opcodes.GOTO)
+                // 無意味な（普通に読んだらエラーの） POP 命令を GOTO 命令後に設置する（∴実行されない POP だがデコンパイラはクラッシュ）
+                if (V_BAD_POP.get())
                 {
-                    method.instructions.insertBefore(abstractInsnNode, new LdcInsnNode(""));
-                    method.instructions.insertBefore(abstractInsnNode, new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/String", "length", "()I", false));
-                    method.instructions.insertBefore(abstractInsnNode, new InsnNode(Opcodes.POP));
-                }
-                if (V_BAD_POP.get() && abstractInsnNode.getOpcode() == Opcodes.POP)
-                {
-                    method.instructions.insertBefore(abstractInsnNode, new LdcInsnNode(""));
-                    method.instructions.insertBefore(abstractInsnNode, new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/String", "length", "()I", false));
-                    method.instructions.insert(abstractInsnNode, new InsnNode(Opcodes.POP2));
-                    method.instructions.remove(abstractInsnNode);
+                    if (abstractInsnNode instanceof JumpInsnNode && abstractInsnNode.getOpcode() == Opcodes.GOTO)
+                    {
+                        method.instructions.insertBefore(abstractInsnNode, new LdcInsnNode(""));
+                        method.instructions.insertBefore(abstractInsnNode, new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/String", "length", "()I", false));
+                        method.instructions.insertBefore(abstractInsnNode, new InsnNode(Opcodes.POP));
+                    }
+                    else if (abstractInsnNode.getOpcode() == Opcodes.POP)
+                    {
+                        method.instructions.insertBefore(abstractInsnNode, new LdcInsnNode(""));
+                        method.instructions.insertBefore(abstractInsnNode, new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/String", "length", "()I", false));
+                        method.instructions.insert(abstractInsnNode, new InsnNode(Opcodes.POP2));
+                        method.instructions.remove(abstractInsnNode);
+                    }
                 }
                 if (V_REPLACE_GOTO.get() && abstractInsnNode instanceof JumpInsnNode && abstractInsnNode.getOpcode() == Opcodes.GOTO)
                 {

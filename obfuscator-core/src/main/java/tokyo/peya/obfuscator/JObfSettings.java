@@ -13,6 +13,7 @@ package tokyo.peya.obfuscator;
 
 import lombok.Getter;
 import tokyo.peya.obfuscator.configuration.DeprecationLevel;
+import tokyo.peya.obfuscator.configuration.ValueManager;
 import tokyo.peya.obfuscator.configuration.values.BooleanValue;
 import tokyo.peya.obfuscator.configuration.values.FilePathValue;
 import tokyo.peya.obfuscator.configuration.values.StringValue;
@@ -21,11 +22,16 @@ import tokyo.peya.obfuscator.configuration.values.StringValue;
 public class JObfSettings
 {
     private static final String PROCESSOR_NAME = "General Settings";
-    private final StringValue excludedClasses = new StringValue(PROCESSOR_NAME, "Excluded classes", null, DeprecationLevel.AVAILABLE, "me.name.Class\nme.name.*\nio.netty.**", 5);
-    private final StringValue generatorChars = new StringValue(PROCESSOR_NAME, "Generator characters", DeprecationLevel.AVAILABLE, "Il");
-    private final BooleanValue useCustomDictionary = new BooleanValue(PROCESSOR_NAME, "Custom dictionary", DeprecationLevel.AVAILABLE, false);
-    private final FilePathValue classNameDictionary = new FilePathValue(PROCESSOR_NAME, "Class Name dictionary", DeprecationLevel.AVAILABLE, "");
-    private final FilePathValue nameDictionary = new FilePathValue(PROCESSOR_NAME, "Name dictionary", DeprecationLevel.AVAILABLE, "");
-    private final BooleanValue useStore = new BooleanValue(PROCESSOR_NAME, "Use STORE instead of DEFLATE (For e.g. SpringBoot)", DeprecationLevel.AVAILABLE, false);
+    private final StringValue excludedClasses = new StringValue(PROCESSOR_NAME, "Excluded classes", "ui.transformers.general.excluded_classes", DeprecationLevel.AVAILABLE, "me.name.Class\nme.name.*\nio.netty.**", 5);
+    private final StringValue generatorChars = new StringValue(PROCESSOR_NAME, "Generator characters", "ui.transformers.general.generator_char", DeprecationLevel.AVAILABLE, "Il");
+    private final BooleanValue useCustomDictionary = new BooleanValue(PROCESSOR_NAME, "Custom dictionary", "ui.transformers.general.use_custom_dictionary", DeprecationLevel.AVAILABLE, false);
+    private final FilePathValue classNamesDictionary = new FilePathValue(PROCESSOR_NAME, "Class Names dictionary", "ui.transformers.general.class_names_dictionary", DeprecationLevel.AVAILABLE, "");
+    private final FilePathValue namesDictionary = new FilePathValue(PROCESSOR_NAME, "Name dictionary",  "ui.transformers.general.other_names_dictionary", DeprecationLevel.AVAILABLE, "");
+    private final BooleanValue useStore = new BooleanValue(PROCESSOR_NAME, "Use STORE instead of DEFLATE (For e.g. SpringBoot)", "ui.transformers.general.use_store", DeprecationLevel.AVAILABLE, false);
+
+    static {
+        ValueManager.registerOwner(PROCESSOR_NAME, "ui.transformers.general");
+        ValueManager.registerClass(JObfSettings.class);
+    }
 }
 

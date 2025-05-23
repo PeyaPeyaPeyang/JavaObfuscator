@@ -39,9 +39,7 @@ class ReturnMangler
         int returnSlot = -1;
 
         if (!isVoidType)
-        {
             returnSlot = variableProvider.allocateVar();
-        }
 
         for (AbstractInsnNode abstractInsnNode : node.instructions.toArray())
         {
@@ -50,9 +48,7 @@ class ReturnMangler
                 InsnList insnList = new InsnList();
 
                 if (!isVoidType)
-                {
                     insnList.add(new VarInsnNode(returnType.getOpcode(Opcodes.ISTORE), returnSlot));
-                }
 
                 insnList.add(new JumpInsnNode(Opcodes.GOTO, returnLabel));
 

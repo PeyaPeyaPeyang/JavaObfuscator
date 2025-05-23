@@ -41,19 +41,20 @@ public class NumberObfuscationTransformer implements IClassTransformer
 {
     private static final String PROCESSOR_NAME = "NumberObfuscation";
     private static final Random random = new Random();
-    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_EXTRACT_TO_ARRAY = new BooleanValue(PROCESSOR_NAME, "Extract to Array", "Calculates the integers once and store them in an array", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_SPECIAL_OBFUSCATE_ZERO = new BooleanValue(PROCESSOR_NAME, "Obfuscate Zero", "Enables special obfuscation of the number 0", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_SHIFT = new BooleanValue(PROCESSOR_NAME, "Shift", "Uses \"<<\" to obfuscate numbers", DeprecationLevel.AVAILABLE, false);
-    private static final BooleanValue V_MULTIPLE_INSTRUCTIONS = new BooleanValue(PROCESSOR_NAME, "Multiple Instructions", "Repeats the obfuscation process", DeprecationLevel.AVAILABLE, true);
+    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, "ui.transformers.number", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_EXTRACT_TO_ARRAY = new BooleanValue(PROCESSOR_NAME, "Extract to Array", "ui.transformers.number.extract_to_array", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_SPECIAL_OBFUSCATE_ZERO = new BooleanValue(PROCESSOR_NAME, "Obfuscate Zero", "ui.transformers.number.obfuscate_zero", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_SHIFT = new BooleanValue(PROCESSOR_NAME, "Shift", "ui.transformers.number.shift", DeprecationLevel.AVAILABLE, false);
+    private static final BooleanValue V_METHOD_AND = new BooleanValue(PROCESSOR_NAME, "And", "ui.transformers.number.and.description", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_METHOD_XOR = new BooleanValue(PROCESSOR_NAME, "XOR", "ui.transformers.number.xor", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_METHOD_STRING_LENGTH = new BooleanValue(PROCESSOR_NAME, "String Length", "ui.transformers.number.string_length", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_METHOD_SIMPLE_MATH = new BooleanValue(PROCESSOR_NAME, "Simple Math", "ui.transformers.number.simple_math", DeprecationLevel.AVAILABLE, true);
 
-    private static final BooleanValue V_METHOD_AND = new BooleanValue(PROCESSOR_NAME, "And", "Uses \"&\" to obfuscate numbers", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_METHOD_XOR = new BooleanValue(PROCESSOR_NAME, "XOR", "Uses \"^\" to obfuscate numbers", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_METHOD_STRING_LENGTH = new BooleanValue(PROCESSOR_NAME, "String Length", "Uses the length of a random string(fixed length) to obfuscate numbers", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_METHOD_SIMPLE_MATH = new BooleanValue(PROCESSOR_NAME, "Simple Math", "Uses simple math(add, sub, ) to obfuscate numbers", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_MULTIPLE_INSTRUCTIONS = new BooleanValue(PROCESSOR_NAME, "Multiple Instructions", "ui.transformers.number.multiple_instructions", DeprecationLevel.AVAILABLE, true);
 
     static
     {
+        ValueManager.registerOwner(PROCESSOR_NAME, "ui.transformers.number");
         ValueManager.registerClass(NumberObfuscationTransformer.class);
     }
 
@@ -70,7 +71,7 @@ public class NumberObfuscationTransformer implements IClassTransformer
         list.add(NodeUtils.generateIntPush(value));
 
         for (int i = 0; i < (V_MULTIPLE_INSTRUCTIONS.get() ? iterations: 1); i++)
-            list = obfuscateInsnList(list);
+            obfuscateInsnList(list);
 
         return list;
     }

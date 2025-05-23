@@ -37,24 +37,24 @@ public class HideStringsTransformer implements IClassTransformer
     private static final String PROCESSOR_NAME = "HideStrings";
 
     private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME,
-            "Might break after editing the SourceFile field in the class.",
+            "ui.transformers.hide_strings.description",
             DeprecationLevel.AVAILABLE, true
     );
     private static final BooleanValue V_OPTIMIZE = new BooleanValue(PROCESSOR_NAME,
             "Optimize the ledger",
-            "Reuses the same string if it is already in the array",
+            "ui.transformers.hide_strings.optimise_ledger",
             DeprecationLevel.AVAILABLE, true
     );
-    private static final StringValue V_MAGIC_NUMBER = new StringValue(PROCESSOR_NAME, "Magigic number: Start",
-            "Begin marker of the hided string",
+    private static final StringValue V_MARKER_START = new StringValue(PROCESSOR_NAME, "Marker: begin",
+            "ui.transformers.hide_strings.start_marker",
             DeprecationLevel.AVAILABLE, "", 1
     );
-    private static final StringValue V_MAGIC_NUMBER_SPLIT = new StringValue(PROCESSOR_NAME, "Split of the magic number",
-            "Delimiter of the hided strings",
+    private static final StringValue V_DELIMITER = new StringValue(PROCESSOR_NAME, "Delimiter",
+            "ui.transformers.hide_strings.delimiter",
             DeprecationLevel.AVAILABLE, "", 1
     );
-    private static final StringValue V_MAGIC_NUMBER_END = new StringValue(PROCESSOR_NAME, "End of the magic number",
-            "End marker of the hided string",
+    private static final StringValue V_MARKER_END = new StringValue(PROCESSOR_NAME, "Marker: end",
+            "ui.transformers.hide_strings.end_marker",
             DeprecationLevel.AVAILABLE, "", 1
     );
 
@@ -63,6 +63,7 @@ public class HideStringsTransformer implements IClassTransformer
 
     static
     {
+        ValueManager.registerOwner(PROCESSOR_NAME, "ui.transformers.hide_strings");
         ValueManager.registerClass(HideStringsTransformer.class);
     }
 
@@ -154,7 +155,7 @@ public class HideStringsTransformer implements IClassTransformer
             preferred = value.get();
 
         boolean contains = false;
-        while (preferred == null || (contains = isStringContainsInListElement(strings, preferred)))
+        while (preferred == null || (contains = isExistsInList(strings, preferred)))
         {
             if (contains)
                 log.warn("Magic number " + preferred + " is duplicated in the ledger, regenerating...");
@@ -165,7 +166,7 @@ public class HideStringsTransformer implements IClassTransformer
         return preferred;
     }
 
-    private static boolean isStringContainsInListElement(List<String> list, String string)
+    private static boolean isExistsInList(List<String> list, String string)
     {
         return list.stream().parallel().anyMatch(s -> s.contains(string));
     }
@@ -217,12 +218,12 @@ public class HideStringsTransformer implements IClassTransformer
         if (ledgerElementCount <= 0)
             return;
 
-        String magicNumber = getOrRandom(V_MAGIC_NUMBER, hiddenStrings);
-        String magicNumberSplit = getOrRandom(V_MAGIC_NUMBER_SPLIT, hiddenStrings);
-        String magicNumberEnd = getOrRandom(V_MAGIC_NUMBER_END, hiddenStrings);
+        String startMarker = getOrRandom(V_MARKER_START, hiddenStrings);
+        String delimiter = getOrRandom(V_DELIMITER, hiddenStrings);
+        String endMarker = getOrRandom(V_MARKER_END, hiddenStrings);
 
         node.sourceDebug = null;
-        node.sourceFile = buildLedger(hiddenStrings, magicNumber, magicNumberSplit, magicNumberEnd);
+        node.sourceFile = buildLedger(hiddenStrings, startMarker, delimiter, endMarker);
         node.fields.add(new FieldNode(
                         ((node.access & Opcodes.ACC_INTERFACE) != 0 ? Opcodes.ACC_PUBLIC: Opcodes.ACC_PRIVATE) | Opcodes.ACC_STATIC,
                         fieldName,
@@ -234,7 +235,7 @@ public class HideStringsTransformer implements IClassTransformer
 
 
         MethodNode mGenerateStrings = getGenerateStringsMethod(node, fieldName,
-                magicNumber, magicNumberSplit, magicNumberEnd
+                startMarker, delimiter, endMarker
         );
         node.methods.add(mGenerateStrings);
 

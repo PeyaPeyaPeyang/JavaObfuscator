@@ -55,15 +55,16 @@ public class StringEncryptionTransformer implements IClassTransformer
 {
     private static final String PROCESSOR_NAME = "StringEncryption";
     private static final Random random = new Random();
-    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_ALGO_AES = new BooleanValue(PROCESSOR_NAME, "Algorithm: AES", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_ALGO_XOR = new BooleanValue(PROCESSOR_NAME, "Algorithm: XOR Processing", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_ALGO_BLOWFISH = new BooleanValue(PROCESSOR_NAME, "Algorithm: Blowfish", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_ALGO_DES = new BooleanValue(PROCESSOR_NAME, "Algorithm: DES", DeprecationLevel.AVAILABLE, true);
+    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, "ui.transformers.string_encryption.description", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_ALGO_AES = new BooleanValue(PROCESSOR_NAME, "Algorithm: AES", "ui.transformers.string_encryption.algo_aes", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_ALGO_XOR = new BooleanValue(PROCESSOR_NAME, "Algorithm: XOR Processing", "ui.transformers.string_encryption.algo_xor", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_ALGO_BLOWFISH = new BooleanValue(PROCESSOR_NAME, "Algorithm: Blowfish", "ui.transformers.string_encryption.algo_blowfish", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_ALGO_DES = new BooleanValue(PROCESSOR_NAME, "Algorithm: DES", "ui.transformers.string_encryption.algo_des", DeprecationLevel.AVAILABLE, true);
 
 
     static
     {
+        ValueManager.registerOwner(PROCESSOR_NAME, "ui.transformers.string_encryption");
         ValueManager.registerClass(StringEncryptionTransformer.class);
     }
 

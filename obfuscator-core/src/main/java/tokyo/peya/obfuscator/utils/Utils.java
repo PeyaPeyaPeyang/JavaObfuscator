@@ -31,6 +31,7 @@ import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.VarInsnNode;
 import tokyo.peya.obfuscator.JavaObfuscator;
+import tokyo.peya.obfuscator.Localisation;
 import tokyo.peya.obfuscator.clazz.ClassWrapper;
 import tokyo.peya.obfuscator.configuration.DeprecationLevel;
 
@@ -39,6 +40,7 @@ import java.awt.Component;
 import java.awt.FileDialog;
 import java.awt.Frame;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -413,11 +415,32 @@ public class Utils
         }
     }
 
-    public static boolean checkZip(String file)
+    public static boolean checkZip(File file)
     {
         try (ZipFile ignored = new ZipFile(file))
         {
             return true;
+        }
+        catch (IOException e)
+        {
+            return false;
+        }
+    }
+
+    public static boolean checkClassFile(File file)
+    {
+        try (FileInputStream fis = new FileInputStream(file))
+        {
+            byte[] b = new byte[4];
+            int i = fis.read(b);
+            if (i != 4)
+                return false;
+
+            // Magic num: 0xCA FE BA BE
+            return (b[0] & 0xFF) == 0xCA
+                    && (b[1] & 0xFF) == 0xFE
+                    && (b[2] & 0xFF) == 0xBA
+                    && (b[3] & 0xFF) == 0xBE;
         }
         catch (IOException e)
         {
@@ -442,13 +465,14 @@ public class Utils
         StringBuilder sb = new StringBuilder();
 
         if (hours > 0)
-            sb.append(hours).append("h ");
+            sb.append(hours).append(Localisation.get("logs.time_unit.hour")).append(" ");
         else if (minutes > 0)
-            sb.append(minutes).append("min ");
-        else if (seconds > 0)
-            sb.append(seconds).append("s ");
-
-        sb.append(l).append("ms ");
+            sb.append(minutes).append(Localisation.get("logs.time_unit.minute")).append(" ");
+        else if (seconds > 0 || l > 0)
+        {
+            String millis = String.valueOf(l / 1000d).replace("0.", "");
+            sb.append(seconds).append(".").append(millis).append(Localisation.get("logs.time_unit.second")).append(" ");
+        }
 
         return sb.toString();
     }

@@ -60,8 +60,8 @@ public class UniqueNameProvider
 
         try
         {
-            this.classNames = Files.readLines(new File(settings.getClassNameDictionary().get()), StandardCharsets.UTF_8);
-            this.names = Files.readLines(new File(settings.getNameDictionary().get()), StandardCharsets.UTF_8);
+            this.classNames = Files.readLines(new File(settings.getClassNamesDictionary().get()), StandardCharsets.UTF_8);
+            this.names = Files.readLines(new File(settings.getNamesDictionary().get()), StandardCharsets.UTF_8);
         }
         catch (IOException e)
         {

@@ -16,14 +16,8 @@ import tokyo.peya.obfuscator.configuration.Value;
 
 public class BooleanValue extends Value<Boolean>
 {
-
-    public BooleanValue(String owner, String name, DeprecationLevel deprecation, Boolean object)
+    public BooleanValue(String owner, String name, String localisationKey, DeprecationLevel deprecation, Boolean object)
     {
-        super(owner, name, deprecation, object);
-    }
-
-    public BooleanValue(String owner, String name, String description, DeprecationLevel deprecation, Boolean object)
-    {
-        super(owner, name, description, deprecation, object);
+        super(owner, name, localisationKey, deprecation, object);
     }
 }

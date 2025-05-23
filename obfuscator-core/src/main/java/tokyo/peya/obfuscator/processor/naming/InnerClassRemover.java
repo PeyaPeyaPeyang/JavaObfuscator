@@ -33,13 +33,14 @@ import java.util.regex.Pattern;
 public class InnerClassRemover implements INameObfuscationProcessor, IClassTransformer
 {
     private static final String PROCESSOR_NAME = "InnerClassRemover";
-    private static final Pattern innerClasses = Pattern.compile(".*[A-Za-z0-9]+\\$[A-Za-z0-9]+");
-    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_REMAP = new BooleanValue(PROCESSOR_NAME, "Remap", DeprecationLevel.SOME_DEPRECATION, false);
-    private static final BooleanValue V_REMOVE_METADATA = new BooleanValue(PROCESSOR_NAME, "Remove Metadata", DeprecationLevel.AVAILABLE, true);
+    private static final Pattern INNER_CLASSES = Pattern.compile(".*[A-Za-z0-9_]+\\$[A-Za-z0-9_]+");
+    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, "ui.transformers.inner_class.description", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_REMAP = new BooleanValue(PROCESSOR_NAME, "Relocate classes",  "ui.transformers.inner_class.relocate_classes", DeprecationLevel.AVAILABLE, false);
+    private static final BooleanValue V_REMOVE_METADATA = new BooleanValue(PROCESSOR_NAME, "Remove metadata", "ui.transformers.inner_class.erase_metadata", DeprecationLevel.AVAILABLE, true);
 
     static
     {
+        ValueManager.registerOwner(PROCESSOR_NAME, "ui.transformers.inner_class");
         ValueManager.registerClass(InnerClassRemover.class);
     }
 
@@ -52,7 +53,7 @@ public class InnerClassRemover implements INameObfuscationProcessor, IClassTrans
 
     private static boolean isInnerClass(String name)
     {
-        return innerClasses.matcher(name).matches();
+        return INNER_CLASSES.matcher(name).matches();
     }
 
     private static void normalizeModifiers(ClassNode classNode)
@@ -95,7 +96,7 @@ public class InnerClassRemover implements INameObfuscationProcessor, IClassTrans
     @Override
     public void transformPost(Obfuscator inst, Map<String, ClassNode> nodes)
     {
-        if (!(V_ENABLED.get() && V_REMAP.get()))
+        if (!(V_ENABLED.get() && V_REMAP.get())) // remap のみ
             return;
 
         final List<ClassNode> classNodes = new ArrayList<>(nodes.values());
@@ -125,7 +126,7 @@ public class InnerClassRemover implements INameObfuscationProcessor, IClassTrans
     @Override
     public void process(ProcessorCallback callback, ClassNode node)
     {
-        if (!V_ENABLED.get() || !V_REMOVE_METADATA.get()) return;
+        if (!(V_ENABLED.get() && V_REMOVE_METADATA.get())) return;  // メタデータのみ
 
         node.outerClass = null;
         node.innerClasses.clear();

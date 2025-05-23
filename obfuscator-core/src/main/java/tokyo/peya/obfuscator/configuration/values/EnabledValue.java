@@ -15,15 +15,19 @@ import tokyo.peya.obfuscator.configuration.DeprecationLevel;
 
 public class EnabledValue extends BooleanValue
 {
+    private final String featureDescriptionKey;
 
-    public EnabledValue(String owner, DeprecationLevel deprecated, Boolean object)
+
+    public EnabledValue(String owner, String featureDescriptionKey, DeprecationLevel deprecation, Boolean object)
     {
-        super(owner, "Enabled", deprecated, object);
+        super(owner, "Enabled", "ui.transformers.enabled", deprecation, object);
+        this.featureDescriptionKey = featureDescriptionKey;
     }
 
-    public EnabledValue(String owner, String description, DeprecationLevel deprecation, Boolean object)
+    @Override
+    public String getDescriptionKey()
     {
-        super(owner, "Enabled", description, deprecation, object);
+        return this.featureDescriptionKey;
     }
 
     @Override

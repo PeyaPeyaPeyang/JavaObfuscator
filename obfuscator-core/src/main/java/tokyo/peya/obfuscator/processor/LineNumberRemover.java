@@ -20,6 +20,7 @@ import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.ParameterNode;
 import org.objectweb.asm.tree.VarInsnNode;
 import tokyo.peya.obfuscator.IClassTransformer;
+import tokyo.peya.obfuscator.Localisation;
 import tokyo.peya.obfuscator.Obfuscator;
 import tokyo.peya.obfuscator.ProcessorCallback;
 import tokyo.peya.obfuscator.annotations.ObfuscationTransformer;
@@ -38,28 +39,28 @@ public class LineNumberRemover implements IClassTransformer
     private static final String PROCESSOR_NAME = "LineNumberRemover";
     private static final Random random = new Random();
     private static final ArrayList<String> TYPES = new ArrayList<>();
-    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_RENAME_VALUES = new BooleanValue(PROCESSOR_NAME, "Rename local variables", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_REMOVE_LINE_NUMBERS = new BooleanValue(PROCESSOR_NAME, "Remove Line Numbers", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_REMOVE_DEBUG_NAMES = new BooleanValue(PROCESSOR_NAME, "Remove Debug Names", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_ADD_LOCAL_VARIABLES = new BooleanValue(PROCESSOR_NAME, "Add Local Variables", "Adds random local variables with wrong types. Might break some decompilers", DeprecationLevel.AVAILABLE, true);
+    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, "ui.transformers.line_number_remover.description", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_RENAME_VALUES = new BooleanValue(PROCESSOR_NAME, "Rename local variables", "ui.transformers.line_number_remover.rename_local_vars", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_REMOVE_LINE_NUMBERS = new BooleanValue(PROCESSOR_NAME, "Remove line Numbers", "ui.transformers.line_number_remover.remove_line_nums", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_ADD_LOCAL_VARIABLES = new BooleanValue(PROCESSOR_NAME, "Add confusing local variables", "ui.transformers.line_number_remover.add_local_vars", DeprecationLevel.AVAILABLE, true);
 
     static
     {
-        TYPES.add("Z");
-        TYPES.add("C");
-        TYPES.add("B");
-        TYPES.add("S");
-        TYPES.add("I");
-        TYPES.add("F");
-        TYPES.add("J");
-        TYPES.add("D");
+        TYPES.add("Z");  // Boolean
+        TYPES.add("C");  // Character
+        TYPES.add("B");  // Byte
+        TYPES.add("S");  // Short
+        TYPES.add("I");  // Integer
+        TYPES.add("F");  // Float
+        TYPES.add("J");  // Long
+        TYPES.add("D");  // Double
         TYPES.add("Ljava/lang/Exception;");
         TYPES.add("Ljava/lang/String;");
     }
 
     static
     {
+        ValueManager.registerOwner(PROCESSOR_NAME, "ui.transformers.line_number_remover");
         ValueManager.registerClass(LineNumberRemover.class);
     }
 

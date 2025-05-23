@@ -34,31 +34,32 @@ public class ShuffleTransformer implements IClassTransformer
     private static final String PROCESSOR_NAME = "Shuffler";
     private static final Random RANDOM = new Random();
 
-    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.AVAILABLE, true);
+    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, "ui.transformers.shuffler.description", DeprecationLevel.AVAILABLE, true);
     private static final BooleanValue V_SHUFFLE_CLASS_STRUCTURE = new BooleanValue(
             PROCESSOR_NAME,
             "Shuffle class structure",
-            "Shuffle class elements (as definition)",
+            "ui.transformers.shuffler.shuffle_class_structure",
             DeprecationLevel.AVAILABLE,
             true
     );
     private static final BooleanValue V_SHUFFLE_METHOD_STRUCTURE = new BooleanValue(
             PROCESSOR_NAME,
             "Shuffle method structure",
-            "Shuffle method elements (as definition)",
+            "ui.transformers.shuffler.shuffle_method_structure",
             DeprecationLevel.AVAILABLE,
             true
     );
     private static final BooleanValue V_SHUFFLE_FIELD_STRUCTURE = new BooleanValue(
             PROCESSOR_NAME,
             "Shuffle field structure",
-            "Shuffle field elements like annotations",
+            "ui.transformers.shuffler.shuffle_field_structure",
             DeprecationLevel.AVAILABLE,
             true
     );
     private static final BooleanValue V_SHUFFLE_ANNOTATIONS = new BooleanValue(
             PROCESSOR_NAME,
             "Shuffle annotations order in all places",
+            "ui.transformers.shuffler.shuffle_annotations",
             DeprecationLevel.AVAILABLE,
             true
     );
@@ -66,12 +67,14 @@ public class ShuffleTransformer implements IClassTransformer
     private static final BooleanValue V_SHUFFLE_DEBUG_CLASS_NAMES = new BooleanValue(
             PROCESSOR_NAME,
             "Shuffle source file names among other classes",
+            "ui.transformers.shuffler.shuffle_debug_class_names",
             DeprecationLevel.AVAILABLE,
             true
     );
 
     static
     {
+        ValueManager.registerOwner(PROCESSOR_NAME, "ui.transformers.shuffler");
         ValueManager.registerClass(ShuffleTransformer.class);
     }
 
@@ -107,6 +110,11 @@ public class ShuffleTransformer implements IClassTransformer
 
     private static void processMethod(MethodNode method)
     {
+        shuffleIfPresent(method.tryCatchBlocks);
+        shuffleIfPresent(method.exceptions);
+        shuffleIfPresent(method.localVariables);
+        shuffleIfPresent(method.parameters);
+
         if (V_SHUFFLE_ANNOTATIONS.get())
         {
             shuffleIfPresent(method.invisibleAnnotations);
@@ -116,11 +124,6 @@ public class ShuffleTransformer implements IClassTransformer
             shuffleIfPresent(method.visibleLocalVariableAnnotations);
             shuffleIfPresent(method.visibleTypeAnnotations);
         }
-
-        shuffleIfPresent(method.tryCatchBlocks);
-        shuffleIfPresent(method.exceptions);
-        shuffleIfPresent(method.localVariables);
-        shuffleIfPresent(method.parameters);
     }
 
     private static void processClassStructure(ClassNode node)

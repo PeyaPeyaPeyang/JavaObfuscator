@@ -57,24 +57,26 @@ public class NameObfuscation implements INameObfuscationProcessor
 {
     private static final String PROCESSOR_NAME = "NameObfuscation";
     private static final Random random = new Random();
-    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.AVAILABLE, false);
-    private static final StringValue V_EXCLUDED_CLASSES = new StringValue(PROCESSOR_NAME, "Excluded classes", null, DeprecationLevel.AVAILABLE, "me.name.Class\nme.name.*\nio.netty.**", 5);
-    private static final StringValue V_EXCLUDED_METHODS = new StringValue(PROCESSOR_NAME, "Excluded methods", null, DeprecationLevel.AVAILABLE, "me.name.Class.method\nme.name.Class**\nme.name.Class.*", 5);
-    private static final StringValue V_EXCLUDED_FIELDS = new StringValue(PROCESSOR_NAME, "Excluded fields", null, DeprecationLevel.AVAILABLE, "me.name.Class.field\nme.name.Class.*\nme.name.**", 5);
-    private static final BooleanValue V_ACCEPT_MISSING_LIBRARIES = new BooleanValue(PROCESSOR_NAME, "Accept Missing Libraries", DeprecationLevel.AVAILABLE, false);
-    private static final BooleanValue V_REMAP_CLASSES = new BooleanValue(PROCESSOR_NAME, "Enabled for class names", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_REMAP_METHODS = new BooleanValue(PROCESSOR_NAME, "Enabled for method names", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_REMAP_FIELDS = new BooleanValue(PROCESSOR_NAME, "Enabled for field names", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_RANDOM_PACKAGE = new BooleanValue(PROCESSOR_NAME, "Randomise package structure", DeprecationLevel.AVAILABLE, false);
-    private static final StringValue V_NEW_PACKAGE = new StringValue(PROCESSOR_NAME, "New Packages(separate by \\n)", null, DeprecationLevel.AVAILABLE, "", 5);
-    private static final BooleanValue V_RANDOM_SOURCE_FILE = new BooleanValue(PROCESSOR_NAME, "Randomise source file names", DeprecationLevel.AVAILABLE, false);
-    private static final BooleanValue V_RANDOM_DEBUG_SOURCE_FILE = new BooleanValue(PROCESSOR_NAME, "Randomise debug source file names", DeprecationLevel.AVAILABLE, false);
-    private static final StringValue V_NEW_SOURCE_FILE = new StringValue(PROCESSOR_NAME, "New source and debug file names(separate by \\n)", null, DeprecationLevel.AVAILABLE, "", 5);
+    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, "ui.transformers.name.description", DeprecationLevel.AVAILABLE, false);
+    private static final StringValue V_EXCLUDED_CLASSES = new StringValue(PROCESSOR_NAME, "Excluded classes", "ui.transformers.name.excluded_classes", DeprecationLevel.AVAILABLE, "me.name.Class\nme.name.*\nio.netty.**", 5);
+    private static final StringValue V_EXCLUDED_METHODS = new StringValue(PROCESSOR_NAME, "Excluded methods", "ui.transformers.name.excluded_methods", DeprecationLevel.AVAILABLE, "me.name.Class.method\nme.name.Class**\nme.name.Class.*", 5);
+    private static final StringValue V_EXCLUDED_FIELDS = new StringValue(PROCESSOR_NAME, "Excluded fields", "ui.transformers.name.excluded_fields", DeprecationLevel.AVAILABLE, "me.name.Class.field\nme.name.Class.*\nme.name.**", 5);
+    private static final BooleanValue V_ALLOW_MISSING_LIBRARIES = new BooleanValue(PROCESSOR_NAME, "Allow Missing Libraries", "ui.transformers.name.allow_missing_libraries",DeprecationLevel.AVAILABLE, false);
+    private static final BooleanValue V_REMAP_CLASSES = new BooleanValue(PROCESSOR_NAME, "Enabled for class names", "ui.transformers.name.enable_class", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_REMAP_METHODS = new BooleanValue(PROCESSOR_NAME, "Enabled for method names", "ui.transformers.name.enable_method", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_REMAP_FIELDS = new BooleanValue(PROCESSOR_NAME, "Enabled for field names", "ui.transformers.name.enable_field", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_RANDOM_PACKAGE = new BooleanValue(PROCESSOR_NAME, "Randomise package structure", "ui.transformers.name.randomise_package", DeprecationLevel.AVAILABLE, false);
+    private static final StringValue V_NEW_PACKAGE = new StringValue(PROCESSOR_NAME, "New Packages", "ui.transformers.name.new_packages", DeprecationLevel.AVAILABLE, "", 5);
+    private static final BooleanValue V_RANDOM_SOURCE_FILE = new BooleanValue(PROCESSOR_NAME, "Randomise source file names", "ui.transformers.name.randomise_source_file", DeprecationLevel.AVAILABLE, false);
+    private static final BooleanValue V_RANDOM_DEBUG_SOURCE_FILE = new BooleanValue(PROCESSOR_NAME, "Randomise debug source file names",  "ui.transformers.name.randomise_debug_source_file", DeprecationLevel.AVAILABLE, false);
+    private static final StringValue V_NEW_SOURCE_FILE = new StringValue(PROCESSOR_NAME, "New source and debug file names", "ui.transformers.name.new_source_names", DeprecationLevel.AVAILABLE, "", 5);
 
-    private static final FilePathValue V_MAPPINGS_TO_SAVE = new FilePathValue(PROCESSOR_NAME, "Mappings to save", null, DeprecationLevel.AVAILABLE, null);
+    private static final BooleanValue V_SAVE_MAPPINGS = new BooleanValue(PROCESSOR_NAME, "Save mappings", "ui.transformers.name.save_mappings", DeprecationLevel.AVAILABLE, false);
+    private static final FilePathValue V_MAPPINGS_FILE_TO_SAVE = new FilePathValue(PROCESSOR_NAME, "Mappings file to save", "ui.transformers.name.mappings_file", DeprecationLevel.AVAILABLE, null);
 
     static
     {
+        ValueManager.registerOwner(PROCESSOR_NAME, "ui.transformers.name");
         ValueManager.registerClass(NameObfuscation.class);
     }
 
@@ -96,31 +98,31 @@ public class NameObfuscation implements INameObfuscationProcessor
         return classNode.methods.stream().anyMatch(methodNode -> Modifier.isNative(methodNode.access));
     }
 
-    private static String normalizeMappnigEntry(HashMap<String, String> mappings, String original, String mapped)
+    private static String recogniseMappingEntry(HashMap<String, String> mappings, String original, String mapped)
     {
         String[] entryContents = original.split("\\.");
         if (entryContents.length <= 1)
             return "CL: " + mapped + " " + original;
 
         String className = entryContents[0];
-        String methodORFieldName = entryContents[1];
+        String memberName = entryContents[1];
         String fieldDesc = entryContents.length > 2 ? entryContents[2]: null;
 
         String mappedClass = mappings.get(className);
 
         if (fieldDesc != null)
-            return "FD: " + mappedClass + "/" + mapped + " " + className + "/" + methodORFieldName + " " + fieldDesc;
+            return "FD: " + mappedClass + "/" + mapped + " " + className + "/" + memberName + " " + fieldDesc;
         else
         {
-            int descStart = methodORFieldName.indexOf('(');
+            int descStart = memberName.indexOf('(');
             if (descStart != -1)
             {
-                String methodDesc = methodORFieldName.substring(descStart);
-                methodORFieldName = methodORFieldName.substring(0, descStart);
-                return "MD: " + mappedClass + "/" + mapped + " " + methodDesc + " " + className + "/" + methodORFieldName + " " + methodDesc;
+                String methodDesc = memberName.substring(descStart);
+                memberName = memberName.substring(0, descStart);
+                return "MD: " + mappedClass + "/" + mapped + " " + methodDesc + " " + className + "/" + memberName + " " + methodDesc;
             }
             else
-                return "# MD: " + mappedClass + "/" + methodORFieldName + " " + mapped;
+                return "# MD: " + mappedClass + "/" + memberName + " " + mapped;
         }
     }
 
@@ -204,10 +206,11 @@ public class NameObfuscation implements INameObfuscationProcessor
             compileExcludePatterns();
 
             log.info("Building Hierarchy...");
-            List<ClassWrapper> classWrappers = buildHierarchies(nodes.values(), V_ACCEPT_MISSING_LIBRARIES.get());
+            List<ClassWrapper> classWrappers = buildHierarchies(nodes.values(), V_ALLOW_MISSING_LIBRARIES.get());
             log.info("Finished building hierarchy");
 
             long current = System.currentTimeMillis();
+
             log.info("Generating mappings...");
 
             //NameUtils.setup();
@@ -215,11 +218,14 @@ public class NameObfuscation implements INameObfuscationProcessor
 
             this.processClasses(classWrappers, mappings);
 
-            String mappingFile = V_MAPPINGS_TO_SAVE.get();
-            if (mappingFile == null)
-                mappingFile = this.obfuscator.getConfig().getMapping();
-            if (mappingFile != null)
-                this.saveMappingsFile(mappingFile, mappings);
+            if (V_SAVE_MAPPINGS.get())
+            {
+                String mappingFile = V_MAPPINGS_FILE_TO_SAVE.get();
+                if (mappingFile == null)
+                    mappingFile = this.obfuscator.getConfig().getMapping();
+                if (mappingFile != null)
+                    this.saveMappingsFile(mappingFile, mappings);
+            }
 
             log.info(String.format("... Finished generating mappings (%s)", Utils.formatTime(System.currentTimeMillis() - current)));
 
@@ -442,7 +448,7 @@ public class NameObfuscation implements INameObfuscationProcessor
     private void saveMappingsFile(String file, HashMap<String, String> mappings)
     {
         String[] mappingEntries = mappings.entrySet().stream()
-                .map(entry -> normalizeMappnigEntry(mappings, entry.getKey(), entry.getValue()))
+                .map(entry -> recogniseMappingEntry(mappings, entry.getKey(), entry.getValue()))
                 .distinct()
                 .toArray(String[]::new);
 

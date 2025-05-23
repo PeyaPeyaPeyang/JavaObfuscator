@@ -52,7 +52,7 @@ public class InlineTransformer implements IClassTransformer
 
     static
     {
-        ValueManager.registerClass(InlineTransformer.class);
+        // ValueManager.registerClass(InlineTransformer.class);
     }
 
     private final Obfuscator inst;

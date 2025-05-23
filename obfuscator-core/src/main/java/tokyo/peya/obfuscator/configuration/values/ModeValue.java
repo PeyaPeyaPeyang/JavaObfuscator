@@ -19,15 +19,9 @@ public class ModeValue extends Value<Integer>
 {
     private final String[] possibleValues;
 
-    public ModeValue(String owner, String name, DeprecationLevel deprecated, Integer object, String[] possibleValues)
+    public ModeValue(String owner, String name, String localisationKey, DeprecationLevel deprecated, Integer object, String[] possibleValues)
     {
-        super(owner, name, deprecated, object);
-        this.possibleValues = possibleValues;
-    }
-
-    public ModeValue(String owner, String name, String description, DeprecationLevel deprecated, Integer object, String[] possibleValues)
-    {
-        super(owner, name, description, deprecated, object);
+        super(owner, name, localisationKey, deprecated, object);
         this.possibleValues = possibleValues;
     }
 

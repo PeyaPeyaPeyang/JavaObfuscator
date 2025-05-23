@@ -20,15 +20,15 @@ public class StringValue extends Value<String>
 {
     private final int textFieldLines;
 
-    public StringValue(String owner, String name, DeprecationLevel deprecated, String object)
+    public StringValue(String owner, String name, String localisationKey, DeprecationLevel deprecated, String object)
     {
-        super(owner, name, deprecated, object);
+        super(owner, name, localisationKey, deprecated, object);
         this.textFieldLines = 1;
     }
 
-    public StringValue(String owner, String name, String description, DeprecationLevel deprecation, String object, int textFieldLines)
+    public StringValue(String owner, String name, String localisationKey, DeprecationLevel deprecation, String object, int textFieldLines)
     {
-        super(owner, name, description, deprecation, object);
+        super(owner, name,  localisationKey, deprecation, object);
         this.textFieldLines = textFieldLines;
     }
 

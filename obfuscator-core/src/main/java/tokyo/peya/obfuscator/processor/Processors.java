@@ -8,7 +8,7 @@ import tokyo.peya.obfuscator.processor.naming.INameObfuscationProcessor;
 import tokyo.peya.obfuscator.processor.naming.InnerClassRemover;
 import tokyo.peya.obfuscator.processor.naming.NameObfuscation;
 import tokyo.peya.obfuscator.processor.number.NumberObfuscationTransformer;
-import tokyo.peya.obfuscator.processor.optimizer.Optimizer;
+import tokyo.peya.obfuscator.processor.optimiser.Optimiser;
 import tokyo.peya.obfuscator.processor.strings.HideStringsTransformer;
 import tokyo.peya.obfuscator.processor.strings.StringEncryptionTransformer;
 
@@ -18,8 +18,8 @@ import java.util.List;
 public class Processors
 {
     private static final Class<?>[] PROCESSORS = {
-            StaticInitializionTransformer.class,
-            Optimizer.class,
+            StaticInitialisationTransformer.class,
+            Optimiser.class,
             InlineTransformer.class,
             InvokeDynamic.class,
             StringEncryptionTransformer.class,
@@ -32,7 +32,7 @@ public class Processors
             HideStringsTransformer.class,
             InnerClassRemover.class,
             DecompilerCrasher.class,
-            ReferenceProxy.class
+            // ReferenceProxy.class
     };
 
     public static Class<?>[] getProcessors()
@@ -52,9 +52,9 @@ public class Processors
     public static List<IClassTransformer> createProcessors(Obfuscator instance)
     {
         List<IClassTransformer> processors = new ArrayList<>();
-        processors.add(new StaticInitializionTransformer(instance));
+        processors.add(new StaticInitialisationTransformer(instance));
 
-        processors.add(new Optimizer());
+        processors.add(new Optimiser());
         processors.add(new InlineTransformer(instance));
         processors.add(new InvokeDynamic(instance));
 
@@ -68,7 +68,7 @@ public class Processors
         processors.add(new NumberObfuscationTransformer(instance));  // HideStringsTransformer のあと
 
         processors.add(new DecompilerCrasher());
-        processors.add(new ReferenceProxy(instance));
+        //processors.add(new ReferenceProxy(instance));
 
         return processors;
     }

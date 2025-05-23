@@ -16,16 +16,8 @@ import tokyo.peya.obfuscator.configuration.Value;
 
 public class NumberValue<T extends Number> extends Value<T>
 {
-
-    public NumberValue(String owner, String name, String description, DeprecationLevel deprecated, T object)
+    public NumberValue(String owner, String name, String localisationKey, DeprecationLevel deprecated, T object)
     {
-        super(owner, name, description, deprecated, object);
+        super(owner, name, localisationKey, deprecated, object);
     }
-
-    public NumberValue(String owner, String name, DeprecationLevel deprecated, T object)
-    {
-        super(owner, name, deprecated, object);
-    }
-
-
 }

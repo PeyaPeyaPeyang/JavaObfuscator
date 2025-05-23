@@ -20,22 +20,17 @@ public abstract class Value<T>
 {
     private final String owner;
     private final String name;
-    private final String description;
+    private final String localisationKey;
     private final DeprecationLevel deprecation;
     @Getter(AccessLevel.NONE)
     @Setter
     private T value;
 
-    public Value(String owner, String name, DeprecationLevel deprecation, T object)
-    {
-        this(owner, name, "", deprecation, object);
-    }
-
-    public Value(String owner, String name, String description, DeprecationLevel deprecation, T object)
+    public Value(String owner, String name, String localisationKey, DeprecationLevel deprecation, T object)
     {
         this.owner = owner;
         this.name = name;
-        this.description = description;
+        this.localisationKey = localisationKey;
         this.deprecation = deprecation;
         this.value = object;
     }
@@ -43,6 +38,11 @@ public abstract class Value<T>
     public T get()
     {
         return this.value;
+    }
+
+    public String getDescriptionKey()
+    {
+        return this.localisationKey + ".description";
     }
 
     @Override

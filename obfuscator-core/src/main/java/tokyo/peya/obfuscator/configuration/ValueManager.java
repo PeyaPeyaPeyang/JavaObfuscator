@@ -12,15 +12,19 @@
 package tokyo.peya.obfuscator.configuration;
 
 import lombok.Getter;
+import tokyo.peya.obfuscator.Localisation;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ValueManager
 {
-    @Getter
     private static final List<Value<?>> values = new ArrayList<>();
+    private static final Map<String, String> ownerLocalisationMap = new HashMap<>();
 
     private static void registerField(Field field, Object object)
     {
@@ -34,6 +38,8 @@ public class ValueManager
             if (obj instanceof Value)
             {
                 Value<?> value = (Value<?>) obj;
+                if (!ownerLocalisationMap.containsKey(value.getOwner()))
+                    throw new IllegalArgumentException("Owner " + value.getOwner() + " not recognised.");
                 values.add(value);
             }
         }
@@ -56,5 +62,24 @@ public class ValueManager
     {
         for (Field field : clazz.getDeclaredFields())
             registerField(field, obj);
+    }
+
+    public static void registerOwner(String owner, String localisationKey)
+    {
+        ownerLocalisationMap.put(owner, localisationKey);
+    }
+
+    public static String getLocalisedOwnerName(String owner)
+    {
+        String localisationKey = ownerLocalisationMap.get(owner);
+        if (localisationKey == null)
+            return owner;
+
+        return Localisation.get(localisationKey);
+    }
+
+    public static List<Value<?>> getValues()
+    {
+        return Collections.unmodifiableList(values);
     }
 }

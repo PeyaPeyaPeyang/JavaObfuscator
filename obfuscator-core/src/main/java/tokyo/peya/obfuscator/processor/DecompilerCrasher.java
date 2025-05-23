@@ -30,9 +30,9 @@ public class DecompilerCrasher implements IClassTransformer
     private static final String PROCESSOR_NAME = "Decompiler Crasher";
 
     private static final String EMPTY_STRINGS;
-    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, DeprecationLevel.AVAILABLE, false);
-    private static final BooleanValue V_INVALID_SIGNATURES = new BooleanValue(PROCESSOR_NAME, "Invalid Signatures", "Adds invalid signatures", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_EMPTY_ANNOTATION = new BooleanValue(PROCESSOR_NAME, "Empty annotation spam", "Adds annotations which are repeated newline", DeprecationLevel.AVAILABLE, true);
+    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, "ui.transformers.decompiler_crasher.description", DeprecationLevel.AVAILABLE, false);
+    private static final BooleanValue V_INVALID_SIGNATURES = new BooleanValue(PROCESSOR_NAME, "Invalid Signatures", "ui.transformers.decompiler_crasher.invalid_signatures", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_EMPTY_ANNOTATION = new BooleanValue(PROCESSOR_NAME, "Empty annotation spam", "ui.transformers.decompiler_crasher.empty_annotation_spam", DeprecationLevel.AVAILABLE, true);
 
     static
     {
@@ -41,14 +41,17 @@ public class DecompilerCrasher implements IClassTransformer
 
     static
     {
+        ValueManager.registerOwner(PROCESSOR_NAME, "ui.transformers.decompiler_crasher");
         ValueManager.registerClass(DecompilerCrasher.class);
     }
 
     @Override
     public void process(ProcessorCallback callback, ClassNode node)
     {
-        if (Modifier.isInterface(node.access)) return;
-        if (!V_ENABLED.get()) return;
+        if (Modifier.isInterface(node.access))
+            return;
+        if (!V_ENABLED.get())
+            return;
 
         if (V_INVALID_SIGNATURES.get())
             if (node.signature == null)  // By ItzSomebody
