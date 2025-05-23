@@ -55,24 +55,24 @@ import java.util.regex.Pattern;
 @Slf4j(topic = "Processor/Name/NameObfuscation")
 public class NameObfuscation implements INameObfuscationProcessor
 {
-    private static final String PROCESSOR_NAME = "NameObfuscation";
+    private static final String PROCESSOR_NAME = "name_obfuscation";
     private static final Random random = new Random();
     private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, "ui.transformers.name.description", DeprecationLevel.AVAILABLE, false);
-    private static final StringValue V_EXCLUDED_CLASSES = new StringValue(PROCESSOR_NAME, "Excluded classes", "ui.transformers.name.excluded_classes", DeprecationLevel.AVAILABLE, "me.name.Class\nme.name.*\nio.netty.**", 5);
-    private static final StringValue V_EXCLUDED_METHODS = new StringValue(PROCESSOR_NAME, "Excluded methods", "ui.transformers.name.excluded_methods", DeprecationLevel.AVAILABLE, "me.name.Class.method\nme.name.Class**\nme.name.Class.*", 5);
-    private static final StringValue V_EXCLUDED_FIELDS = new StringValue(PROCESSOR_NAME, "Excluded fields", "ui.transformers.name.excluded_fields", DeprecationLevel.AVAILABLE, "me.name.Class.field\nme.name.Class.*\nme.name.**", 5);
-    private static final BooleanValue V_ALLOW_MISSING_LIBRARIES = new BooleanValue(PROCESSOR_NAME, "Allow Missing Libraries", "ui.transformers.name.allow_missing_libraries",DeprecationLevel.AVAILABLE, false);
-    private static final BooleanValue V_REMAP_CLASSES = new BooleanValue(PROCESSOR_NAME, "Enabled for class names", "ui.transformers.name.enable_class", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_REMAP_METHODS = new BooleanValue(PROCESSOR_NAME, "Enabled for method names", "ui.transformers.name.enable_method", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_REMAP_FIELDS = new BooleanValue(PROCESSOR_NAME, "Enabled for field names", "ui.transformers.name.enable_field", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_RANDOM_PACKAGE = new BooleanValue(PROCESSOR_NAME, "Randomise package structure", "ui.transformers.name.randomise_package", DeprecationLevel.AVAILABLE, false);
-    private static final StringValue V_NEW_PACKAGE = new StringValue(PROCESSOR_NAME, "New Packages", "ui.transformers.name.new_packages", DeprecationLevel.AVAILABLE, "", 5);
-    private static final BooleanValue V_RANDOM_SOURCE_FILE = new BooleanValue(PROCESSOR_NAME, "Randomise source file names", "ui.transformers.name.randomise_source_file", DeprecationLevel.AVAILABLE, false);
-    private static final BooleanValue V_RANDOM_DEBUG_SOURCE_FILE = new BooleanValue(PROCESSOR_NAME, "Randomise debug source file names",  "ui.transformers.name.randomise_debug_source_file", DeprecationLevel.AVAILABLE, false);
-    private static final StringValue V_NEW_SOURCE_FILE = new StringValue(PROCESSOR_NAME, "New source and debug file names", "ui.transformers.name.new_source_names", DeprecationLevel.AVAILABLE, "", 5);
+    private static final StringValue V_EXCLUDED_CLASSES = new StringValue(PROCESSOR_NAME, "excluded_classes", "ui.transformers.name.excluded_classes", DeprecationLevel.AVAILABLE, "me.name.Class\nme.name.*\nio.netty.**", 5);
+    private static final StringValue V_EXCLUDED_METHODS = new StringValue(PROCESSOR_NAME, "excluded_methods", "ui.transformers.name.excluded_methods", DeprecationLevel.AVAILABLE, "me.name.Class.method\nme.name.Class**\nme.name.Class.*", 5);
+    private static final StringValue V_EXCLUDED_FIELDS = new StringValue(PROCESSOR_NAME, "excluded_fields", "ui.transformers.name.excluded_fields", DeprecationLevel.AVAILABLE, "me.name.Class.field\nme.name.Class.*\nme.name.**", 5);
+    private static final BooleanValue V_ALLOW_MISSING_LIBRARIES = new BooleanValue(PROCESSOR_NAME, "allow_missing_libraries", "ui.transformers.name.allow_missing_libraries",DeprecationLevel.AVAILABLE, false);
+    private static final BooleanValue V_REMAP_CLASSES = new BooleanValue(PROCESSOR_NAME, "enabled_for_class_names", "ui.transformers.name.enable_class", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_REMAP_METHODS = new BooleanValue(PROCESSOR_NAME, "enabled_for_method_names", "ui.transformers.name.enable_method", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_REMAP_FIELDS = new BooleanValue(PROCESSOR_NAME, "enabled_for_field_names", "ui.transformers.name.enable_field", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_RANDOM_PACKAGE = new BooleanValue(PROCESSOR_NAME, "randomise_package_structure", "ui.transformers.name.randomise_package", DeprecationLevel.AVAILABLE, false);
+    private static final StringValue V_NEW_PACKAGE = new StringValue(PROCESSOR_NAME, "new_packages", "ui.transformers.name.new_packages", DeprecationLevel.AVAILABLE, "", 5);
+    private static final BooleanValue V_RANDOM_SOURCE_FILE = new BooleanValue(PROCESSOR_NAME, "randomise_source_file_names", "ui.transformers.name.randomise_source_file", DeprecationLevel.AVAILABLE, false);
+    private static final BooleanValue V_RANDOM_DEBUG_SOURCE_FILE = new BooleanValue(PROCESSOR_NAME, "randomise_debug_source_file_names",  "ui.transformers.name.randomise_debug_source_file", DeprecationLevel.AVAILABLE, false);
+    private static final StringValue V_NEW_SOURCE_FILE = new StringValue(PROCESSOR_NAME, "new_source_and_debug_file_names", "ui.transformers.name.new_source_names", DeprecationLevel.AVAILABLE, "", 5);
 
-    private static final BooleanValue V_SAVE_MAPPINGS = new BooleanValue(PROCESSOR_NAME, "Save mappings", "ui.transformers.name.save_mappings", DeprecationLevel.AVAILABLE, false);
-    private static final FilePathValue V_MAPPINGS_FILE_TO_SAVE = new FilePathValue(PROCESSOR_NAME, "Mappings file to save", "ui.transformers.name.mappings_file", DeprecationLevel.AVAILABLE, null);
+    private static final BooleanValue V_SAVE_MAPPINGS = new BooleanValue(PROCESSOR_NAME, "save_mappings", "ui.transformers.name.save_mappings", DeprecationLevel.AVAILABLE, false);
+    private static final FilePathValue V_MAPPINGS_FILE_TO_SAVE = new FilePathValue(PROCESSOR_NAME, "mappings_file_to_save", "ui.transformers.name.mappings_file", DeprecationLevel.AVAILABLE, null);
 
     static
     {

@@ -20,7 +20,7 @@ public class Processors
     private static final Class<?>[] PROCESSORS = {
             StaticInitialisationTransformer.class,
             Optimiser.class,
-            InlineTransformer.class,
+            // InlineTransformer.class,
             InvokeDynamic.class,
             StringEncryptionTransformer.class,
             NumberObfuscationTransformer.class,

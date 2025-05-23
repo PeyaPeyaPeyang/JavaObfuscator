@@ -34,7 +34,7 @@ import java.util.Random;
 
 public class ReferenceProxy implements IClassTransformer
 {
-    private static final String PROCESSOR_NAME = "ReferenceProxy";
+    private static final String PROCESSOR_NAME = "reference_proxy";
     private static final Random random = new Random();
     private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, "", DeprecationLevel.DEPRECATED, false);
 

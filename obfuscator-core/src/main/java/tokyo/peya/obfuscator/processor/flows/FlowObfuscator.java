@@ -46,14 +46,14 @@ public class FlowObfuscator implements IClassTransformer
     private static final String PROCESSOR_NAME = "FlowObfuscator";
     private static final Random random = new Random();
     private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME,  "ui.transformers.flow_obfuscator.description", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_MANGLE_COMPARISONS = new BooleanValue(PROCESSOR_NAME, "Mangle Comparisons",  "ui.transformers.flow_obfuscator.mangle_comparisons", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_REPLACE_GOTO = new BooleanValue(PROCESSOR_NAME, "Replace GOTO", "ui.transformers.flow_obfuscator.replace_goto", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_REPLACE_IF = new BooleanValue(PROCESSOR_NAME, "Replace If", "ui.transformers.flow_obfuscator.replace_if", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_BAD_POP = new BooleanValue(PROCESSOR_NAME, "Bad POP", "ui.transformers.flow_obfuscator.bad_pop", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_BAD_CONCAT = new BooleanValue(PROCESSOR_NAME, "Bad Concat", "ui.transformers.flow_obfuscator.bad_concat", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_MANGLE_SWITCHES_ENABLED = new BooleanValue(PROCESSOR_NAME, "Mangle Switches", "ui.transformers.flow_obfuscator.mangle_switches", DeprecationLevel.SOME_DEPRECATION, false);
-    private static final BooleanValue V_MANGLE_RETURN = new BooleanValue(PROCESSOR_NAME, "Mangle Return", "ui.transformers.flow_obfuscator.mangle_return", DeprecationLevel.SOME_DEPRECATION, false);
-    private static final BooleanValue V_MANGLE_LOCALS = new BooleanValue(PROCESSOR_NAME, "Mangle Local Variables", "ui.transformers.flow_obfuscator.mangle_local_variables", DeprecationLevel.SOME_DEPRECATION, false);
+    private static final BooleanValue V_MANGLE_COMPARISONS = new BooleanValue(PROCESSOR_NAME, "mangle_comparisons",  "ui.transformers.flow_obfuscator.mangle_comparisons", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_REPLACE_GOTO = new BooleanValue(PROCESSOR_NAME, "replace_goto", "ui.transformers.flow_obfuscator.replace_goto", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_REPLACE_IF = new BooleanValue(PROCESSOR_NAME, "replace_if", "ui.transformers.flow_obfuscator.replace_if", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_BAD_POP = new BooleanValue(PROCESSOR_NAME, "bad_pop", "ui.transformers.flow_obfuscator.bad_pop", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_BAD_CONCAT = new BooleanValue(PROCESSOR_NAME, "bad_concat", "ui.transformers.flow_obfuscator.bad_concat", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_MANGLE_SWITCHES_ENABLED = new BooleanValue(PROCESSOR_NAME, "mangle_switches", "ui.transformers.flow_obfuscator.mangle_switches", DeprecationLevel.SOME_DEPRECATION, false);
+    private static final BooleanValue V_MANGLE_RETURN = new BooleanValue(PROCESSOR_NAME, "mangle_return", "ui.transformers.flow_obfuscator.mangle_return", DeprecationLevel.SOME_DEPRECATION, false);
+    private static final BooleanValue V_MANGLE_LOCALS = new BooleanValue(PROCESSOR_NAME, "Mangle_local_variables", "ui.transformers.flow_obfuscator.mangle_local_variables", DeprecationLevel.SOME_DEPRECATION, false);
 
     static
     {

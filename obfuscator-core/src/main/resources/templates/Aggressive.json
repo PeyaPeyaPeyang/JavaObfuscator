@@ -1,36 +1,35 @@
 {
   "ShuffleMembers": {
-    "Enabled": true
+    "enabled": true
   },
   "InvokeDynamic": {
-    "Enabled": true
+    "enabled": true
   },
-  "LineNumberRemover": {
-    "Enabled": true,
-    "Rename local variables": true,
-    "Remove Line Numbers": true,
-    "Remove Debug Names": true,
-    "Add Local Variables": true
+  "line_number_remover": {
+    "enabled": true,
+    "rename_local_variables": true,
+    "remove_line_numbers": true,
+    "add_confusing_local_variables": true
   },
-  "FlowObfuscator": {
-    "Enabled": true,
-    "Replace GOTO": true,
-    "Replace If": true,
-    "Bad POP": true
+  "flow_obfuscator": {
+    "enabled": true,
+    "replace_goto": true,
+    "replace_if": true,
+    "bad_pop": true
   },
-  "HideMembers": {
-    "Enabled": true
+  "hide_members": {
+    "enabled": true
   },
-  "StringEncryption": {
-    "Enabled": true,
-    "HideStrings": true
+  "string_encryption": {
+    "enabled": true,
+    "hide_strings": true
   },
-  "NumberObfuscation": {
-    "Enabled": true,
-    "Extract to Array": true,
-    "Obfuscate Zero": true,
-    "Shift": true,
-    "And": true,
-    "Multiple Instructions": true
+  "number_obfuscation": {
+    "enabled": true,
+    "extract_to_array": true,
+    "obfuscate_zero": true,
+    "shift": true,
+    "and": true,
+    "multiple_instructions": true
   }
 }

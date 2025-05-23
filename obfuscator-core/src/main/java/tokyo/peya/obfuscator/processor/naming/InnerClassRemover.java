@@ -32,11 +32,11 @@ import java.util.regex.Pattern;
 
 public class InnerClassRemover implements INameObfuscationProcessor, IClassTransformer
 {
-    private static final String PROCESSOR_NAME = "InnerClassRemover";
+    private static final String PROCESSOR_NAME = "inner_class_remover";
     private static final Pattern INNER_CLASSES = Pattern.compile(".*[A-Za-z0-9_]+\\$[A-Za-z0-9_]+");
     private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, "ui.transformers.inner_class.description", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_REMAP = new BooleanValue(PROCESSOR_NAME, "Relocate classes",  "ui.transformers.inner_class.relocate_classes", DeprecationLevel.AVAILABLE, false);
-    private static final BooleanValue V_REMOVE_METADATA = new BooleanValue(PROCESSOR_NAME, "Remove metadata", "ui.transformers.inner_class.erase_metadata", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_REMAP = new BooleanValue(PROCESSOR_NAME, "relocate_classes",  "ui.transformers.inner_class.relocate_classes", DeprecationLevel.AVAILABLE, false);
+    private static final BooleanValue V_REMOVE_METADATA = new BooleanValue(PROCESSOR_NAME, "remove_metadata", "ui.transformers.inner_class.erase_metadata", DeprecationLevel.AVAILABLE, true);
 
     static
     {

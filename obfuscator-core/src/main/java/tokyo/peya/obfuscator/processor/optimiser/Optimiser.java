@@ -23,14 +23,13 @@ import tokyo.peya.obfuscator.configuration.values.EnabledValue;
 
 public class Optimiser implements IClassTransformer
 {
-    private static final String PROCESSOR_NAME = "Optimiser";
+    private static final String PROCESSOR_NAME = "optimiser";
 
     private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME,  "ui.transformers.optimiser", DeprecationLevel.AVAILABLE, false);
 
-    private static final BooleanValue V_REPLACE_EQUALS = new BooleanValue(PROCESSOR_NAME, "Replace String.equals()", "ui.transformers.optimiser.replace_equals", DeprecationLevel.SOME_DEPRECATION, false);
-    private static final BooleanValue V_EQUALS_IGNORE_CASE = new BooleanValue(PROCESSOR_NAME, "Replace String.equalsIgnoreCase()", "ui.transformers.optimiser.replace_equals_ic", DeprecationLevel.SOME_DEPRECATION, false);
-    private static final BooleanValue V_OPTIMIZE_STATIC_STRING_CALLS
-            = new BooleanValue(PROCESSOR_NAME, "Optimize static string calls(hashCode(), toUpper/LowerCase())",  "ui.transformers.optimiser.replace_static_calls", DeprecationLevel.AVAILABLE, false);
+    private static final BooleanValue V_REPLACE_EQUALS = new BooleanValue(PROCESSOR_NAME, "replace_string_equals", "ui.transformers.optimiser.replace_equals", DeprecationLevel.SOME_DEPRECATION, false);
+    private static final BooleanValue V_EQUALS_IGNORE_CASE = new BooleanValue(PROCESSOR_NAME, "replace_string_equals_ignore_case", "ui.transformers.optimiser.replace_equals_ic", DeprecationLevel.SOME_DEPRECATION, false);
+    private static final BooleanValue V_OPTIMIZE_STATIC_STRING_CALLS = new BooleanValue(PROCESSOR_NAME, "optimise_static_string_calls",  "ui.transformers.optimiser.replace_static_calls", DeprecationLevel.AVAILABLE, false);
 
     static
     {

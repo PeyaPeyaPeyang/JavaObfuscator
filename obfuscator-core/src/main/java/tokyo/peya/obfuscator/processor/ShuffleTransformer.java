@@ -31,34 +31,34 @@ import java.util.Random;
 
 public class ShuffleTransformer implements IClassTransformer
 {
-    private static final String PROCESSOR_NAME = "Shuffler";
+    private static final String PROCESSOR_NAME = "shuffler";
     private static final Random RANDOM = new Random();
 
     private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, "ui.transformers.shuffler.description", DeprecationLevel.AVAILABLE, true);
     private static final BooleanValue V_SHUFFLE_CLASS_STRUCTURE = new BooleanValue(
             PROCESSOR_NAME,
-            "Shuffle class structure",
+            "shuffle_class_structure",
             "ui.transformers.shuffler.shuffle_class_structure",
             DeprecationLevel.AVAILABLE,
             true
     );
     private static final BooleanValue V_SHUFFLE_METHOD_STRUCTURE = new BooleanValue(
             PROCESSOR_NAME,
-            "Shuffle method structure",
+            "shuffle_method_structure",
             "ui.transformers.shuffler.shuffle_method_structure",
             DeprecationLevel.AVAILABLE,
             true
     );
     private static final BooleanValue V_SHUFFLE_FIELD_STRUCTURE = new BooleanValue(
             PROCESSOR_NAME,
-            "Shuffle field structure",
+            "shuffle_field_structure",
             "ui.transformers.shuffler.shuffle_field_structure",
             DeprecationLevel.AVAILABLE,
             true
     );
     private static final BooleanValue V_SHUFFLE_ANNOTATIONS = new BooleanValue(
             PROCESSOR_NAME,
-            "Shuffle annotations order in all places",
+            "shuffle_annotations",
             "ui.transformers.shuffler.shuffle_annotations",
             DeprecationLevel.AVAILABLE,
             true
@@ -66,7 +66,7 @@ public class ShuffleTransformer implements IClassTransformer
 
     private static final BooleanValue V_SHUFFLE_DEBUG_CLASS_NAMES = new BooleanValue(
             PROCESSOR_NAME,
-            "Shuffle source file names among other classes",
+            "shuffle_source_file",
             "ui.transformers.shuffler.shuffle_debug_class_names",
             DeprecationLevel.AVAILABLE,
             true

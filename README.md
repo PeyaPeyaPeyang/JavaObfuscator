@@ -111,95 +111,109 @@ public class HelloWorld
 
 ```
 {
-  "input": "D:\\Computing\\HelloWorld\\out\\artifacts\\HelloWorld_jar\\HelloWorld.jar",
-  "output": "D:\\Computing\\HelloWorld\\out\\artifacts\\HelloWorld_jar\\HelloWorld-obf.jar",
+  "input": "",
+  "output": "",
   "script": "function isRemappingEnabledForClass(node) {\n    return true;\n}\nfunction isObfuscatorEnabledForClass(node) {\n    return true;\n}",
-  "libraries": [
-    "C:\\Program Files\\Java\\jre1.8.0_211\\lib",
-    "D:\\Computing\\backdoored_old\\dependencies",
-    "D:\\Computing\\backdoored\\libs"
-  ],
-  "Crasher": {
-    "Enabled": false,
-    "Invalid Signatures": true,
-    "Empty annotation spam": true
+  "threads": 28,
+  "libraries": [],
+  "string_encryption": {
+    "enabled": true,
+    "algorithm_aes": true,
+    "algorithm_xor": true,
+    "algorithm_blowfish": true,
+    "algorithm_des": true
   },
-  "InvokeDynamic": {
-    "Enabled": true
+  "line_number_remover": {
+    "enabled": true,
+    "rename_local_variables": true,
+    "remove_line_numbers": true,
+    "add_confusing_local_variables": true
   },
-  "HWIDPRotection": {
-    "Enabled": false,
-    "HWID": ""
+  "number_obfuscation": {
+    "enabled": true,
+    "extract_to_array": true,
+    "obfuscate_zero": true,
+    "shift": false,
+    "and": true,
+    "xor": true,
+    "string_length": true,
+    "simle_math": true,
+    "multiple_instructions": true
   },
-  "Optimizer": {
-    "Enabled": true,
-    "Replace String.equals()": true,
-    "Replace String.equalsIgnoreCase()": true,
-    "Optimize static string calls": true
+  "static_initialisation": {
+    "enabled": true
   },
-  "LineNumberRemover": {
-    "Enabled": true,
-    "Rename local variables": true,
-    "Remove Line Numbers": true,
-    "Remove Debug Names": true,
-    "Add Local Variables": true,
-    "New SourceFile Name": ""
+  "hide_strings": {
+    "enabled": true,
+    "optimise_ledger": true,
+    "start_marker": "",
+    "delimiter": "",
+    "end_marker": ""
   },
-  "StringEncryption": {
-    "Enabled": true,
-    "HideStrings": true,
-    "AES": true
+  "optimiser": {
+    "enabled": false,
+    "replace_string_equals": false,
+    "replace_string_equals_ignore_case": false,
+    "optimise_static_string_calls": false
   },
-  "NumberObfuscation": {
-    "Enabled": true,
-    "Extract to Array": true,
-    "Obfuscate Zero": true,
-    "Shift": false,
-    "And": false,
-    "Multiple Instructions": true
+  "invoke_dynamic": {
+    "enabled": false
   },
-  "ReferenceProxy": {
-    "Enabled": false
+  "general": {
+    "excluded_classes": "me.name.Class\nme.name.*\nio.netty.**",
+    "generator_characters": "Il",
+    "custom_dictionary": false,
+    "class_names_dictionary": "",
+    "name_dictionary": "",
+    "Use_store": false
   },
-  "ShuffleMembers": {
-    "Enabled": true
+  "decompiler_crasher": {
+    "enabled": false,
+    "invalid_signatures": true,
+    "empty_annotation_spam": true
   },
-  "InnerClassRemover": {
-    "Enabled": true,
-    "Remap": true,
-    "Remove Metadata": true
+  "name_obfuscation": {
+    "enabled": false,
+    "excluded_classes": "me.name.Class\nme.name.*\nio.netty.**",
+    "excluded_methods": "me.name.Class.method\nme.name.Class**\nme.name.Class.*",
+    "excluded_fields": "me.name.Class.field\nme.name.Class.*\nme.name.**",
+    "allow_missing_libraries": false,
+    "enabled_for_class_names": true,
+    "enabled_for_method_names": true,
+    "enabled_for_field_names": true,
+    "randomise_package_structure": false,
+    "new_packages": "",
+    "randomise_source_file_names": false,
+    "randomise_debug_source_file_names": false,
+    "new_source_and_debug_file_names": "",
+    "save_mappings": false
   },
-  "NameObfuscation": {
-    "Enabled": true,
-    "Excluded classes": "HelloWorld",
-    "Excluded methods": "",
-    "Excluded fields": ""
+  "hide_members": {
+    "enabled": true
   },
-  "General Settings": {
-    "Custom dictionary": true,
-    "Name dictionary": "hello,world"
-  },
-  "Packager": {
-    "Enabled": false,
-    "Use MainClass from the JAR manifest": true,
-    "Main class": "HelloWorld"
+  "shuffler": {
+    "enabled": true,
+    "shuffle_class_structure": true,
+    "shuffle_method_structure": true,
+    "shuffle_field_structure": true,
+    "shuffle_annotations": true,
+    "shuffle_source_file": true
   },
   "FlowObfuscator": {
-    "Enabled": true,
-    "Mangle Comparisons": true,
-    "Replace GOTO": true,
-    "Replace If": true,
-    "Bad POP": true,
-    "Bad Concat": true,
-    "Mangle Switches": false,
-    "Mangle Return": false,
-    "Mangle Local Variables": false
+    "enabled": true,
+    "mangle_comparisons": true,
+    "replace_goto": true,
+    "replace_if": true,
+    "bad_pop": true,
+    "bad_concat": true,
+    "mangle_switches": false,
+    "mangle_return": false,
+    "Mangle_local_variables": false
   },
-  "HideMembers": {
-    "Enabled": true
-  },
-  "Inlining": {
-    "Enabled": false
+  "inner_class_remover": {
+    "enabled": true,
+    "relocate_classes": false,
+    "remove_metadata": true
   }
 }
 ```

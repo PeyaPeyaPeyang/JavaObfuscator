@@ -38,18 +38,18 @@ import static org.objectweb.asm.Opcodes.T_BYTE;
 public class Packager
 {
     private static final Random RANDOM = new Random();
-    private static final String PROCESSOR_NAME = "Packager";
+    private static final String PROCESSOR_NAME = "packager";
 
     private static final EnabledValue V_ENABLED = new EnabledValue(
             PROCESSOR_NAME,
-            "Generate custom ClassLoader and load your classes with it dynamically.",
+            "ui.transformers.packager.description",
             DeprecationLevel.AVAILABLE,
             false
     );
-    private static final BooleanValue V_AUTO_FIND_MAIN_CLASS = new BooleanValue(PROCESSOR_NAME, "Auto find Main class", "ui.transformers.packager.auto_find_main_class", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_AUTO_FIND_MAIN_CLASS = new BooleanValue(PROCESSOR_NAME, "auto_find_main_class", "ui.transformers.packager.auto_find_main_class", DeprecationLevel.AVAILABLE, true);
     private static final StringValue V_MAIN_CLASS = new StringValue(
             PROCESSOR_NAME,
-            "Main class",
+            "main_class",
             "ui.transformers.packager.main_class",
             DeprecationLevel.AVAILABLE,
             "org.example.Main"

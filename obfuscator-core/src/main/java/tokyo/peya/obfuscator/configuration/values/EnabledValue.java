@@ -20,7 +20,7 @@ public class EnabledValue extends BooleanValue
 
     public EnabledValue(String owner, String featureDescriptionKey, DeprecationLevel deprecation, Boolean object)
     {
-        super(owner, "Enabled", "ui.transformers.enabled", deprecation, object);
+        super(owner, "enabled", "ui.transformers.enabled", deprecation, object);
         this.featureDescriptionKey = featureDescriptionKey;
     }
 

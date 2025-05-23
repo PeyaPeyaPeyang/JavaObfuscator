@@ -39,18 +39,18 @@ import java.util.Random;
 @Slf4j(topic = "Processor/NumberObfuscationTransformer")
 public class NumberObfuscationTransformer implements IClassTransformer
 {
-    private static final String PROCESSOR_NAME = "NumberObfuscation";
+    private static final String PROCESSOR_NAME = "number_obfuscation";
     private static final Random random = new Random();
     private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, "ui.transformers.number", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_EXTRACT_TO_ARRAY = new BooleanValue(PROCESSOR_NAME, "Extract to Array", "ui.transformers.number.extract_to_array", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_SPECIAL_OBFUSCATE_ZERO = new BooleanValue(PROCESSOR_NAME, "Obfuscate Zero", "ui.transformers.number.obfuscate_zero", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_SHIFT = new BooleanValue(PROCESSOR_NAME, "Shift", "ui.transformers.number.shift", DeprecationLevel.AVAILABLE, false);
-    private static final BooleanValue V_METHOD_AND = new BooleanValue(PROCESSOR_NAME, "And", "ui.transformers.number.and.description", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_METHOD_XOR = new BooleanValue(PROCESSOR_NAME, "XOR", "ui.transformers.number.xor", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_METHOD_STRING_LENGTH = new BooleanValue(PROCESSOR_NAME, "String Length", "ui.transformers.number.string_length", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_METHOD_SIMPLE_MATH = new BooleanValue(PROCESSOR_NAME, "Simple Math", "ui.transformers.number.simple_math", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_EXTRACT_TO_ARRAY = new BooleanValue(PROCESSOR_NAME, "extract_to_array", "ui.transformers.number.extract_to_array", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_SPECIAL_OBFUSCATE_ZERO = new BooleanValue(PROCESSOR_NAME, "obfuscate_zero", "ui.transformers.number.obfuscate_zero", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_SHIFT = new BooleanValue(PROCESSOR_NAME, "shift", "ui.transformers.number.shift", DeprecationLevel.AVAILABLE, false);
+    private static final BooleanValue V_METHOD_AND = new BooleanValue(PROCESSOR_NAME, "and", "ui.transformers.number.and", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_METHOD_XOR = new BooleanValue(PROCESSOR_NAME, "xor", "ui.transformers.number.xor", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_METHOD_STRING_LENGTH = new BooleanValue(PROCESSOR_NAME, "string_length", "ui.transformers.number.string_length", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_METHOD_SIMPLE_MATH = new BooleanValue(PROCESSOR_NAME, "simle_math", "ui.transformers.number.simple_math", DeprecationLevel.AVAILABLE, true);
 
-    private static final BooleanValue V_MULTIPLE_INSTRUCTIONS = new BooleanValue(PROCESSOR_NAME, "Multiple Instructions", "ui.transformers.number.multiple_instructions", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_MULTIPLE_INSTRUCTIONS = new BooleanValue(PROCESSOR_NAME, "multiple_instructions", "ui.transformers.number.multiple_instructions", DeprecationLevel.AVAILABLE, true);
 
     static
     {

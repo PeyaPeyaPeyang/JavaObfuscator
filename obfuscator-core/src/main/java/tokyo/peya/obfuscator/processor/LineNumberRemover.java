@@ -36,13 +36,13 @@ import java.util.Random;
 
 public class LineNumberRemover implements IClassTransformer
 {
-    private static final String PROCESSOR_NAME = "LineNumberRemover";
+    private static final String PROCESSOR_NAME = "line_number_remover";
     private static final Random random = new Random();
     private static final ArrayList<String> TYPES = new ArrayList<>();
     private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, "ui.transformers.line_number_remover.description", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_RENAME_VALUES = new BooleanValue(PROCESSOR_NAME, "Rename local variables", "ui.transformers.line_number_remover.rename_local_vars", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_REMOVE_LINE_NUMBERS = new BooleanValue(PROCESSOR_NAME, "Remove line Numbers", "ui.transformers.line_number_remover.remove_line_nums", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_ADD_LOCAL_VARIABLES = new BooleanValue(PROCESSOR_NAME, "Add confusing local variables", "ui.transformers.line_number_remover.add_local_vars", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_RENAME_VALUES = new BooleanValue(PROCESSOR_NAME, "rename_local_variables", "ui.transformers.line_number_remover.rename_local_vars", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_REMOVE_LINE_NUMBERS = new BooleanValue(PROCESSOR_NAME, "remove_line_numbers", "ui.transformers.line_number_remover.remove_line_nums", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_ADD_LOCAL_VARIABLES = new BooleanValue(PROCESSOR_NAME, "add_confusing_local_variables", "ui.transformers.line_number_remover.add_local_vars", DeprecationLevel.AVAILABLE, true);
 
     static
     {

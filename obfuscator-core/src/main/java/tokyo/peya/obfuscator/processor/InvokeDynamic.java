@@ -76,7 +76,7 @@ import static org.objectweb.asm.Opcodes.NEW;
 @Slf4j(topic = "Processor/InvokeDynamic")
 public class InvokeDynamic implements IClassTransformer
 {
-    private static final String PROCESSOR_NAME = "InvokeDynamic";
+    private static final String PROCESSOR_NAME = "invoke_dynamic";
     private static final Random random = new Random();
     private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, "ui.transformers.invoke_dynamic.description", DeprecationLevel.SOME_DEPRECATION, false);
 

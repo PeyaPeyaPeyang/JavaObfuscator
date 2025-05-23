@@ -53,13 +53,13 @@ import java.util.Random;
 @Slf4j(topic = "Processor/StringEncryption")
 public class StringEncryptionTransformer implements IClassTransformer
 {
-    private static final String PROCESSOR_NAME = "StringEncryption";
+    private static final String PROCESSOR_NAME = "string_encryption";
     private static final Random random = new Random();
     private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, "ui.transformers.string_encryption.description", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_ALGO_AES = new BooleanValue(PROCESSOR_NAME, "Algorithm: AES", "ui.transformers.string_encryption.algo_aes", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_ALGO_XOR = new BooleanValue(PROCESSOR_NAME, "Algorithm: XOR Processing", "ui.transformers.string_encryption.algo_xor", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_ALGO_BLOWFISH = new BooleanValue(PROCESSOR_NAME, "Algorithm: Blowfish", "ui.transformers.string_encryption.algo_blowfish", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_ALGO_DES = new BooleanValue(PROCESSOR_NAME, "Algorithm: DES", "ui.transformers.string_encryption.algo_des", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_ALGO_AES = new BooleanValue(PROCESSOR_NAME, "algorithm_aes", "ui.transformers.string_encryption.algo_aes", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_ALGO_XOR = new BooleanValue(PROCESSOR_NAME, "algorithm_xor", "ui.transformers.string_encryption.algo_xor", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_ALGO_BLOWFISH = new BooleanValue(PROCESSOR_NAME, "algorithm_blowfish", "ui.transformers.string_encryption.algo_blowfish", DeprecationLevel.AVAILABLE, true);
+    private static final BooleanValue V_ALGO_DES = new BooleanValue(PROCESSOR_NAME, "algorithm_des", "ui.transformers.string_encryption.algo_des", DeprecationLevel.AVAILABLE, true);
 
 
     static

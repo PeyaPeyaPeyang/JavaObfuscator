@@ -34,7 +34,7 @@ import java.util.Random;
 
 public class StaticInitialisationTransformer implements IClassTransformer
 {
-    private static final String PROCESSOR_NAME = "Static Initialisation";
+    private static final String PROCESSOR_NAME = "static_initialisation";
 
     private static final Random random = new Random();
     private final Obfuscator inst;

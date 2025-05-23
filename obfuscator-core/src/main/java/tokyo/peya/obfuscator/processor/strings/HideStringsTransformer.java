@@ -34,26 +34,26 @@ import java.util.Random;
 @Slf4j(topic = "Processor/String/HideStrings")
 public class HideStringsTransformer implements IClassTransformer
 {
-    private static final String PROCESSOR_NAME = "HideStrings";
+    private static final String PROCESSOR_NAME = "hide_strings";
 
     private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME,
             "ui.transformers.hide_strings.description",
             DeprecationLevel.AVAILABLE, true
     );
     private static final BooleanValue V_OPTIMIZE = new BooleanValue(PROCESSOR_NAME,
-            "Optimize the ledger",
+            "optimise_ledger",
             "ui.transformers.hide_strings.optimise_ledger",
             DeprecationLevel.AVAILABLE, true
     );
-    private static final StringValue V_MARKER_START = new StringValue(PROCESSOR_NAME, "Marker: begin",
+    private static final StringValue V_MARKER_START = new StringValue(PROCESSOR_NAME, "start_marker",
             "ui.transformers.hide_strings.start_marker",
             DeprecationLevel.AVAILABLE, "", 1
     );
-    private static final StringValue V_DELIMITER = new StringValue(PROCESSOR_NAME, "Delimiter",
+    private static final StringValue V_DELIMITER = new StringValue(PROCESSOR_NAME, "delimiter",
             "ui.transformers.hide_strings.delimiter",
             DeprecationLevel.AVAILABLE, "", 1
     );
-    private static final StringValue V_MARKER_END = new StringValue(PROCESSOR_NAME, "Marker: end",
+    private static final StringValue V_MARKER_END = new StringValue(PROCESSOR_NAME, "end_marker",
             "ui.transformers.hide_strings.end_marker",
             DeprecationLevel.AVAILABLE, "", 1
     );
