@@ -3,7 +3,7 @@
   <grid id="27dc6" binding="panel1" default-binding="true" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="1" bottom="0" right="1"/>
     <constraints>
-      <xy x="20" y="20" width="884" height="630"/>
+      <xy x="20" y="20" width="1383" height="630"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -314,6 +314,98 @@
                   <text resource-bundle="langs/messages" key="ui.tabs.templates.button.apply"/>
                 </properties>
               </component>
+            </children>
+          </grid>
+          <grid id="c7bdf" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="0" left="0" bottom="0" right="0"/>
+            <constraints>
+              <tabbedpane title-resource-bundle="langs/messages" title-key="ui.tabs.preview"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <grid id="ef908" layout-manager="GridLayoutManager" row-count="2" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                <margin top="0" left="0" bottom="0" right="0"/>
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties/>
+                <border type="none"/>
+                <children>
+                  <hspacer id="578de">
+                    <constraints>
+                      <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false">
+                        <preferred-size width="633" height="11"/>
+                      </grid>
+                    </constraints>
+                  </hspacer>
+                  <grid id="91dfc" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                    <margin top="0" left="0" bottom="0" right="0"/>
+                    <constraints>
+                      <grid row="1" column="0" row-span="1" col-span="4" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties/>
+                    <border type="none"/>
+                    <children>
+                      <scrollpane id="1e18" class="org.fife.ui.rtextarea.RTextScrollPane">
+                        <constraints>
+                          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                        </constraints>
+                        <properties>
+                          <verticalScrollBarPolicy value="20"/>
+                        </properties>
+                        <border type="none"/>
+                        <children>
+                          <component id="786ed" class="org.fife.ui.rsyntaxtextarea.RSyntaxTextArea" binding="originalArea">
+                            <constraints/>
+                            <properties>
+                              <editable value="true"/>
+                              <enabled value="true"/>
+                              <syntaxEditingStyle value="text/java" noi18n="true"/>
+                            </properties>
+                          </component>
+                        </children>
+                      </scrollpane>
+                      <scrollpane id="f129d" class="org.fife.ui.rtextarea.RTextScrollPane">
+                        <constraints>
+                          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                        </constraints>
+                        <properties/>
+                        <border type="none"/>
+                        <children>
+                          <component id="d4227" class="org.fife.ui.rsyntaxtextarea.RSyntaxTextArea" binding="obfuscatedArea">
+                            <constraints/>
+                            <properties>
+                              <editable value="false"/>
+                              <paintMarkOccurrencesBorder value="true"/>
+                              <paintMatchedBracketPair value="true"/>
+                              <paintTabLines value="true"/>
+                              <syntaxEditingStyle value="text/java" noi18n="true"/>
+                              <tabsEmulated value="true"/>
+                            </properties>
+                          </component>
+                        </children>
+                      </scrollpane>
+                    </children>
+                  </grid>
+                  <component id="81a4f" class="javax.swing.JButton" binding="pickAnotherClassButton">
+                    <constraints>
+                      <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties>
+                      <text resource-bundle="langs/messages" key="ui.tabs.preview.pick_another_class_button"/>
+                    </properties>
+                  </component>
+                  <component id="aa2d7" class="javax.swing.JButton" binding="updatePreviewButton">
+                    <constraints>
+                      <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties>
+                      <text resource-bundle="langs/messages" key="ui.tabs.preview.update_button"/>
+                    </properties>
+                  </component>
+                </children>
+              </grid>
             </children>
           </grid>
           <grid id="b5f51" layout-manager="GridLayoutManager" row-count="2" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">

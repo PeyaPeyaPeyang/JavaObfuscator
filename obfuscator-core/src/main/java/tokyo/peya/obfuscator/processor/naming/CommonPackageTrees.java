@@ -80,20 +80,43 @@ public class CommonPackageTrees
         while (true)
         {
             if (current == null)
-            {
                 current = root.get(random.nextInt(root.size()));
-            }
 
             path.append(current.data).append("/");
 
             if (random.nextBoolean() || current.leaves.size() <= 0)
-            {
                 return path.toString();
-            }
 
             int i = random.nextInt(current.leaves.size());
             current = current.leaves.get(i);
         }
+    }
+
+    public static boolean isCommonPackage(String name)
+    {
+        List<String> parts = Arrays.asList(name.split("\\."));
+        if (parts.size() < 2)
+            return false;
+
+        Tree current = null;
+        for (String part : parts)
+        {
+            if (current != null)
+                current = current.get(part);
+            else
+            {
+                for (Tree root : CommonPackageTrees.root)
+                {
+                    if (root.data.equals(part))
+                    {
+                        current = root;
+                        break;
+                    }
+                }
+            }
+        }
+
+        return current != null && !current.leaves.isEmpty();
     }
 }
 

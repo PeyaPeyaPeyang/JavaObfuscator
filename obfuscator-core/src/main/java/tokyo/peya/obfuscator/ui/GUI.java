@@ -39,6 +39,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rsyntaxtextarea.Theme;
 import org.fife.ui.rtextarea.RTextScrollPane;
+import org.objectweb.asm.tree.ClassNode;
 import tokyo.peya.obfuscator.JavaObfuscator;
 import tokyo.peya.obfuscator.Localisation;
 import tokyo.peya.obfuscator.configuration.ConfigManager;
@@ -69,6 +70,7 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -104,6 +106,10 @@ public class GUI extends JFrame
     private JLabel threadsLabel;
     private JCheckBox verbose;
     private JButton clearLogButton;
+    private JButton updatePreviewButton;
+    private RSyntaxTextArea originalArea;
+    private RSyntaxTextArea obfuscatedArea;
+    private JButton pickAnotherClassButton;
     private List<String> libraryList = new ArrayList<>();
 
     static
@@ -134,6 +140,7 @@ public class GUI extends JFrame
     public GUI()
     {
 
+        $$$setupUI$$$();
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setContentPane(this.panel1);
         setSize(1020, 800);
@@ -143,16 +150,12 @@ public class GUI extends JFrame
         this.inputBrowseButton.addActionListener(e -> {
             String file = Utils.chooseFile(null, GUI.this, new JarFileFilter());
             if (file != null)
-            {
                 this.inputTextField.setText(file);
-            }
         });
         this.outputBrowseButton.addActionListener(e -> {
             String file = Utils.chooseFile(null, GUI.this, new JarFileFilter(), true);
             if (file != null)
-            {
                 this.outputTextField.setText(file);
-            }
         });
         this.obfuscateButton.addActionListener(e -> startObfuscator());
         this.buildButton.addActionListener(e -> buildConfig());
@@ -208,7 +211,11 @@ public class GUI extends JFrame
         this.templates.setListData(templatesArray);
         try
         {
-            Theme.load(GUI.class.getResourceAsStream("/theme.xml")).apply(this.scriptArea);
+            Theme theme = Theme.load(GUI.class.getResourceAsStream("/theme.xml"));
+            theme.apply(this.scriptArea);
+            //Preview
+            theme.apply(this.originalArea);
+            theme.apply(this.obfuscatedArea);
         }
         catch (IOException e)
         {
@@ -286,6 +293,67 @@ public class GUI extends JFrame
         this.threadsSlider.setMaximum(cores);
         this.threadsSlider.setValue(cores);
 
+        this.updatePreviewButton.addActionListener(e -> {
+            try
+            {
+                if (this.originalArea.getText().isEmpty())
+                {
+                    String text = PreviewGenerator.classNodeToCode(PreviewGenerator.DEFAULT_HELLO_WORLD_CLASS);
+                    this.originalArea.setText(text);
+                }
+
+                byte[] compiled = PreviewGenerator.compile(
+                        this.originalArea.getText()
+                );
+                if (compiled == null)
+                {
+                    JOptionPane.showMessageDialog(
+                            GUI.this, Localisation.get("ui.messages.error.invalid_jvm_file"),
+                            Localisation.get("ui.messages.error"), JOptionPane.ERROR_MESSAGE
+                    );
+                    return;
+                }
+
+                ClassNode compiledCN = PreviewGenerator.toClassNode(compiled);
+                String obfuscated = PreviewGenerator.classNodeToCode(
+                        PreviewGenerator.obfuscate(compiledCN, createConfiguration())
+                );
+                this.obfuscatedArea.setText(obfuscated);
+            }
+            catch (Exception e1)
+            {
+                e1.printStackTrace();
+                showExceptionNotification(e1);
+            }
+        });
+
+        this.pickAnotherClassButton.addActionListener(e -> {
+            String input = this.inputTextField.getText();
+            if (input == null || input.isEmpty())
+            {
+                JOptionPane.showMessageDialog(
+                        GUI.this, Localisation.get("ui.messages.error.no_input"),
+                        Localisation.get("ui.messages.error"), JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
+
+            Path path = Paths.get(input);
+            if (!Files.exists(path))
+            {
+                JOptionPane.showMessageDialog(
+                        GUI.this, Localisation.get("ui.messages.error.invalid_jvm_file"),
+                        Localisation.get("ui.messages.error"), JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
+
+            ClassNode randomClass = PreviewGenerator.getRandomInputClass(path);
+            String text = PreviewGenerator.classNodeToCode(randomClass);
+            this.originalArea.setText(text);
+
+            this.updatePreviewButton.doClick();
+         });
 
         setVisible(true);
     }
@@ -308,14 +376,7 @@ public class GUI extends JFrame
     private void buildConfig()
     {
         this.configPanel.setText(ConfigManager.generateConfig(
-                                         new Configuration(
-                                                 this.libraryList,
-                                                 this.inputTextField.getText(),
-                                                 this.outputTextField.getText(),
-                                                 this.scriptArea.getText(),
-                                                 this.threadsSlider.getValue(),
-                                                 null
-                                         ),
+                createConfiguration(),
                                          this.prettyPrintCheckBox.isSelected()
                                  )
         );
@@ -344,13 +405,6 @@ public class GUI extends JFrame
                 JOptionPane.ERROR_MESSAGE
         );
 
-    }
-
-    {
-// GUI initializer generated by IntelliJ IDEA GUI Designer
-// >>> IMPORTANT!! <<<
-// DO NOT EDIT OR ADD ANY CODE HERE!
-        $$$setupUI$$$();
     }
 
     /**
@@ -945,10 +999,173 @@ public class GUI extends JFrame
                 )
         );
         final JPanel panel9 = new JPanel();
-        panel9.setLayout(new GridLayoutManager(2, 3, new Insets(5, 5, 1, 5), -1, -1));
-        tabbedPane1.addTab(this.$$$getMessageFromBundle$$$("langs/messages", "ui.tabs.logs.title"), panel9);
-        final JScrollPane scrollPane3 = new JScrollPane();
+        panel9.setLayout(new GridLayoutManager(1, 1, new Insets(0, 0, 0, 0), -1, -1));
+        tabbedPane1.addTab(this.$$$getMessageFromBundle$$$("langs/messages", "ui.tabs.preview"), panel9);
+        final JPanel panel10 = new JPanel();
+        panel10.setLayout(new GridLayoutManager(2, 4, new Insets(0, 0, 0, 0), -1, -1));
         panel9.add(
+                panel10,
+                new GridConstraints(
+                        0,
+                        0,
+                        1,
+                        1,
+                        GridConstraints.ANCHOR_CENTER,
+                        GridConstraints.FILL_BOTH,
+                        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                        null,
+                        null,
+                        null,
+                        0,
+                        false
+                )
+        );
+        final Spacer spacer2 = new Spacer();
+        panel10.add(
+                spacer2,
+                new GridConstraints(
+                        0,
+                        1,
+                        1,
+                        1,
+                        GridConstraints.ANCHOR_CENTER,
+                        GridConstraints.FILL_HORIZONTAL,
+                        GridConstraints.SIZEPOLICY_WANT_GROW,
+                        1,
+                        null,
+                        new Dimension(633, 11),
+                        null,
+                        0,
+                        false
+                )
+        );
+        final JPanel panel11 = new JPanel();
+        panel11.setLayout(new GridLayoutManager(1, 2, new Insets(0, 0, 0, 0), -1, -1));
+        panel10.add(
+                panel11,
+                new GridConstraints(
+                        1,
+                        0,
+                        1,
+                        4,
+                        GridConstraints.ANCHOR_CENTER,
+                        GridConstraints.FILL_BOTH,
+                        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                        null,
+                        null,
+                        null,
+                        0,
+                        false
+                )
+        );
+        final RTextScrollPane rTextScrollPane2 = new RTextScrollPane();
+        rTextScrollPane2.setVerticalScrollBarPolicy(20);
+        panel11.add(
+                rTextScrollPane2,
+                new GridConstraints(
+                        0,
+                        0,
+                        1,
+                        1,
+                        GridConstraints.ANCHOR_CENTER,
+                        GridConstraints.FILL_BOTH,
+                        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                        null,
+                        null,
+                        null,
+                        0,
+                        false
+                )
+        );
+        originalArea = new RSyntaxTextArea();
+        originalArea.setEditable(true);
+        originalArea.setEnabled(true);
+        originalArea.setSyntaxEditingStyle("text/java");
+        rTextScrollPane2.setViewportView(originalArea);
+        final RTextScrollPane rTextScrollPane3 = new RTextScrollPane();
+        panel11.add(
+                rTextScrollPane3,
+                new GridConstraints(
+                        0,
+                        1,
+                        1,
+                        1,
+                        GridConstraints.ANCHOR_CENTER,
+                        GridConstraints.FILL_BOTH,
+                        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                        null,
+                        null,
+                        null,
+                        0,
+                        false
+                )
+        );
+        obfuscatedArea = new RSyntaxTextArea();
+        obfuscatedArea.setEditable(false);
+        obfuscatedArea.setPaintMarkOccurrencesBorder(true);
+        obfuscatedArea.setPaintMatchedBracketPair(true);
+        obfuscatedArea.setPaintTabLines(true);
+        obfuscatedArea.setSyntaxEditingStyle("text/java");
+        obfuscatedArea.setTabsEmulated(true);
+        rTextScrollPane3.setViewportView(obfuscatedArea);
+        pickAnotherClassButton = new JButton();
+        this.$$$loadButtonText$$$(
+                pickAnotherClassButton,
+                this.$$$getMessageFromBundle$$$(
+                        "langs/messages",
+                        "ui.tabs.preview.pick_another_class_button"
+                )
+        );
+        panel10.add(
+                pickAnotherClassButton,
+                new GridConstraints(
+                        0,
+                        2,
+                        1,
+                        1,
+                        GridConstraints.ANCHOR_CENTER,
+                        GridConstraints.FILL_HORIZONTAL,
+                        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                        GridConstraints.SIZEPOLICY_FIXED,
+                        null,
+                        null,
+                        null,
+                        0,
+                        false
+                )
+        );
+        updatePreviewButton = new JButton();
+        this.$$$loadButtonText$$$(
+                updatePreviewButton,
+                this.$$$getMessageFromBundle$$$("langs/messages", "ui.tabs.preview.update_button")
+        );
+        panel10.add(
+                updatePreviewButton,
+                new GridConstraints(
+                        0,
+                        3,
+                        1,
+                        1,
+                        GridConstraints.ANCHOR_CENTER,
+                        GridConstraints.FILL_HORIZONTAL,
+                        GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                        GridConstraints.SIZEPOLICY_FIXED,
+                        null,
+                        null,
+                        null,
+                        0,
+                        false
+                )
+        );
+        final JPanel panel12 = new JPanel();
+        panel12.setLayout(new GridLayoutManager(2, 3, new Insets(5, 5, 1, 5), -1, -1));
+        tabbedPane1.addTab(this.$$$getMessageFromBundle$$$("langs/messages", "ui.tabs.logs.title"), panel12);
+        final JScrollPane scrollPane3 = new JScrollPane();
+        panel12.add(
                 scrollPane3,
                 new GridConstraints(
                         0,
@@ -975,7 +1192,7 @@ public class GUI extends JFrame
                 autoScroll,
                 this.$$$getMessageFromBundle$$$("langs/messages", "ui.tabs.logs.auto_scroll")
         );
-        panel9.add(
+        panel12.add(
                 autoScroll,
                 new GridConstraints(
                         1,
@@ -996,7 +1213,7 @@ public class GUI extends JFrame
         verbose = new JCheckBox();
         verbose.setSelected(false);
         this.$$$loadButtonText$$$(verbose, this.$$$getMessageFromBundle$$$("langs/messages", "ui.tabs.logs.verbose"));
-        panel9.add(
+        panel12.add(
                 verbose,
                 new GridConstraints(
                         1,
@@ -1019,7 +1236,7 @@ public class GUI extends JFrame
                 clearLogButton,
                 this.$$$getMessageFromBundle$$$("langs/messages", "ui.tabs.logs.button.clear")
         );
-        panel9.add(
+        panel12.add(
                 clearLogButton,
                 new GridConstraints(
                         1,
@@ -1178,14 +1395,7 @@ public class GUI extends JFrame
                         this.obfuscateButton.setEnabled(false);
 
                         JavaObfuscator.VERBOSE = this.verbose.isSelected();
-                        Configuration config = new Configuration(
-                                this.libraryList,
-                                this.inputTextField.getText(),
-                                this.outputTextField.getText(),
-                                this.scriptArea.getText(),
-                                this.threadsSlider.getValue(),
-                                null
-                        );
+                        Configuration config = createConfiguration();
 
                         boolean succeed = JavaObfuscator.runObfuscator(config);
                         if (!(succeed || JavaObfuscator.getLastException() == null))
@@ -1199,6 +1409,18 @@ public class GUI extends JFrame
         {
             showExceptionNotification(e);
         }
+    }
+
+    private Configuration createConfiguration()
+    {
+        return new Configuration(
+                this.libraryList,
+                this.inputTextField.getText(),
+                this.outputTextField.getText(),
+                this.scriptArea.getText(),
+                this.threadsSlider.getValue(),
+                null
+        );
     }
 
     private void initValues()
@@ -1218,7 +1440,10 @@ public class GUI extends JFrame
                              {
                                  BooleanValue booleanValue = (BooleanValue) value;
 
-                                 JCheckBox checkBox = new JCheckBox(Localisation.get(booleanValue.getLocalisationKey()), booleanValue.get());
+                                 JCheckBox checkBox = new JCheckBox(
+                                         Localisation.get(booleanValue.getLocalisationKey()),
+                                         booleanValue.get()
+                                 );
                                  checkBox.addActionListener(event -> booleanValue.setValue(checkBox.isSelected()));
                                  panel.add(checkBox);
 

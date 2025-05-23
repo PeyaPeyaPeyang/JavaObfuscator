@@ -1000,4 +1000,31 @@ public class Obfuscator
 
         return true;
     }
+
+    public ClassNode processClass(ClassNode node)
+    {
+        for (IClassTransformer proc : this.processors)
+        {
+            if (this.script != null && !this.script.isObfuscatorEnabled(node))
+                continue;
+
+            if (this.isExcludedClass(node.name))
+                continue;
+
+            try
+            {
+                proc.process(new ProcessorCallback(), node);
+            }
+            catch (Exception e)
+            {
+                log.error(Localisation.access("logs.obfuscation.transforming.error")
+                        .set("entryName", node.name)
+                        .get(),
+                        e
+                );
+            }
+        }
+
+        return node;
+    }
 }

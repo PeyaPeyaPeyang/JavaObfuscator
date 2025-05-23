@@ -25,6 +25,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.objectweb.asm.tree.ClassNode;
 import org.slf4j.LoggerFactory;
 import tokyo.peya.obfuscator.configuration.ConfigManager;
 import tokyo.peya.obfuscator.configuration.Configuration;
@@ -302,4 +303,14 @@ public class JavaObfuscator
         root.setLevel(logLevel);
     }
 
+    public static ClassNode obfuscateClass(ClassNode classNode, Configuration config)
+    {
+        log.debug("Obfuscating one class: " + classNode.name);
+        Obfuscator obfuscator = JavaObfuscator.currentSession = new Obfuscator(config);
+        obfuscator.processClass(classNode);
+        JavaObfuscator.currentSession = null;
+        log.debug("DONE!");
+
+        return classNode;
+    }
 }
