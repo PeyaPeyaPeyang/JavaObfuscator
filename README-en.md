@@ -70,7 +70,13 @@ This is a powerful obfuscation tool for Java bytecode, offering the following fe
 
 ## Usage Examples
 
-*(Insert code block here)*
++ Requires [Java 17](https://www.oracle.com/java/technologies/javase-jdk17-downloads.html) 
+
+```bash
+java -jar obfuscator.jar --jarIn helloWorld.jar --jarOut helloWorld-obf.jar
+java -jar obfuscator.jar --jarIn helloWorld.jar --jarOut helloWorld-obf.jar --config obfConfig.json
+java -jar obfuscator.jar # With GUI 
+```
 
 ---
 

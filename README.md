@@ -53,11 +53,14 @@
 
 ---
 
-## 使用例
+## 使用方法
+
++ [Java 17](https://www.oracle.com/java/technologies/javase-jdk17-downloads.html) 以降が必要です。
 
 ```bash
 java -jar obfuscator.jar --jarIn helloWorld.jar --jarOut helloWorld-obf.jar
 java -jar obfuscator.jar --jarIn helloWorld.jar --jarOut helloWorld-obf.jar --config obfConfig.json
+java -jar obfuscator.jar # GUI つき
 ```
 
 ---
