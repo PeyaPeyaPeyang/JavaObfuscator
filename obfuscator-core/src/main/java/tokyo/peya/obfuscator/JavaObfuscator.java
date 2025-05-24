@@ -303,14 +303,14 @@ public class JavaObfuscator
         root.setLevel(logLevel);
     }
 
-    public static ClassNode obfuscateClass(ClassNode classNode, Configuration config)
+    public static ClassNode obfuscateClass(ClassNode classNode, Configuration config) throws IOException
     {
         log.debug("Obfuscating one class: " + classNode.name);
         Obfuscator obfuscator = JavaObfuscator.currentSession = new Obfuscator(config);
-        obfuscator.processClass(classNode);
+        ClassNode obfuscated = obfuscator.processClass(classNode);
         JavaObfuscator.currentSession = null;
         log.debug("DONE!");
 
-        return classNode;
+        return obfuscated;
     }
 }

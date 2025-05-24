@@ -20,6 +20,7 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FrameNode;
 import tokyo.peya.obfuscator.annotations.ObfuscateRule;
@@ -54,12 +55,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -997,19 +1000,41 @@ public class Obfuscator
         return true;
     }
 
-    public ClassNode processClass(ClassNode node)
+    public ClassNode processClass(ClassNode node) throws IOException
     {
+        // 変わったあとも見つけるためのマーカーアノテーションを追加
+        AnnotationNode markerAnnotation = new AnnotationNode("LObfuscation$" + new Random().nextInt(1000) + ";");
+        if (node.invisibleAnnotations == null)
+            node.invisibleAnnotations = new ArrayList<>();
+        node.invisibleAnnotations.add(markerAnnotation);
+
+        loadClasspath(this.config.getLibraries());
+        Map<String, ClassNode> classPath = new HashMap<>() {{
+            put(node.name, node);
+        }};
+
+        // 変形処理をする
+        for (INameObfuscationProcessor nameObfuscationProcessor : this.nameObfuscationProcessors)
+            nameObfuscationProcessor.transformPost(this, classPath);
+
+        // 変形処理後の, メインクラスを探し出す
+        ClassNode mainClassNode = classPath.values().stream()
+                .filter(cn -> cn.invisibleAnnotations.stream()
+                                                     .anyMatch(annotationNode -> annotationNode.desc.equals(markerAnnotation.desc)))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Main class not found after transformation"));
+
         for (IClassTransformer proc : this.processors)
         {
-            if (this.script != null && !this.script.isObfuscatorEnabled(node))
+            if (this.script != null && !this.script.isObfuscatorEnabled(mainClassNode))
                 continue;
 
-            if (this.isExcludedClass(node.name))
+            if (this.isExcludedClass(mainClassNode.name))
                 continue;
 
             try
             {
-                proc.process(new ProcessorCallback(), node);
+                proc.process(new ProcessorCallback(), mainClassNode);
             }
             catch (Exception e)
             {
@@ -1017,6 +1042,10 @@ public class Obfuscator
             }
         }
 
-        return node;
+        // マーカー・アノテーションを削除
+        if (mainClassNode.invisibleAnnotations != null)
+            mainClassNode.invisibleAnnotations.removeIf(annotationNode -> annotationNode.desc.equals(markerAnnotation.desc));
+
+        return mainClassNode;
     }
 }

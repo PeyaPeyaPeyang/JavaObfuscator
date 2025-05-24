@@ -143,7 +143,7 @@ public class PreviewGenerator
         return classNode;
     }
 
-    public static ClassNode obfuscate(ClassNode classNode, Configuration config)
+    public static ClassNode obfuscate(ClassNode classNode, Configuration config) throws IOException
     {
         return JavaObfuscator.obfuscateClass(classNode, config);
     }
@@ -174,6 +174,7 @@ public class PreviewGenerator
     {
         SimpleCompiler compiler = new SimpleCompiler();
         compiler.setCompileErrorHandler(new CompileErrorHandlerMock());
+        compiler.setDebuggingInformation(true, true, true);
         compiler.cook(sourceCode);
 
         ClassLoader  classLoader = compiler.getClassLoader();
