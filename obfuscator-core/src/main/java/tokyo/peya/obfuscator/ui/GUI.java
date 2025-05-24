@@ -298,8 +298,10 @@ public class GUI extends JFrame
             {
                 if (this.originalArea.getText().isEmpty())
                 {
-                    String text = PreviewGenerator.classNodeToCode(PreviewGenerator.DEFAULT_HELLO_WORLD_CLASS);
-                    this.originalArea.setText(text);
+                    JOptionPane.showMessageDialog(
+                            GUI.this, Localisation.get("ui.messages.error.no_preview_target"),
+                            Localisation.get("ui.messages.error"), JOptionPane.ERROR_MESSAGE
+                    );
                 }
 
                 byte[] compiled = PreviewGenerator.compile(
@@ -315,9 +317,15 @@ public class GUI extends JFrame
                 }
 
                 ClassNode compiledCN = PreviewGenerator.toClassNode(compiled);
-                String obfuscated = PreviewGenerator.classNodeToCode(
-                        PreviewGenerator.obfuscate(compiledCN, createConfiguration())
-                );
+                ClassNode obfuscatedCN = PreviewGenerator.obfuscate(compiledCN, createConfiguration());
+                // Decompiler Crasher が居ると普通にこれもクラッシュするので, 影響部分を取り除く
+                obfuscatedCN.methods.stream()
+                        .filter(methodNode -> methodNode.invisibleAnnotations != null)
+                        .forEach(methodNode -> methodNode.invisibleAnnotations.removeIf(
+                                annotationNode -> annotationNode.desc.length() > 100
+                        ));
+
+                String obfuscated = PreviewGenerator.classNodeToCode(obfuscatedCN);
                 this.obfuscatedArea.setText(obfuscated);
             }
             catch (Exception e1)
@@ -331,10 +339,9 @@ public class GUI extends JFrame
             String input = this.inputTextField.getText();
             if (input == null || input.isEmpty())
             {
-                JOptionPane.showMessageDialog(
-                        GUI.this, Localisation.get("ui.messages.error.no_input"),
-                        Localisation.get("ui.messages.error"), JOptionPane.ERROR_MESSAGE
-                );
+                // サンプルコードを表示
+                String text = PreviewGenerator.classNodeToCode(PreviewGenerator.DEFAULT_HELLO_WORLD_CLASS);
+                this.originalArea.setText(text);
                 return;
             }
 

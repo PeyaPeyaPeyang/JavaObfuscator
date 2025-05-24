@@ -36,7 +36,7 @@ public class DecompilerCrasher implements IClassTransformer
 
     static
     {
-        EMPTY_STRINGS = NameUtils.crazyString(50000);
+        EMPTY_STRINGS = NameUtils.crazyString(16378);
     }
 
     static
