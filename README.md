@@ -1,121 +1,85 @@
-# Java Obfuscator (original by [superblaubeere27/obfuscator](https://github.com/superblaubeere27/obfuscator)
+# Java Obfuscator（[superblaubeere27/obfuscator](https://github.com/superblaubeere27/obfuscator) 由来のフォーク）
 
-*** GUIs are supported fully ***
+(For English, see [README-en.md](README-en.md).)
 
-A Java bytecode obfuscator supporting
+**:white_check_mark: GUI完全対応 / 日本語＆英語表示対応**
 
-* Flow Obfuscation
-* Line Number Removal
-* Number Obfuscation
-* Name Obfuscation (Classes, methods and fields) with custom dictionaries
-* Deobfuscator crasher
-* String Encryption(Supporting algorithms: AES, XOR, Blowfish, DES)
-* Inner Class Removal
-* Invoke Dynamic
-* Reference Proxy(Accessing all fields with reflection.)
-* Member Shuffling & Hiding
+このツールはJavaバイトコード向けの強力な難読化器で、次のような機能をサポートしています：
 
-## Differences from the original
+## 主な機能
 
-+ NO HWID Protections
-+ NO NumberObfuscation crashing bugs
-+ Improved codes(**I rewrote!!**)
-+ Advanced NameObfuscation configurations
-+ Mapping saving
-+ More algorithm for StringEncryption
-+ Better log color
-+ Rename Main-Class in MANIFEST.MF
-+ Advanced string hiding
-  * Optimizing strings ledger with reusing string references
+- :white_check_mark: **フロー制御難読化（Flow Obfuscation）**  
+  制御構造を改変してリバースエンジニアリングを困難にする
+- :white_check_mark: **行番号の削除**  
+  ソースコードの行番号情報を削除し、デバッグを妨害
+- :white_check_mark: **数値難読化（ビット演算、文字列長利用など）**  
+  数値を複雑な式や配列参照に変換し可読性を低下
+- :white_check_mark: **名前の難読化（クラス名・メソッド名・フィールド名）＋カスタム辞書対応**  
+  意味のある名前を無意味な記号に変換し解析を困難にする
+- :white_check_mark: **Decompiler Crasher（動作安定化済み）**  
+  一部のJava逆コンパイラをクラッシュさせる構文を安全に挿入
+- :white_check_mark: **文字列暗号化（AES / XOR / Blowfish / DES に対応）**  
+  ハードコードされた文字列をランタイムで復号化する方式に変更
+- :white_check_mark: **インナークラス削除**  
+  内部クラスを外部クラスとして展開・統合し構造を単純化
+- :white_check_mark: **`invokedynamic` の活用**  
+  メソッド呼び出しに `invokedynamic` を使用して可読性と追跡性を低下
+- :white_check_mark: **参照プロキシ（全フィールドをリフレクション経由でアクセス）**  
+  通常アクセスを避けてリフレクションでメンバーへアクセス
+- :white_check_mark: **クラス・メソッド・フィールドの構造シャッフル＆隠蔽**  
+  宣言順やアノテーションをランダム化し、見た目と構造を不安定化
+- :white_check_mark: **プレビュー機能（設定結果をリアルタイムで確認可能）**  
+  GUIから設定した内容を即座に反映・確認できる機能
+- :white_check_mark: **GUI / ログの多言語化（現在は日本語・英語に対応）**  
+  インターフェースと出力メッセージを多言語に対応
+- :white_check_mark: **スクリプトによる除外設定**  
+  特定のクラスやパッケージを難読化対象から除外するためのJavaScriptスクリプト機能
+- :white_check_mark: **設定ファイル（JSON）による高度なカスタマイズ**  
+  難読化の各種設定をJSON形式で柔軟に制御可能
 
-## Obfuscated code
+---
 
-Luyten + Procyon
+## オリジナル版との差分
 
-Without
+- :x: HWID制限を撤廃
+- :white_check_mark: 数値難読化バグの修正（クラッシュなし）
+- :white_check_mark: 全体的なコードの書き直しと改善
+- :white_check_mark: 名前難読化設定の高機能化
+- :white_check_mark: マッピングファイルの保存に対応
+- :white_check_mark: 文字列暗号化アルゴリズムの追加
+- :white_check_mark: ログ出力のカラーリング改善
+- :white_check_mark: `MANIFEST.MF` 内の `Main-Class` 名のリネーム機能
+- :white_check_mark: 文字列隠蔽時の, 文字列再利用による台帳の最適化（同じ文字列は1回だけ保持）
 
-```Java
+---
 
-public class HelloWorld
-{
-    public HelloWorld()
-    {
-        super();
-    }
+## 使用例
 
-    public static void main(final String[] args)
-    {
-        System.out.println("Hello World");
-        for (int i = 0; i < 10; ++i)
-        {
-            System.out.println(i);
-        }
-    }
-}
+```bash
+java -jar obfuscator.jar --jarIn helloWorld.jar --jarOut helloWorld-obf.jar
+java -jar obfuscator.jar --jarIn helloWorld.jar --jarOut helloWorld-obf.jar --config obfConfig.json
 ```
 
-Obfuscated (short version for full code visit https://pastebin.com/RFHtgPtX)
+---
 
-```Java
+## コマンドライン引数
 
-public class HelloWorld
+- `--help`：ヘルプ表示
+- `--version`：バージョン情報表示
+- `--jarIn <入力JAR>`
+- `--jarOut <出力JAR>`
+- `--config <設定ファイル（JSON）>`
+- `--cp <クラスパス>`
+- `--scriptFile <スクリプトJSファイル>`
+- `--threads <スレッド数>`
+- `--verbose`：詳細ログを有効化
+
+---
+
+## 設定ファイル例（抜粋）
+
+```json
 {
-
-    public static void main(final String[] array)
-    {
-        // invokedynamic(1:(Ljava/io/PrintStream;Ljava/lang/String;)V, invokedynamic(0:()Ljava/io/PrintStream;), HelloWorld.llII[HelloWorld.lllI[0]])
-        float lllllllIlIllIII = HelloWorld.lllI[0];
-        while (llIll((int) lllllllIlIllIII, HelloWorld.lllI[1]))
-        {
-            // invokedynamic(2:(Ljava/io/PrintStream;I)V, invokedynamic(0:()Ljava/io/PrintStream;), lllllllIlIllIII)
-            ++lllllllIlIllIII;
-            "".length();
-            if (" ".length() == (" ".length() << ("   ".length() << " ".length()) & ~(" ".length() << ("   ".length() << " ".length()))))
-            {
-                throw null;
-            }
-        }
-    }
-
-}
-
-```
-
-## Usage
-
-`--help` Prints the help page on the screen
-
-`--version` Shows the version of the obfuscator
-
-`--jarIn <input>` Input JAR
-
-`--jarOut <output>` Output JAR
-
-`--config <configFile>` Config File
-
-`--cp <classPath>` Class Path
-
-`--scriptFile <scriptFile>` A JS file to script certain parts of the obfuscation
-
-`--threads` Sets the number of threads the obfuscator should use
-
-`--verbose` Sets logging to verbose mode
-
-### Examples
-
-`java -jar obfuscator.jar --jarIn helloWorld.jar --jarOut helloWorld-obf.jar`
-
-`java -jar obfuscator.jar --jarIn helloWorld.jar --jarOut helloWorld-obf.jar --config obfConfig`
-
-### Example Config
-
-```
-{
-  "input": "",
-  "output": "",
-  "script": "function isRemappingEnabledForClass(node) {\n    return true;\n}\nfunction isObfuscatorEnabledForClass(node) {\n    return true;\n}",
-  "threads": 28,
-  "libraries": [],
   "string_encryption": {
     "enabled": true,
     "algorithm_aes": true,
@@ -140,65 +104,6 @@ public class HelloWorld
     "simle_math": true,
     "multiple_instructions": true
   },
-  "static_initialisation": {
-    "enabled": true
-  },
-  "hide_strings": {
-    "enabled": true,
-    "optimise_ledger": true,
-    "start_marker": "",
-    "delimiter": "",
-    "end_marker": ""
-  },
-  "optimiser": {
-    "enabled": false,
-    "replace_string_equals": false,
-    "replace_string_equals_ignore_case": false,
-    "optimise_static_string_calls": false
-  },
-  "invoke_dynamic": {
-    "enabled": false
-  },
-  "general": {
-    "excluded_classes": "me.name.Class\nme.name.*\nio.netty.**",
-    "generator_characters": "Il",
-    "custom_dictionary": false,
-    "class_names_dictionary": "",
-    "name_dictionary": "",
-    "Use_store": false
-  },
-  "decompiler_crasher": {
-    "enabled": false,
-    "invalid_signatures": true,
-    "empty_annotation_spam": true
-  },
-  "name_obfuscation": {
-    "enabled": false,
-    "excluded_classes": "me.name.Class\nme.name.*\nio.netty.**",
-    "excluded_methods": "me.name.Class.method\nme.name.Class**\nme.name.Class.*",
-    "excluded_fields": "me.name.Class.field\nme.name.Class.*\nme.name.**",
-    "allow_missing_libraries": false,
-    "enabled_for_class_names": true,
-    "enabled_for_method_names": true,
-    "enabled_for_field_names": true,
-    "randomise_package_structure": false,
-    "new_packages": "",
-    "randomise_source_file_names": false,
-    "randomise_debug_source_file_names": false,
-    "new_source_and_debug_file_names": "",
-    "save_mappings": false
-  },
-  "hide_members": {
-    "enabled": true
-  },
-  "shuffler": {
-    "enabled": true,
-    "shuffle_class_structure": true,
-    "shuffle_method_structure": true,
-    "shuffle_field_structure": true,
-    "shuffle_annotations": true,
-    "shuffle_source_file": true
-  },
   "FlowObfuscator": {
     "enabled": true,
     "mangle_comparisons": true,
@@ -214,55 +119,82 @@ public class HelloWorld
     "enabled": true,
     "relocate_classes": false,
     "remove_metadata": true
+  },
+  "decompiler_crasher": {
+    "enabled": true,
+    "invalid_signatures": true,
+    "empty_annotation_spam": true
+  },
+  "preview": {
+    "enabled": true
   }
 }
 ```
 
-### Excluding Classes
+---
 
-In some situations you need to prevent certain classes from being obfuscated, such as dependencies packaged with your
-jar or mixins in a forge mod.
+## 除外設定（特定クラスを難読化対象外にする）
 
-You will need to exclude in two places.
+JavaScriptスクリプトで制御する：
 
-##### Scripting Tab
-
-Here is an example script that will obfuscate and remap all classes except the org.json dependency and mixins.
-
-```javascript
+```js
 function isRemappingEnabledForClass(node) {
-    var flag1 = !node.name.startsWith("org/json");
-    var flag2 = !node.name.startsWith("com/client/mixin");
-    return flag1 && flag2;
+    return !node.name.startsWith("org/json") && !node.name.startsWith("com/client/mixin");
 }
 
 function isObfuscatorEnabledForClass(node) {
-    var flag1 = !node.name.startsWith("org/json");
-    var flag2 = !node.name.startsWith("com/client/mixin");
-    return flag1 && flag2;
+    return !node.name.startsWith("org/json") && !node.name.startsWith("com/client/mixin");
 }
 ```
 
-##### Name Obfuscation
+さらに `name_obfuscation` セクションに除外指定を追記：
 
-If you also want to exclude these classes from name obfuscation you will need to go to Transformers -> Name Obfuscation
-and add these exclusions there.
-
-To Exclude the same classes as we did above, we would need to add the following to Excluded classes, methods and fields.
-
-```regexp
+```
 org.json.**
-com.client.mixin.**~~~~
+com.client.mixin.**
 ```
 
-If your classes are still being obfuscated after applyinng both of these exclusions please open an issue.
+---
 
-## Credits
+## 難読化結果（例）
 
-- superblaubeere27 (**Original** Obfuscator(Master of this fork))
-- MCInjector (FFixer base)
-- FFixer (Obfuscator base)
-- SmokeObfuscator (Some ideas)
-- MarcoMC (Some ideas)
-- ItzSomebody (NameUtils.crazyString(), Crasher)
+元コード：
 
+```java
+public class HelloWorld {
+    public static void main(String[] args) {
+        System.out.println("Hello World");
+        for (int i = 0; i < 10; ++i) {
+            System.out.println(i);
+        }
+    }
+}
+```
+
+難読化後（詳細省略）：
+
+```java
+public class HelloWorld {
+    public static void main(final String[] array) {
+        float lllllllIlIllIII = HelloWorld.lllI[0];
+        while (llIll((int) lllllllIlIllIII, HelloWorld.lllI[1])) {
+            ++lllllllIlIllIII;
+            "".length();
+        }
+    }
+}
+```
+
+---
+
+## クレジット
+
+- [superblaubeere27](https://github.com/superblaubeere27)（オリジナル作者）
+- FFixer, MCInjector, SmokeObfuscator などのアイデアを活用
+- MarcoMC, ItzSomebody ほか
+
+---
+
+## ライセンス
+
+本プロジェクトは [MIT ライセンス](LICENSE)に準拠しています。
