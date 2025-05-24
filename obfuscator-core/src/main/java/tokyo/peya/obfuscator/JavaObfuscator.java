@@ -109,7 +109,7 @@ public class JavaObfuscator
 
             String scriptContent = null;
             if (options.has("scriptFile"))
-                scriptContent = new String(Files.readAllBytes(((File) options.valueOf("scriptFile")).toPath()), StandardCharsets.UTF_8);
+                scriptContent = Files.readString(((File) options.valueOf("scriptFile")).toPath());
 
             boolean embedded = false;
             int threads = Math.max(1, (Integer) options.valueOf("threads"));

@@ -17,7 +17,6 @@ public class Localisation
     }
 
     static {
-        System.out.println(Locale.getDefault());
         setLocale(Locale.getDefault());
     }
 

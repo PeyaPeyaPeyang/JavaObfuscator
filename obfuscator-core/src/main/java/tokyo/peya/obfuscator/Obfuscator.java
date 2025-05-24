@@ -32,6 +32,7 @@ import tokyo.peya.obfuscator.configuration.ValueManager;
 import tokyo.peya.obfuscator.processor.Packager;
 import tokyo.peya.obfuscator.processor.Processors;
 import tokyo.peya.obfuscator.processor.naming.INameObfuscationProcessor;
+import tokyo.peya.obfuscator.ui.PreviewGenerator;
 import tokyo.peya.obfuscator.utils.ExcludePattern;
 import tokyo.peya.obfuscator.utils.MissingClassException;
 import tokyo.peya.obfuscator.utils.Utils;
@@ -594,12 +595,7 @@ public class Obfuscator
     {
         try
         {
-            ClassReader cr = new ClassReader(classBytes);
-            ClassNode cn = new ClassNode();
-
-            //ca = new LineInjectorAdaptor(ASM4, cn);
-
-            cr.accept(cn, 0);
+            ClassNode cn = PreviewGenerator.toClassNode(classBytes);
             this.classes.put(name, cn);
         }
         catch (Exception e)

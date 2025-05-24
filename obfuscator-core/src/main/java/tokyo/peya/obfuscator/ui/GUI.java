@@ -186,8 +186,7 @@ public class GUI extends JFrame
                 buildConfig();
                 try
                 {
-                    Configuration configuration = ConfigManager.loadConfig(
-                            new String(Files.readAllBytes(Paths.get(name)), StandardCharsets.UTF_8));
+                    Configuration configuration = ConfigManager.loadConfig(Files.readString(Paths.get(name)));
                     this.inputTextField.setText(configuration.getInput());
                     this.outputTextField.setText(configuration.getOutput());
                     this.scriptArea.setText(configuration.getScript());
@@ -362,7 +361,31 @@ public class GUI extends JFrame
             this.updatePreviewButton.doClick();
          });
 
-        setVisible(true);
+        this.addJavaBaseLibraries();
+        this.setVisible(true);
+    }
+
+
+
+    public void addJavaBaseLibraries()
+    {
+        String javaHome = System.getProperty("java.home");
+        if (javaHome == null || javaHome.isEmpty())
+            return;
+
+        Path baseJavaModulePath = Paths.get(javaHome, "jmods", "java.base.jmod");
+
+        if (this.libraryList.contains(baseJavaModulePath.toString()))
+        {
+            // 既に追加されている場合は何もしない
+            return;
+        }
+
+        if (Files.exists(baseJavaModulePath))
+        {
+            this.libraryList.add(baseJavaModulePath.toString());
+            this.updateLibraries();
+        }
     }
 
     private void updateLibraries()
