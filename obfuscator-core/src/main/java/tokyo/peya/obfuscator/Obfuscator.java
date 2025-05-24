@@ -1013,11 +1013,7 @@ public class Obfuscator
             }
             catch (Exception e)
             {
-                log.error(Localisation.access("logs.obfuscation.transforming.error")
-                        .set("entryName", node.name)
-                        .get(),
-                        e
-                );
+                log.error("ERR!!", e);
             }
         }
 
