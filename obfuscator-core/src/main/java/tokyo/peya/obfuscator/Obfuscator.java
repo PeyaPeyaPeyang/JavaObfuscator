@@ -721,9 +721,6 @@ public class Obfuscator
 
     private Map<String, byte[]> processClasses(Map<String, ClassNode> classes)
     {
-        for (INameObfuscationProcessor nameObfuscationProcessor : this.nameObfuscationProcessors)
-            nameObfuscationProcessor.transformPost(this, classes);
-
         long startTime = System.currentTimeMillis();
 
         int threadCount = this.config.getNThreads();
@@ -732,7 +729,12 @@ public class Obfuscator
                 .set("classes", classes.size())
                 .get()
         );
-        Map<String, byte[]> toWrite = this.transformClasses(classes, threadCount);
+        Map<String, ClassNode> transformed = this.transformClasses(classes, threadCount);
+
+        for (INameObfuscationProcessor nameObfuscationProcessor : this.nameObfuscationProcessors)
+            nameObfuscationProcessor.transformPost(this, transformed);
+
+        Map<String, byte[]> toWrite = this.encodeClasses(transformed, threadCount);
         log.info(Localisation.access("logs.task_finished")
                 .set("time", Utils.formatTime(System.currentTimeMillis() - startTime))
                 .get()
@@ -756,7 +758,7 @@ public class Obfuscator
 
     }
 
-    private Map<String, byte[]> transformClasses(Map<String, ClassNode> classes, int threadCount)
+    private Map<String, ClassNode> transformClasses(Map<String, ClassNode> classes, int threadCount)
     {
         ExecutorService executorService = Executors.newFixedThreadPool(threadCount, new ThreadFactoryBuilder()
                 .setNameFormat("Worker-%d")
@@ -764,11 +766,11 @@ public class Obfuscator
         );
 
         LinkedList<Map.Entry<String, ClassNode>> classQueue = new LinkedList<>(classes.entrySet());
-        Map<String, byte[]> toWrite = new HashMap<>();
+        Map<String, ClassNode> obfuscated = new HashMap<>();
 
         AtomicInteger processed = new AtomicInteger(0);
-        Callable<Map<String, byte[]>> runnable = () -> {
-            Map<String, byte[]> toWriteThread = new HashMap<>();
+        Callable<Map<String, ClassNode>> runnable = () -> {
+            Map<String, ClassNode> toWriteThread = new HashMap<>();
             while (true)
             {
                 Map.Entry<String, ClassNode> stringClassNodeEntry;
@@ -784,15 +786,13 @@ public class Obfuscator
                 ProcessorCallback callback = new ProcessorCallback();
 
                 String entryName = stringClassNodeEntry.getKey();
-                byte[] entryData;
                 ClassNode cn = stringClassNodeEntry.getValue();
-                boolean isPackagerClassDecrypter = this.packager.isEnabled() && this.packager.isPackagerClassDecrypter(cn);
 
                 try
                 {
                     this.computeMode = ModifiedClassWriter.COMPUTE_MAXS;
 
-                    boolean isSkippedByScript = this.script != null && this.script.isObfuscatorEnabled(cn);
+                    boolean isSkippedByScript = !(this.script == null || this.script.isObfuscatorEnabled(cn));
                     if (isSkippedByScript || this.isExcludedClass(cn.name))
                     {
                         log.info(Localisation.access("logs.obfuscation.transforming.skipped")
@@ -848,15 +848,96 @@ public class Obfuscator
                                 .forEach(abstractInsnNode -> method.instructions.remove(abstractInsnNode)));
 
 
-                    int mode = this.computeMode
-                            | (callback.isForceComputeFrames() ? ModifiedClassWriter.COMPUTE_MAXS: 0);
+                    this.computeMode = this.computeMode | (callback.isForceComputeFrames() ? ModifiedClassWriter.COMPUTE_MAXS: 0);
 
-                    log.debug(Localisation.access("logs.obfuscation.transforming.writing")
+                    removeObfuscateRuleAnnotations(cn);
+
+                    toWriteThread.put(entryName, cn);
+                    processed.incrementAndGet();
+                }
+                catch (Exception e)
+                {
+                    log.error(Localisation.access("logs.obfuscation.transforming.error")
+                            .set("threadName", Thread.currentThread().getName())
                             .set("proceedClasses", processed.get())
                             .set("totalClasses", classes.size())
                             .set("entryName", entryName)
-                            .set("computingMode", mode)
-                            .get()
+                            .get(),
+                            e
+                    );
+
+                    throw e;
+                }
+            }
+
+            return toWriteThread;
+        };
+
+        List<Future<Map<String, ClassNode>>> futures = new ArrayList<>();
+        for (int i = 0; i < threadCount; i++)
+            futures.add(executorService.submit(runnable));
+
+        for (Future<Map<String, ClassNode>> future : futures)
+            try
+            {
+                obfuscated.putAll(future.get());
+            }
+            catch (InterruptedException e)
+            {
+                log.error("Error getting future", e);
+            }
+            catch (ExecutionException e)
+            {
+                if (e.getCause() instanceof Exception)
+                    JavaObfuscator.setLastException((Exception) e.getCause());
+
+                log.error("Error getting future", e);
+            }
+
+        executorService.shutdown();
+
+        return obfuscated;
+    }
+
+    private Map<String, byte[]> encodeClasses(Map<String, ClassNode> classes, int threadCount)
+    {
+        ExecutorService executorService = Executors.newFixedThreadPool(threadCount, new ThreadFactoryBuilder()
+                .setNameFormat("Worker-%d")
+                .build()
+        );
+
+        LinkedList<Map.Entry<String, ClassNode>> classQueue = new LinkedList<>(classes.entrySet());
+        Map<String, byte[]> toWrite = new HashMap<>();
+
+        AtomicInteger processed = new AtomicInteger(0);
+        Callable<Map<String, byte[]>> runnable = () -> {
+            Map<String, byte[]> toWriteThread = new HashMap<>();
+            while (true)
+            {
+                Map.Entry<String, ClassNode> stringClassNodeEntry;
+
+                synchronized (classQueue)
+                {
+                    stringClassNodeEntry = classQueue.poll();
+                }
+
+                if (stringClassNodeEntry == null)
+                    break;
+
+                String entryName = stringClassNodeEntry.getKey();
+                byte[] entryData;
+                ClassNode cn = stringClassNodeEntry.getValue();
+                boolean isPackagerClassDecrypter = this.packager.isEnabled() && this.packager.isPackagerClassDecrypter(cn);
+
+                try
+                {
+                    int mode = this.computeMode;
+                    log.debug(Localisation.access("logs.obfuscation.transforming.writing")
+                                          .set("proceedClasses", processed.get())
+                                          .set("totalClasses", classes.size())
+                                          .set("entryName", entryName)
+                                          .set("computingMode", mode)
+                                          .get()
                     );
 
                     removeObfuscateRuleAnnotations(cn);
@@ -879,12 +960,12 @@ public class Obfuscator
                 catch (Exception e)
                 {
                     log.error(Localisation.access("logs.obfuscation.transforming.error")
-                            .set("threadName", Thread.currentThread().getName())
-                            .set("proceedClasses", processed.get())
-                            .set("totalClasses", classes.size())
-                            .set("entryName", entryName)
-                            .get(),
-                            e
+                                          .set("threadName", Thread.currentThread().getName())
+                                          .set("proceedClasses", processed.get())
+                                          .set("totalClasses", classes.size())
+                                          .set("entryName", entryName)
+                                          .get(),
+                              e
                     );
 
                     throw e;
@@ -923,7 +1004,6 @@ public class Obfuscator
 
         return toWrite;
     }
-
     public void writeEntry(ZipOutputStream outJar, String name, byte[] value, boolean stored) throws IOException
     {
         ZipEntry newEntry = new ZipEntry(name);
@@ -1002,13 +1082,34 @@ public class Obfuscator
 
     public ClassNode processClass(ClassNode node) throws IOException
     {
+        loadClasspath(this.config.getLibraries());
+
+        for (IClassTransformer proc : this.processors)
+        {
+            if (this.script != null && !this.script.isObfuscatorEnabled(node))
+                continue;
+
+            if (this.isExcludedClass(node.name))
+                continue;
+
+            try
+            {
+                proc.process(new ProcessorCallback(), node);
+            }
+            catch (Exception e)
+            {
+                log.error("ERR!!", e);
+            }
+        }
+
+        // 以下, 名前系の難読化のための処理
+
         // 変わったあとも見つけるためのマーカーアノテーションを追加
         AnnotationNode markerAnnotation = new AnnotationNode("LObfuscation$" + new Random().nextInt(1000) + ";");
         if (node.invisibleAnnotations == null)
             node.invisibleAnnotations = new ArrayList<>();
         node.invisibleAnnotations.add(markerAnnotation);
 
-        loadClasspath(this.config.getLibraries());
         Map<String, ClassNode> classPath = new HashMap<>() {{
             put(node.name, node);
         }};
@@ -1019,28 +1120,10 @@ public class Obfuscator
 
         // 変形処理後の, メインクラスを探し出す
         ClassNode mainClassNode = classPath.values().stream()
-                .filter(cn -> cn.invisibleAnnotations.stream()
-                                                     .anyMatch(annotationNode -> annotationNode.desc.equals(markerAnnotation.desc)))
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException("Main class not found after transformation"));
-
-        for (IClassTransformer proc : this.processors)
-        {
-            if (this.script != null && !this.script.isObfuscatorEnabled(mainClassNode))
-                continue;
-
-            if (this.isExcludedClass(mainClassNode.name))
-                continue;
-
-            try
-            {
-                proc.process(new ProcessorCallback(), mainClassNode);
-            }
-            catch (Exception e)
-            {
-                log.error("ERR!!", e);
-            }
-        }
+                                           .filter(cn -> cn.invisibleAnnotations.stream()
+                                                                                .anyMatch(annotationNode -> annotationNode.desc.equals(markerAnnotation.desc)))
+                                           .findFirst()
+                                           .orElseThrow(() -> new IllegalStateException("Main class not found after transformation"));
 
         // マーカー・アノテーションを削除
         if (mainClassNode.invisibleAnnotations != null)
