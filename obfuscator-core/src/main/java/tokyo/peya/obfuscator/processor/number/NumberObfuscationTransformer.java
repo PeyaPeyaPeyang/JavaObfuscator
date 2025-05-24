@@ -258,7 +258,7 @@ public class NumberObfuscationTransformer implements IClassTransformer
         MethodNode generateIntegers = new MethodNode(
                 ((node.access & Opcodes.ACC_INTERFACE) != 0 ? Opcodes.ACC_PUBLIC: Opcodes.ACC_PRIVATE)
                         | Opcodes.ACC_STATIC,
-                this.instance.getNameProvider().generateMethodName(node, "()V"),
+                this.instance.getNameProvider().toUniqueMethodName(node, "initialiseNumbers", "()V"),
                 "()V",
                 null,
                 new String[0]

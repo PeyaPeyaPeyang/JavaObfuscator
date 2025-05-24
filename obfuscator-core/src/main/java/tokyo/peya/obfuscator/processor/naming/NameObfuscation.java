@@ -352,7 +352,7 @@ public class NameObfuscation implements INameObfuscationProcessor
                     new HashSet<>(),
                     methodWrapper,
                     ownerClass.originalName,
-                    this.obfuscator.getNameProvider().generateMethodName(ownerClass.classNode, methodWrapper.originalDescription)
+                    this.obfuscator.getNameProvider().generateMethodName(ownerClass.classNode,  methodWrapper.originalDescription)
             );
     }
 

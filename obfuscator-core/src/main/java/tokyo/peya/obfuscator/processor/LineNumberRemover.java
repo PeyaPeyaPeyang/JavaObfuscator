@@ -20,7 +20,6 @@ import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.ParameterNode;
 import org.objectweb.asm.tree.VarInsnNode;
 import tokyo.peya.obfuscator.IClassTransformer;
-import tokyo.peya.obfuscator.Localisation;
 import tokyo.peya.obfuscator.Obfuscator;
 import tokyo.peya.obfuscator.ProcessorCallback;
 import tokyo.peya.obfuscator.annotations.ObfuscationTransformer;
@@ -85,23 +84,13 @@ public class LineNumberRemover implements IClassTransformer
 
             for (AbstractInsnNode abstractInsnNode : method.instructions.toArray())
             {
-                if (abstractInsnNode instanceof LineNumberNode && V_REMOVE_LINE_NUMBERS.get())
-                {
-                    LineNumberNode insnNode = (LineNumberNode) abstractInsnNode;
+                if (abstractInsnNode instanceof LineNumberNode insnNode && V_REMOVE_LINE_NUMBERS.get())
                     method.instructions.remove(insnNode);
-                }
 
-                if (abstractInsnNode instanceof VarInsnNode)
-                {
-                    VarInsnNode insnNode = (VarInsnNode) abstractInsnNode;
-
-                    if (!varMap.containsKey(insnNode.var))
+                if (abstractInsnNode instanceof VarInsnNode insnNode && !varMap.containsKey(insnNode.var))
                         varMap.put(insnNode.var, TYPES.get(random.nextInt(TYPES.size())));
-                }
-                if (abstractInsnNode instanceof LabelNode)
+                if (abstractInsnNode instanceof LabelNode insnNode)
                 {
-                    LabelNode insnNode = (LabelNode) abstractInsnNode;
-
                     if (firstLabel == null)
                         firstLabel = insnNode;
 

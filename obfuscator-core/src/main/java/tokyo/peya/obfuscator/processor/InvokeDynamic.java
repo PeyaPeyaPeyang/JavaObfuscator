@@ -345,7 +345,7 @@ public class InvokeDynamic implements IClassTransformer
 
         MethodNode mv;
         {
-            mv = new MethodNode(Opcodes.ACC_PRIVATE + Opcodes.ACC_STATIC, this.instance.getNameProvider().generateMethodName(node, "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;"), "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;", null, new String[]{"java/lang/NoSuchMethodException", "java/lang/IllegalAccessException"});
+            mv = new MethodNode(Opcodes.ACC_PRIVATE + Opcodes.ACC_STATIC, this.instance.getNameProvider().toUniqueMethodName(node,  "proxiedInvoke", "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;"), "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;", null, new String[]{"java/lang/NoSuchMethodException", "java/lang/IllegalAccessException"});
             mv.visitCode();
             Label l0 = new Label();
             Label l1 = new Label();

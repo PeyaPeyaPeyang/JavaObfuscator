@@ -157,8 +157,8 @@ public class PreviewGenerator
                 new InMemoryResultSaver(),
                 new HashMap<>()
                 {{
-                    this.put("gen", "0");
-                    this.put("dgs", "1");
+                    this.put("rbr", "0"); // Hide bridge methods
+                    this.put("dgs", "1"); // Decompile generic signatures
                 }},
                 new FernflowerLogProxy()
         );

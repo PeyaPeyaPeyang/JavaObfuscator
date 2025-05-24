@@ -97,14 +97,11 @@ public class HideStringsTransformer implements IClassTransformer
 
         for (AbstractInsnNode abstractInsnNode : method.instructions.toArray())
         {
-            if (!(abstractInsnNode instanceof LdcInsnNode))
+            if (!(abstractInsnNode instanceof LdcInsnNode ldc))
                 continue;
 
-            LdcInsnNode ldc = (LdcInsnNode) abstractInsnNode;
-            if (!(ldc.cst instanceof String))
+            if (!(ldc.cst instanceof String string))
                 continue;
-
-            String string = (String) ldc.cst;
 
             if (string.length() > MAX_ONE_STRING_LENGTH)
             {
@@ -177,7 +174,7 @@ public class HideStringsTransformer implements IClassTransformer
         if (!V_ENABLED.get())
             return;
 
-        String fieldName = this.instance.getNameProvider().generateFieldName(node);
+        String fieldName = this.instance.getNameProvider().toUniqueFieldName(node, "stringConstants");
         List<String> hiddenStrings = new ArrayList<>();
 
         int ledgerElementCount = 0;
@@ -208,8 +205,7 @@ public class HideStringsTransformer implements IClassTransformer
         // メモリ削減のために, 1つのメソッドにしか文字列値がない場合は再利用を想定しないで消す。
         if (methodCount == 1)
         {
-            InsnList toAdd = new InsnList();
-            toAdd.add(new InsnNode(Opcodes.ACONST_NULL));
+            InsnList toAdd = NodeUtils.nullPush();
             toAdd.add(new FieldInsnNode(Opcodes.PUTSTATIC, node.name, fieldName, "[Ljava/lang/String;"));
 
             NodeUtils.insertOn(methodNode.instructions, insnNode -> insnNode.getOpcode() >= Opcodes.IRETURN && insnNode.getOpcode() <= Opcodes.RETURN, toAdd);

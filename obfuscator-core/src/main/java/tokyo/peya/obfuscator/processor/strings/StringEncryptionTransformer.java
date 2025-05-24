@@ -152,14 +152,12 @@ public class StringEncryptionTransformer implements IClassTransformer
         for (MethodNode method : node.methods)
             for (AbstractInsnNode abstractInsnNode : method.instructions.toArray())
             {
-                if (!(abstractInsnNode instanceof LdcInsnNode))
+                if (!(abstractInsnNode instanceof LdcInsnNode insnNode))
                     continue;
 
-                LdcInsnNode insnNode = (LdcInsnNode) abstractInsnNode;
-                if (!(insnNode.cst instanceof String))
+                if (!(insnNode.cst instanceof String string))
                     continue;
 
-                String string = (String) insnNode.cst;
                 if (string.length() >= 500)
                 {
                     log.warn("A constant string value in class " + node.name +
