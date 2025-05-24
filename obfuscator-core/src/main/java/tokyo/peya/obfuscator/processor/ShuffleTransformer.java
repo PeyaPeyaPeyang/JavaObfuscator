@@ -171,6 +171,10 @@ public class ShuffleTransformer implements IClassTransformer
     {
         Collection<ClassNode> classes = this.instance.getClasses().values();
 
+        int randomMaxBound = classes.size();
+        if (randomMaxBound <= 1)
+            return; // No other classes to steal from
+
         ClassNode node = classes.stream()
                 .skip(RANDOM.nextInt(classes.size()))
                 .findFirst()
