@@ -11,6 +11,7 @@
 
 package tokyo.peya.obfuscator.processor;
 
+import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.LabelNode;
@@ -107,17 +108,32 @@ public class LineNumberRemover implements IClassTransformer
                     method.localVariables.add(new LocalVariableNode(this.instance.getNameProvider().generateLocalVariableName(method), integerStringEntry.getValue(), null, firstLabel, lastLabel, integerStringEntry.getKey()));
             }
 
-            if (method.parameters != null && V_RENAME_VALUES.get())
+            if (V_RENAME_VALUES.get())
             {
-                for (ParameterNode parameter : method.parameters)
-                    parameter.name = this.instance.getNameProvider().generateLocalVariableName(method);
-            }
-            if (method.localVariables != null && V_RENAME_VALUES.get())
-            {
-                for (LocalVariableNode parameter : method.localVariables)
-                    parameter.name = this.instance.getNameProvider().generateLocalVariableName(method);
+                this.procRenameMethods(method);
+                if (method.localVariables != null)
+                    for (LocalVariableNode parameter : method.localVariables)
+                        parameter.name = this.instance.getNameProvider().generateLocalVariableName(method);
             }
         }
+    }
+
+    private void procRenameMethods(MethodNode method)
+    {
+        if (method.parameters == null)
+        {
+            method.parameters = new ArrayList<>();
+            Type[] argumentTypes = Type.getArgumentTypes(method.desc);
+            for (int i = 0; i < argumentTypes.length; i++)
+            {
+                String name = this.instance.getNameProvider().generateLocalVariableName(method);
+                method.parameters.add(new ParameterNode(name, 0));
+            }
+        }
+        else
+            for (ParameterNode parameter : method.parameters)
+                parameter.name = this.instance.getNameProvider().generateLocalVariableName(method);
+
     }
 
     @Override
