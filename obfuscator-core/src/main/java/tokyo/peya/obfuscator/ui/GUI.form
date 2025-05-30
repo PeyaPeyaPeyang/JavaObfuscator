@@ -362,6 +362,7 @@
                               <editable value="true"/>
                               <enabled value="true"/>
                               <syntaxEditingStyle value="text/java" noi18n="true"/>
+                              <tabSize value="2"/>
                             </properties>
                           </component>
                         </children>
@@ -381,6 +382,7 @@
                               <paintMatchedBracketPair value="true"/>
                               <paintTabLines value="true"/>
                               <syntaxEditingStyle value="text/java" noi18n="true"/>
+                              <tabSize value="2"/>
                               <tabsEmulated value="true"/>
                             </properties>
                           </component>

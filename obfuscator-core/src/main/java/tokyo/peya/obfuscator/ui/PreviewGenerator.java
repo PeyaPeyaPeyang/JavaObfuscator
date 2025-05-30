@@ -159,6 +159,8 @@ public class PreviewGenerator
                 {{
                     this.put("rbr", "0"); // Hide bridge methods
                     this.put("dgs", "1"); // Decompile generic signatures
+                    this.put("ind", "  "); // Indent spaces
+                    this.put("lit", "1"); // Literal expressions as is
                 }},
                 new FernflowerLogProxy()
         );

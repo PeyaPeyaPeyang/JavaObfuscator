@@ -319,10 +319,10 @@ public class GUI extends JFrame
                 ClassNode obfuscatedCN = PreviewGenerator.obfuscate(compiledCN, createConfiguration());
                 // Decompiler Crasher が居ると普通にこれもクラッシュするので, 影響部分を取り除く
                 obfuscatedCN.methods.stream()
-                        .filter(methodNode -> methodNode.invisibleAnnotations != null)
-                        .forEach(methodNode -> methodNode.invisibleAnnotations.removeIf(
-                                annotationNode -> annotationNode.desc.length() > 100
-                        ));
+                                    .filter(methodNode -> methodNode.invisibleAnnotations != null)
+                                    .forEach(methodNode -> methodNode.invisibleAnnotations.removeIf(
+                                            annotationNode -> annotationNode.desc.length() > 100
+                                    ));
 
                 String obfuscated = PreviewGenerator.classNodeToCode(obfuscatedCN);
                 this.obfuscatedArea.setText(obfuscated);
@@ -359,13 +359,11 @@ public class GUI extends JFrame
             this.originalArea.setText(text);
 
             this.updatePreviewButton.doClick();
-         });
+        });
 
         this.addJavaBaseLibraries();
         this.setVisible(true);
     }
-
-
 
     public void addJavaBaseLibraries()
     {
@@ -1114,6 +1112,7 @@ public class GUI extends JFrame
         originalArea.setEditable(true);
         originalArea.setEnabled(true);
         originalArea.setSyntaxEditingStyle("text/java");
+        originalArea.setTabSize(2);
         rTextScrollPane2.setViewportView(originalArea);
         final RTextScrollPane rTextScrollPane3 = new RTextScrollPane();
         panel11.add(
@@ -1140,6 +1139,7 @@ public class GUI extends JFrame
         obfuscatedArea.setPaintMatchedBracketPair(true);
         obfuscatedArea.setPaintTabLines(true);
         obfuscatedArea.setSyntaxEditingStyle("text/java");
+        obfuscatedArea.setTabSize(2);
         obfuscatedArea.setTabsEmulated(true);
         rTextScrollPane3.setViewportView(obfuscatedArea);
         pickAnotherClassButton = new JButton();
