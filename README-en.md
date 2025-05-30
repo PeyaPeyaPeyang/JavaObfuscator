@@ -665,7 +665,7 @@ public class Main {
 
    static {
       Il();
-      genertateString();
+      retrieveStrings();
       buildLedger();
       l();
       Il[ll[1]].length();
@@ -703,7 +703,7 @@ public class Main {
       return (boolean)(lIIIIIIllllllll <= IIIIIIIllllllll ? ll[0] : ll[1]);
    }
 
-   private static void genertateString() {
+   private static void retrieveStrings() {
       String var0 = new Exception().getStackTrace()[ll[1]].getFileName();
       Il = var0.substring(var0.indexOf("㫧") + ll[0], var0.lastIndexOf("茵")).split("\uea45");
    }

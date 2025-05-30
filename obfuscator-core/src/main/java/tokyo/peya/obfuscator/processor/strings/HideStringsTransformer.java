@@ -230,25 +230,25 @@ public class HideStringsTransformer implements IClassTransformer
         );
 
 
-        MethodNode mGenerateStrings = getGenerateStringsMethod(node, fieldName,
+        MethodNode mretrieveStringss = getretrieveStringssMethod(node, fieldName,
                 startMarker, delimiter, endMarker
         );
-        node.methods.add(mGenerateStrings);
+        node.methods.add(mretrieveStringss);
 
         MethodNode clInit = NodeUtils.getOrCreateCLInit(node);
         clInit.instructions.insertBefore(
                 clInit.instructions.getFirst(),
-                NodeUtils.methodCall(node, mGenerateStrings)
+                NodeUtils.methodCall(node, mretrieveStringss)
         );
     }
 
-    private MethodNode getGenerateStringsMethod(ClassNode cn, String ledgerFieldName,
+    private MethodNode getretrieveStringssMethod(ClassNode cn, String ledgerFieldName,
                                                 String magicNumber, String magicNumberSplit, String magicNumberEnd)
     {
 
-        MethodNode generateStrings = new MethodNode(
+        MethodNode retrieveStringss = new MethodNode(
                 ((cn.access & Opcodes.ACC_INTERFACE) != 0 ? Opcodes.ACC_PUBLIC: Opcodes.ACC_PRIVATE) | Opcodes.ACC_STATIC,
-                this.instance.getNameProvider().toUniqueMethodName(cn, "genertateString", "()V"),
+                this.instance.getNameProvider().toUniqueMethodName(cn, "retrieveStrings", "()V"),
                 "()V",
                 null,
                 new String[0]
@@ -330,11 +330,11 @@ public class HideStringsTransformer implements IClassTransformer
 
         toAdd.add(end);
         toAdd.add(new InsnNode(Opcodes.RETURN));
-        generateStrings.instructions = toAdd;
-        generateStrings.maxStack = 4;
-        generateStrings.maxLocals = 4;
+        retrieveStringss.instructions = toAdd;
+        retrieveStringss.maxStack = 4;
+        retrieveStringss.maxLocals = 4;
 
-        return generateStrings;
+        return retrieveStringss;
     }
 
     @Override

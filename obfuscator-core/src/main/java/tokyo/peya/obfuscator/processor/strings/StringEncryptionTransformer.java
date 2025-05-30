@@ -200,7 +200,7 @@ public class StringEncryptionTransformer implements IClassTransformer
 
     private MethodNode createInitStringsMethod(ClassNode node, InsnList stringArrayInstructions)
     {
-        MethodNode generateStrings = new MethodNode(
+        MethodNode retrieveStringss = new MethodNode(
                 ((node.access & Opcodes.ACC_INTERFACE) != 0 ? Opcodes.ACC_PUBLIC: Opcodes.ACC_PRIVATE)
                         | Opcodes.ACC_STATIC,
                 this.instance.getNameProvider().toUniqueMethodName(node, "buildLedger", "()V"),
@@ -209,11 +209,11 @@ public class StringEncryptionTransformer implements IClassTransformer
                 new String[0]
         );
 
-        generateStrings.instructions = stringArrayInstructions;
-        generateStrings.instructions.add(new InsnNode(Opcodes.RETURN));
-        generateStrings.maxStack = 6;
+        retrieveStringss.instructions = stringArrayInstructions;
+        retrieveStringss.instructions.add(new InsnNode(Opcodes.RETURN));
+        retrieveStringss.maxStack = 6;
 
-        return generateStrings;
+        return retrieveStringss;
     }
 
     @Override
@@ -260,9 +260,9 @@ public class StringEncryptionTransformer implements IClassTransformer
                 constantReferences
         );
 
-        MethodNode generateStrings = this.createInitStringsMethod(node, encryptedStringConstants);
-        node.methods.add(generateStrings);
-        NodeUtils.addInvokeOnClassInitMethod(node, generateStrings);
+        MethodNode retrieveStringss = this.createInitStringsMethod(node, encryptedStringConstants);
+        node.methods.add(retrieveStringss);
+        NodeUtils.addInvokeOnClassInitMethod(node, retrieveStringss);
 
         // 実際に復号化するメソッドを追加
         deployDecryptionMethods(node, encryptionMethodMap);
@@ -302,7 +302,7 @@ public class StringEncryptionTransformer implements IClassTransformer
         for (int j = 0; j < constants; j++)
         {
             IStringEncryptionAlgorithm processor = this.algorithms.get(random.nextInt(this.algorithms.size()));
-            String decryptionKey = StringManipulationUtils.generateString(5);
+            String decryptionKey = StringManipulationUtils.retrieveStrings(5);
 
             String decrypterName = encryptionMethodMap.get(processor);
 

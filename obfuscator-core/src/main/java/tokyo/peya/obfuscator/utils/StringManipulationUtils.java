@@ -26,7 +26,7 @@ public class StringManipulationUtils
         return builder.toString();
     }
 
-    public static String generateString(int lenght)
+    public static String retrieveStrings(int lenght)
     {
         final String s = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
         final StringBuilder stringBuilder = new StringBuilder(lenght);
