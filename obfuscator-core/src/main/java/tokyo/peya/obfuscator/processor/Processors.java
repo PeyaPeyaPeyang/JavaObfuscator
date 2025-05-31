@@ -32,6 +32,7 @@ public class Processors
             HideStringsTransformer.class,
             InnerClassRemover.class,
             DecompilerCrasher.class,
+            Packager.class,
             // ReferenceProxy.class
     };
 
