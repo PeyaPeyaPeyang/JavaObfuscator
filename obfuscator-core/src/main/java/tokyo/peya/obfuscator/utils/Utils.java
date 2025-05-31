@@ -123,40 +123,40 @@ public class Utils
 
     public static boolean notAbstractOrNative(MethodNode methodNode)
     {
-        return !Modifier.isNative(methodNode.access) && !Modifier.isAbstract(methodNode.access);
+        return !(Modifier.isNative(methodNode.access) || Modifier.isAbstract(methodNode.access));
     }
 
     public static AbstractInsnNode getNextFollowGoto(AbstractInsnNode node)
     {
         AbstractInsnNode next = node.getNext();
         while (next instanceof LabelNode || next instanceof LineNumberNode || next instanceof FrameNode)
-        {
             next = next.getNext();
-        }
+
         if (next.getOpcode() == Opcodes.GOTO)
         {
             JumpInsnNode cast = (JumpInsnNode) next;
             next = cast.label;
             while (Utils.isNotInstruction(next))
-            {
                 next = next.getNext();
-            }
         }
         return next;
     }
 
     public static AbstractInsnNode getNext(AbstractInsnNode node)
     {
-        if (node == null) return null;
-        AbstractInsnNode next = node.getNext();
+        if (node == null)
+            return null;
 
-        if (next == null) return null;
+        AbstractInsnNode next = node.getNext();
+        if (next == null)
+            return null;
 
         while (Utils.isNotInstruction(next))
         {
             next = next.getNext();
 
-            if (next == null) break;
+            if (next == null)
+                break;
         }
         return next;
     }

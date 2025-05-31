@@ -262,7 +262,7 @@ public class StringEncryptionTransformer implements IClassTransformer
 
         MethodNode retrieveStringss = this.createInitStringsMethod(node, encryptedStringConstants);
         node.methods.add(retrieveStringss);
-        NodeUtils.addInvokeOnClassInitMethod(node, retrieveStringss);
+        NodeUtils.addInvokeOnClassInitialisation(node, retrieveStringss);
 
         // 実際に復号化するメソッドを追加
         deployDecryptionMethods(node, encryptionMethodMap);

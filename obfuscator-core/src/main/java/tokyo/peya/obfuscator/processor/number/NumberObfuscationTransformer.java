@@ -268,7 +268,7 @@ public class NumberObfuscationTransformer implements IClassTransformer
         generateIntegers.maxStack = 6;
         node.methods.add(generateIntegers);
 
-        NodeUtils.addInvokeOnClassInitMethod(node, generateIntegers);
+        NodeUtils.addInvokeOnClassInitialisation(node, generateIntegers);
     }
 
     @Override
