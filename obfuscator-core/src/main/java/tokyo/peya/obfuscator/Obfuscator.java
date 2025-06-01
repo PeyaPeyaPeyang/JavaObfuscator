@@ -11,8 +11,6 @@
 
 package tokyo.peya.obfuscator;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
 import com.google.common.io.ByteStreams;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import lombok.Getter;
@@ -55,7 +53,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -84,12 +81,6 @@ import java.util.zip.ZipOutputStream;
 public class Obfuscator
 {
     private static final JObfSettings SETTINGS = new JObfSettings();
-
-    static
-    {
-        ValueManager.registerClass(SETTINGS);
-    }
-
     @Getter
     private final Configuration config;
     private final UniqueNameProvider nameProvider;
@@ -102,12 +93,16 @@ public class Obfuscator
     private final List<IClassTransformer> processors;
     private final List<INameObfuscationProcessor> nameObfuscationProcessors;
     private final List<Pattern> excludePatterns;
-
     @Setter
     public ScriptBridge script;
     private boolean mainClassChanged;
     private String mainClass;
     private int computeMode;
+
+    static
+    {
+        ValueManager.registerClass(SETTINGS);
+    }
 
     public Obfuscator(Configuration config)
     {
@@ -129,59 +124,6 @@ public class Obfuscator
 
         this.processors.addAll(Processors.createProcessors(this));
         this.nameObfuscationProcessors.addAll(Processors.createNameProcessors(this));
-    }
-
-    private static List<Pattern> compileExcludePatterns()
-    {
-        List<Pattern> result = new ArrayList<>();
-        for (String s : SETTINGS.getExcludedClasses().get().split("\n"))
-            result.add(ExcludePattern.compileExcludePattern(s));
-
-        return result;
-    }
-
-    private static ZipInputStream getInJarStream(String inputJarPath) throws FileNotFoundException
-    {
-        try
-        {
-            return new ZipInputStream(new BufferedInputStream(new FileInputStream(inputJarPath)));
-        }
-        catch (FileNotFoundException e)
-        {
-            throw new FileNotFoundException("Could not open input file: " + e.getMessage());
-        }
-    }
-
-    private static ZipOutputStream getOutJarStream(String outputJarPath, boolean stored) throws FileNotFoundException
-    {
-        try
-        {
-            OutputStream out = outputJarPath == null ? new ByteArrayOutputStream(): new FileOutputStream(outputJarPath);
-            ZipOutputStream outJar = new ZipOutputStream(new BufferedOutputStream(out));
-            outJar.setMethod(stored ? ZipOutputStream.STORED: ZipOutputStream.DEFLATED);
-
-            if (stored)
-                outJar.setLevel(Deflater.NO_COMPRESSION);
-
-            return outJar;
-        }
-        catch (FileNotFoundException e)
-        {
-            throw new FileNotFoundException("Could not open output file: " + e.getMessage());
-        }
-    }
-
-    private static boolean isClass(String name)
-    {
-        return name.endsWith(".class");
-    }
-
-    private static void removeObfuscateRuleAnnotations(ClassNode node)
-    {
-        String obfuscateRulePath = ObfuscateRule.class.getName().replace('.', '/');
-
-        if (node.invisibleTypeAnnotations != null)
-            node.invisibleTypeAnnotations.removeIf(typeAnnotationNode -> typeAnnotationNode.desc.equals("L" + obfuscateRulePath + ";"));
     }
 
     private boolean isExcludedClass(String name)
@@ -221,10 +163,17 @@ public class Obfuscator
                 if (superClass == null)
                 {
                     if (!acceptMissingClass)
-                        throw new MissingClassException(Localisation.access("logs.obfuscation.hierarchy.missing_super_class.fatal")
-                                .set("missingSuperClass", classWrapper.classNode.superName)
-                                .set("referencingClass", classWrapper.classNode.name)
-                                .get()
+                        throw new MissingClassException(Localisation.access(
+                                                                            "logs.obfuscation.hierarchy.missing_super_class.fatal")
+                                                                    .set(
+                                                                            "missingSuperClass",
+                                                                            classWrapper.classNode.superName
+                                                                    )
+                                                                    .set(
+                                                                            "referencingClass",
+                                                                            classWrapper.classNode.name
+                                                                    )
+                                                                    .get()
                         );
 
                     tree.missingSuperClass = true;
@@ -254,18 +203,22 @@ public class Obfuscator
                     if (interfaceClass == null)
                     {
                         if (!acceptMissingClass)
-                            throw new MissingClassException(Localisation.access("logs.obfuscation.hierarchy.missing_interface.fatal")
-                                    .set("missingInterface", s)
-                                    .set("referencingClass", classWrapper.classNode.name)
-                                    .get()
+                            throw new MissingClassException(Localisation.access(
+                                                                                "logs.obfuscation.hierarchy.missing_interface.fatal")
+                                                                        .set("missingInterface", s)
+                                                                        .set(
+                                                                                "referencingClass",
+                                                                                classWrapper.classNode.name
+                                                                        )
+                                                                        .get()
                             );
 
                         tree.missingSuperClass = true;
 
                         log.warn(Localisation.access("logs.obfuscation.hierarchy.missing_interface")
-                                .set("missingInterface", s)
-                                .set("referencingClass", classWrapper.classNode.name)
-                                .get()
+                                             .set("missingInterface", s)
+                                             .set("referencingClass", classWrapper.classNode.name)
+                                             .get()
                         );
                     }
                     else
@@ -298,7 +251,10 @@ public class Obfuscator
         while (entries.hasMoreElements())
         {
             ZipEntry ent = entries.nextElement();
-            if (ent.getName().endsWith(".class") && (!isModule || !ent.getName().endsWith("module-info.class") && ent.getName().startsWith("classes/")))
+            if (ent.getName().endsWith(".class") && (!isModule || !ent.getName()
+                                                                      .endsWith("module-info.class") && ent.getName()
+                                                                                                           .startsWith(
+                                                                                                                   "classes/")))
                 byteList.add(ByteStreams.toByteArray(zipIn.getInputStream(ent)));
         }
         zipIn.close();
@@ -322,8 +278,8 @@ public class Obfuscator
             if (!file.exists())
             {
                 log.warn(Localisation.access("logs.obfuscation.classpath.not_exist")
-                        .set("fileName", file.getAbsolutePath())
-                        .get()
+                                     .set("fileName", file.getAbsolutePath())
+                                     .get()
                 );
                 continue;
             }
@@ -335,9 +291,9 @@ public class Obfuscator
             if (file.isFile())
             {
                 log.info(Localisation.access("logs.obfuscation.classpath.loading_each")
-                        .set("filePath", file.getAbsolutePath())
-                        .set("percent", ++i * 100 / libraries.size())
-                        .get()
+                                     .set("filePath", file.getAbsolutePath())
+                                     .set("percent", ++i * 100 / libraries.size())
+                                     .get()
                 );
                 classList.addAll(loadClasspathFile(file));
                 continue;
@@ -346,34 +302,34 @@ public class Obfuscator
             try (Stream<Path> stream = Files.walk(file.toPath()))
             {
                 stream.map(Path::toFile)
-                        .filter(f -> f.getName().endsWith(".jar")
-                                || f.getName().endsWith(".zip")
-                                || f.getName().endsWith(".jmod"))
-                        .forEach(f -> {
-                            log.debug(Localisation.access("logs.obfuscation.classpath.read.reading_file")
-                                    .set("fileName", f.getName())
-                                    .set("filePath", f.getAbsolutePath())
-                                    .get()
-                            );
-                            try
-                            {
-                                classList.addAll(loadClasspathFile(f));
-                            }
-                            catch (IOException e)
-                            {
-                                log.warn(Localisation.access("logs.obfuscation.classpath.read.fail")
-                                        .set("fileName", f.getName())
-                                        .set("filePath", f.getAbsolutePath())
-                                        .get()
-                                );
-                            }
-                        });
+                      .filter(f -> f.getName().endsWith(".jar")
+                              || f.getName().endsWith(".zip")
+                              || f.getName().endsWith(".jmod"))
+                      .forEach(f -> {
+                          log.debug(Localisation.access("logs.obfuscation.classpath.read.reading_file")
+                                                .set("fileName", f.getName())
+                                                .set("filePath", f.getAbsolutePath())
+                                                .get()
+                          );
+                          try
+                          {
+                              classList.addAll(loadClasspathFile(f));
+                          }
+                          catch (IOException e)
+                          {
+                              log.warn(Localisation.access("logs.obfuscation.classpath.read.fail")
+                                                   .set("fileName", f.getName())
+                                                   .set("filePath", f.getAbsolutePath())
+                                                   .get()
+                              );
+                          }
+                      });
             }
         }
 
         log.info(Localisation.access("logs.obfuscation.classpath.read.success")
-                .set("classes", classList.size())
-                .get()
+                             .set("classes", classList.size())
+                             .get()
         );
 
         this.classPath.putAll(parseClassPath(classList, this.config.getNThreads()));
@@ -603,7 +559,8 @@ public class Obfuscator
         }
         catch (Exception e)
         {
-            log.warn(Localisation.access("logs.obfuscation.error.fail_read").set("className", name).get(),
+            log.warn(
+                    Localisation.access("logs.obfuscation.error.fail_read").set("className", name).get(),
                     e
             );
             this.files.put(name, classBytes);
@@ -615,20 +572,27 @@ public class Obfuscator
         long startTime = System.currentTimeMillis();
 
         log.info(Localisation.access("logs.obfuscation.reading_input")
-                .set("jarName", this.config.getInput())
-                .get()
+                             .set("jarName", this.config.getInput())
+                             .get()
         );
         Map<String, byte[]> classDataMap = readJarClasses(inJar, outJar);
 
         for (Map.Entry<String, ClassNode> stringClassNodeEntry : this.classes.entrySet())
-            this.classPath.put(stringClassNodeEntry.getKey().replace(".class", ""), new ClassWrapper(stringClassNodeEntry.getValue(), false, classDataMap.get(stringClassNodeEntry.getKey())));
+            this.classPath.put(
+                    stringClassNodeEntry.getKey().replace(".class", ""),
+                    new ClassWrapper(
+                            stringClassNodeEntry.getValue(),
+                            false,
+                            classDataMap.get(stringClassNodeEntry.getKey())
+                    )
+            );
 
         for (ClassNode value : this.classes.values())
             this.libraryClassNodes.add(new ClassWrapper(value, false, null));
 
         log.info(Localisation.access("logs.task_finished")
-                .set("time", Utils.formatTime(System.currentTimeMillis() - startTime))
-                .get()
+                             .set("time", Utils.formatTime(System.currentTimeMillis() - startTime))
+                             .get()
         );
 
         Map<String, byte[]> toWrite = this.processClasses(this.classes);
@@ -646,8 +610,8 @@ public class Obfuscator
         Map<String, byte[]> toWrite = new HashMap<>(this.processClasses(packagerMap));
 
         log.info(Localisation.access("logs.task_finished")
-                .set("time", Utils.formatTime(System.currentTimeMillis() - startTime))
-                .get()
+                             .set("time", Utils.formatTime(System.currentTimeMillis() - startTime))
+                             .get()
         );
 
         return toWrite;
@@ -656,8 +620,8 @@ public class Obfuscator
     private void finishOutJar(Map<String, byte[]> classes, ZipOutputStream outJar, boolean stored) throws IOException
     {
         log.info(Localisation.access("logs.obfuscation.transforming.writing_artifact")
-                .set("outputPath", this.config.getOutput())
-                .get()
+                             .set("outputPath", this.config.getOutput())
+                             .get()
         );
         long startTime = System.currentTimeMillis();
         Map<String, byte[]> toWrite = new HashMap<>(classes);
@@ -670,8 +634,8 @@ public class Obfuscator
             writeEntry(outJar, stringEntry.getKey(), stringEntry.getValue(), stored);
 
         log.info(Localisation.access("logs.task_finished")
-                .set("time", Utils.formatTime(System.currentTimeMillis() - startTime))
-                .get()
+                             .set("time", Utils.formatTime(System.currentTimeMillis() - startTime))
+                             .get()
         );
 
         writeResources(outJar, stored);
@@ -693,10 +657,11 @@ public class Obfuscator
                 metaInfoProcessed = true;
                 if (this.mainClassChanged)
                 {
-                    entryData = Utils.replaceMainClass(new String(entryData, StandardCharsets.UTF_8), this.mainClass).getBytes(StandardCharsets.UTF_8);
+                    entryData = Utils.replaceMainClass(new String(entryData, StandardCharsets.UTF_8), this.mainClass)
+                                     .getBytes(StandardCharsets.UTF_8);
                     log.info(Localisation.access("logs.obfuscation.resources.main_class.replaced")
-                            .set("newMainClass", this.mainClass)
-                            .get()
+                                         .set("newMainClass", this.mainClass)
+                                         .get()
                     );
                 }
 
@@ -714,8 +679,8 @@ public class Obfuscator
         }
 
         log.info(Localisation.access("logs.task_finished")
-                .set("time", Utils.formatTime(System.currentTimeMillis() - startTime))
-                .get()
+                             .set("time", Utils.formatTime(System.currentTimeMillis() - startTime))
+                             .get()
         );
     }
 
@@ -725,9 +690,9 @@ public class Obfuscator
 
         int threadCount = this.config.getNThreads();
         log.info(Localisation.access("logs.obfuscation.transformer.begin")
-                .set("threads", threadCount)
-                .set("classes", classes.size())
-                .get()
+                             .set("threads", threadCount)
+                             .set("classes", classes.size())
+                             .get()
         );
         Map<String, ClassNode> transformed = this.transformClasses(classes, threadCount);
 
@@ -736,8 +701,8 @@ public class Obfuscator
 
         Map<String, byte[]> toWrite = this.encodeClasses(transformed, threadCount);
         log.info(Localisation.access("logs.task_finished")
-                .set("time", Utils.formatTime(System.currentTimeMillis() - startTime))
-                .get()
+                             .set("time", Utils.formatTime(System.currentTimeMillis() - startTime))
+                             .get()
         );
 
         return toWrite;
@@ -746,8 +711,8 @@ public class Obfuscator
     public void setMainClass(String newMainClass)
     {
         log.info(Localisation.access("logs.obfuscation.resources.main_class.detected_change")
-                .set("newMainClass", newMainClass)
-                .get()
+                             .set("newMainClass", newMainClass)
+                             .get()
         );
 
         if (this.packager.isEnabled() && this.packager.getMainClass().equals(this.mainClass))
@@ -760,9 +725,10 @@ public class Obfuscator
 
     private Map<String, ClassNode> transformClasses(Map<String, ClassNode> classes, int threadCount)
     {
-        ExecutorService executorService = Executors.newFixedThreadPool(threadCount, new ThreadFactoryBuilder()
-                .setNameFormat("Worker-%d")
-                .build()
+        ExecutorService executorService = Executors.newFixedThreadPool(
+                threadCount, new ThreadFactoryBuilder()
+                        .setNameFormat("Worker-%d")
+                        .build()
         );
 
         LinkedList<Map.Entry<String, ClassNode>> classQueue = new LinkedList<>(classes.entrySet());
@@ -804,10 +770,10 @@ public class Obfuscator
                     }
 
                     log.debug(Localisation.access("logs.obfuscation.transforming.processing")
-                            .set("proceedClasses", processed.get())
-                            .set("totalClasses", classes.size())
-                            .set("entryName", entryName)
-                            .get()
+                                          .set("proceedClasses", processed.get())
+                                          .set("totalClasses", classes.size())
+                                          .set("entryName", entryName)
+                                          .get()
                     );
 
                     for (IClassTransformer proc : this.processors)
@@ -816,10 +782,10 @@ public class Obfuscator
                         if (!shouldProcess)
                         {
                             log.info(Localisation.access("logs.obfuscation.transforming.skipped.annotation")
-                                    .set("proceedClasses", processed.get())
-                                    .set("totalClasses", classes.size())
-                                    .set("entryName", entryName)
-                                    .get()
+                                                 .set("proceedClasses", processed.get())
+                                                 .set("totalClasses", classes.size())
+                                                 .set("entryName", entryName)
+                                                 .get()
                             );
                             continue;
                         }
@@ -830,11 +796,12 @@ public class Obfuscator
                         }
                         catch (Exception e)
                         {
-                            log.error(Localisation.access("logs.obfuscation.transforming.error")
-                                    .set("proceedClasses", processed.get())
-                                    .set("totalClasses", classes.size())
-                                    .set("entryName", entryName)
-                                    .get(),
+                            log.error(
+                                    Localisation.access("logs.obfuscation.transforming.error")
+                                                .set("proceedClasses", processed.get())
+                                                .set("totalClasses", classes.size())
+                                                .set("entryName", entryName)
+                                                .get(),
                                     e
                             );
 
@@ -844,8 +811,9 @@ public class Obfuscator
 
                     if (callback.isForceComputeFrames())
                         cn.methods.forEach(method -> Arrays.stream(method.instructions.toArray())
-                                .filter(abstractInsnNode -> abstractInsnNode instanceof FrameNode)
-                                .forEach(abstractInsnNode -> method.instructions.remove(abstractInsnNode)));
+                                                           .filter(abstractInsnNode -> abstractInsnNode instanceof FrameNode)
+                                                           .forEach(abstractInsnNode -> method.instructions.remove(
+                                                                   abstractInsnNode)));
 
 
                     this.computeMode = this.computeMode | (callback.isForceComputeFrames() ? ModifiedClassWriter.COMPUTE_MAXS: 0);
@@ -857,12 +825,13 @@ public class Obfuscator
                 }
                 catch (Exception e)
                 {
-                    log.error(Localisation.access("logs.obfuscation.transforming.error")
-                            .set("threadName", Thread.currentThread().getName())
-                            .set("proceedClasses", processed.get())
-                            .set("totalClasses", classes.size())
-                            .set("entryName", entryName)
-                            .get(),
+                    log.error(
+                            Localisation.access("logs.obfuscation.transforming.error")
+                                        .set("threadName", Thread.currentThread().getName())
+                                        .set("proceedClasses", processed.get())
+                                        .set("totalClasses", classes.size())
+                                        .set("entryName", entryName)
+                                        .get(),
                             e
                     );
 
@@ -901,9 +870,10 @@ public class Obfuscator
 
     private Map<String, byte[]> encodeClasses(Map<String, ClassNode> classes, int threadCount)
     {
-        ExecutorService executorService = Executors.newFixedThreadPool(threadCount, new ThreadFactoryBuilder()
-                .setNameFormat("Worker-%d")
-                .build()
+        ExecutorService executorService = Executors.newFixedThreadPool(
+                threadCount, new ThreadFactoryBuilder()
+                        .setNameFormat("Worker-%d")
+                        .build()
         );
 
         LinkedList<Map.Entry<String, ClassNode>> classQueue = new LinkedList<>(classes.entrySet());
@@ -927,7 +897,8 @@ public class Obfuscator
                 String entryName = stringClassNodeEntry.getKey();
                 byte[] entryData;
                 ClassNode cn = stringClassNodeEntry.getValue();
-                boolean isPackagerClassDecrypter = this.packager.isEnabled() && this.packager.isPackagerClassDecrypter(cn);
+                boolean isPackagerClassDecrypter = this.packager.isEnabled() && this.packager.isPackagerClassDecrypter(
+                        cn);
 
                 try
                 {
@@ -959,13 +930,14 @@ public class Obfuscator
                 }
                 catch (Exception e)
                 {
-                    log.error(Localisation.access("logs.obfuscation.transforming.error")
-                                          .set("threadName", Thread.currentThread().getName())
-                                          .set("proceedClasses", processed.get())
-                                          .set("totalClasses", classes.size())
-                                          .set("entryName", entryName)
-                                          .get(),
-                              e
+                    log.error(
+                            Localisation.access("logs.obfuscation.transforming.error")
+                                        .set("threadName", Thread.currentThread().getName())
+                                        .set("proceedClasses", processed.get())
+                                        .set("totalClasses", classes.size())
+                                        .set("entryName", entryName)
+                                        .get(),
+                            e
                     );
 
                     throw e;
@@ -1004,13 +976,14 @@ public class Obfuscator
 
         return toWrite;
     }
+
     public void writeEntry(ZipOutputStream outJar, String name, byte[] value, boolean stored) throws IOException
     {
         ZipEntry newEntry = new ZipEntry(name);
 
         log.debug(Localisation.access("logs.obfuscation.copying_entry")
-                             .set("entryName", name)
-                             .get()
+                              .set("entryName", name)
+                              .get()
         );
 
         if (stored)
@@ -1034,35 +1007,35 @@ public class Obfuscator
         ObfuscateRule[] rules = null;
         if (node.invisibleTypeAnnotations != null)
             rules = node.invisibleTypeAnnotations.stream()
-                    .filter(typeAnnotationNode -> typeAnnotationNode.desc.equals("L" + obfuscateRulePath + ";"))
-                    .map(typeAnnotationNode -> {
-                        Object[] values = typeAnnotationNode.values.toArray();
-                        if (values.length != 2)
-                            throw new RuntimeException("Invalid ObfuscateRule annotation");
+                                                 .filter(typeAnnotationNode -> typeAnnotationNode.desc.equals("L" + obfuscateRulePath + ";"))
+                                                 .map(typeAnnotationNode -> {
+                                                     Object[] values = typeAnnotationNode.values.toArray();
+                                                     if (values.length != 2)
+                                                         throw new RuntimeException("Invalid ObfuscateRule annotation");
 
-                        return new ObfuscateRule()
-                        {
+                                                     return new ObfuscateRule()
+                                                     {
 
-                            @Override
-                            public Class<? extends Annotation> annotationType()
-                            {
-                                return ObfuscateRule.class;
-                            }
+                                                         @Override
+                                                         public Class<? extends Annotation> annotationType()
+                                                         {
+                                                             return ObfuscateRule.class;
+                                                         }
 
-                            @Override
-                            public Action value()
-                            {
-                                return (Action) values[1];
-                            }
+                                                         @Override
+                                                         public Action value()
+                                                         {
+                                                             return (Action) values[1];
+                                                         }
 
-                            @Override
-                            public ObfuscationTransformer[] processors()
-                            {
-                                return (ObfuscationTransformer[]) values[0];
-                            }
-                        };
-                    })
-                    .toArray(ObfuscateRule[]::new);
+                                                         @Override
+                                                         public ObfuscationTransformer[] processors()
+                                                         {
+                                                             return (ObfuscationTransformer[]) values[0];
+                                                         }
+                                                     };
+                                                 })
+                                                 .toArray(ObfuscateRule[]::new);
 
         if (rules == null)
             return true;
@@ -1110,7 +1083,8 @@ public class Obfuscator
             node.invisibleAnnotations = new ArrayList<>();
         node.invisibleAnnotations.add(markerAnnotation);
 
-        Map<String, ClassNode> classPath = new HashMap<>() {{
+        Map<String, ClassNode> classPath = new HashMap<>()
+        {{
             put(node.name, node);
         }};
 
@@ -1121,14 +1095,69 @@ public class Obfuscator
         // 変形処理後の, メインクラスを探し出す
         ClassNode mainClassNode = classPath.values().stream()
                                            .filter(cn -> cn.invisibleAnnotations.stream()
-                                                                                .anyMatch(annotationNode -> annotationNode.desc.equals(markerAnnotation.desc)))
+                                                                                .anyMatch(annotationNode -> annotationNode.desc.equals(
+                                                                                        markerAnnotation.desc)))
                                            .findFirst()
-                                           .orElseThrow(() -> new IllegalStateException("Main class not found after transformation"));
+                                           .orElseThrow(() -> new IllegalStateException(
+                                                   "Main class not found after transformation"));
 
         // マーカー・アノテーションを削除
         if (mainClassNode.invisibleAnnotations != null)
             mainClassNode.invisibleAnnotations.removeIf(annotationNode -> annotationNode.desc.equals(markerAnnotation.desc));
 
         return mainClassNode;
+    }
+
+    private static List<Pattern> compileExcludePatterns()
+    {
+        List<Pattern> result = new ArrayList<>();
+        for (String s : SETTINGS.getExcludedClasses().get().split("\n"))
+            result.add(ExcludePattern.compileExcludePattern(s));
+
+        return result;
+    }
+
+    private static ZipInputStream getInJarStream(String inputJarPath) throws FileNotFoundException
+    {
+        try
+        {
+            return new ZipInputStream(new BufferedInputStream(new FileInputStream(inputJarPath)));
+        }
+        catch (FileNotFoundException e)
+        {
+            throw new FileNotFoundException("Could not open input file: " + e.getMessage());
+        }
+    }
+
+    private static ZipOutputStream getOutJarStream(String outputJarPath, boolean stored) throws FileNotFoundException
+    {
+        try
+        {
+            OutputStream out = outputJarPath == null ? new ByteArrayOutputStream(): new FileOutputStream(outputJarPath);
+            ZipOutputStream outJar = new ZipOutputStream(new BufferedOutputStream(out));
+            outJar.setMethod(stored ? ZipOutputStream.STORED: ZipOutputStream.DEFLATED);
+
+            if (stored)
+                outJar.setLevel(Deflater.NO_COMPRESSION);
+
+            return outJar;
+        }
+        catch (FileNotFoundException e)
+        {
+            throw new FileNotFoundException("Could not open output file: " + e.getMessage());
+        }
+    }
+
+    private static boolean isClass(String name)
+    {
+        return name.endsWith(".class");
+    }
+
+    private static void removeObfuscateRuleAnnotations(ClassNode node)
+    {
+        String obfuscateRulePath = ObfuscateRule.class.getName().replace('.', '/');
+
+        if (node.invisibleTypeAnnotations != null)
+            node.invisibleTypeAnnotations.removeIf(typeAnnotationNode -> typeAnnotationNode.desc.equals("L" + obfuscateRulePath + ";"));
     }
 }

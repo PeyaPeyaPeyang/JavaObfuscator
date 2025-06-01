@@ -84,9 +84,8 @@ public class InliningUtils
         // + replace local vars / parameters with new ones
         for (AbstractInsnNode abstractInsnNode : node.instructions.toArray())
         {
-            if (abstractInsnNode instanceof LabelNode)
+            if (abstractInsnNode instanceof LabelNode insnNode)
             {
-                LabelNode insnNode = (LabelNode) abstractInsnNode;
                 labelMap.put(insnNode, new LabelNode());
             }
             if (abstractInsnNode instanceof VarInsnNode)
@@ -127,11 +126,17 @@ public class InliningUtils
                         inlinedParameters.put(argumentMap.get(i - 1), abstractInsnNode);
                     }
                     else
-                        insns.add(new VarInsnNode(argumentTypes.get(i - 1).getOpcode(Opcodes.ISTORE), argumentMap.get(i - 1)));
+                        insns.add(new VarInsnNode(
+                                argumentTypes.get(i - 1).getOpcode(Opcodes.ISTORE),
+                                argumentMap.get(i - 1)
+                        ));
                 }
                 else
                 {
-                    insns.add(new VarInsnNode(argumentTypes.get(i - 1).getOpcode(Opcodes.ISTORE), argumentMap.get(i - 1)));
+                    insns.add(new VarInsnNode(
+                            argumentTypes.get(i - 1).getOpcode(Opcodes.ISTORE),
+                            argumentMap.get(i - 1)
+                    ));
                 }
             }
         }
@@ -164,11 +169,15 @@ public class InliningUtils
             {
                 if (inlinedParameters.containsKey(((VarInsnNode) abstractInsnNode).var))
                 {
-                    insns.add(inlinedParameters.get(((VarInsnNode) abstractInsnNode).var).clone(null)); // TODO Prevent STORE instructions
+                    insns.add(inlinedParameters.get(((VarInsnNode) abstractInsnNode).var)
+                                               .clone(null)); // TODO Prevent STORE instructions
                 }
                 else
                 {
-                    insns.add(new VarInsnNode(abstractInsnNode.getOpcode(), slotMap.get(((VarInsnNode) abstractInsnNode).var)));
+                    insns.add(new VarInsnNode(
+                            abstractInsnNode.getOpcode(),
+                            slotMap.get(((VarInsnNode) abstractInsnNode).var)
+                    ));
                 }
 
                 continue;
@@ -176,7 +185,10 @@ public class InliningUtils
 
             if (abstractInsnNode instanceof IincInsnNode)
             {
-                insns.add(new IincInsnNode(slotMap.get(((IincInsnNode) abstractInsnNode).var), ((IincInsnNode) abstractInsnNode).incr));
+                insns.add(new IincInsnNode(
+                        slotMap.get(((IincInsnNode) abstractInsnNode).var),
+                        ((IincInsnNode) abstractInsnNode).incr
+                ));
                 continue;
             }
 
@@ -186,7 +198,12 @@ public class InliningUtils
             if (abstractInsnNode instanceof MethodInsnNode)
             {
                 ClassNode lookup = Objects.requireNonNull(Utils.lookupClass(((MethodInsnNode) abstractInsnNode).owner));
-                MethodNode lookupMethod = Objects.requireNonNull(Utils.getMethod(lookup, ((MethodInsnNode) abstractInsnNode).name, ((MethodInsnNode) abstractInsnNode).desc, true));
+                MethodNode lookupMethod = Objects.requireNonNull(Utils.getMethod(
+                        lookup,
+                        ((MethodInsnNode) abstractInsnNode).name,
+                        ((MethodInsnNode) abstractInsnNode).desc,
+                        true
+                ));
 
                 lookup.access = makePublic(lookup.access);
                 lookupMethod.access = makePublic(lookupMethod.access);
@@ -195,7 +212,10 @@ public class InliningUtils
             if (abstractInsnNode instanceof FieldInsnNode)
             {
                 ClassNode lookup = Objects.requireNonNull(Utils.lookupClass(((FieldInsnNode) abstractInsnNode).owner));
-                FieldNode lookupMethod = Objects.requireNonNull(Utils.getField(lookup, ((FieldInsnNode) abstractInsnNode).name));
+                FieldNode lookupMethod = Objects.requireNonNull(Utils.getField(
+                        lookup,
+                        ((FieldInsnNode) abstractInsnNode).name
+                ));
 
 
                 lookup.access = makePublic(lookup.access);
@@ -215,7 +235,12 @@ public class InliningUtils
 
         for (TryCatchBlockNode tryCatchBlock : node.tryCatchBlocks)
         {
-            target.tryCatchBlocks.add(new TryCatchBlockNode(labelMap.get(tryCatchBlock.start), labelMap.get(tryCatchBlock.end), labelMap.get(tryCatchBlock.handler), tryCatchBlock.type));
+            target.tryCatchBlocks.add(new TryCatchBlockNode(
+                    labelMap.get(tryCatchBlock.start),
+                    labelMap.get(tryCatchBlock.end),
+                    labelMap.get(tryCatchBlock.handler),
+                    tryCatchBlock.type
+            ));
         }
 
         return insns;
@@ -277,7 +302,12 @@ public class InliningUtils
                     break;
                 }
 
-                MethodNode lookupMethod = Utils.getMethod(lookup, ((MethodInsnNode) abstractInsnNode).name, ((MethodInsnNode) abstractInsnNode).desc, true);
+                MethodNode lookupMethod = Utils.getMethod(
+                        lookup,
+                        ((MethodInsnNode) abstractInsnNode).name,
+                        ((MethodInsnNode) abstractInsnNode).desc,
+                        true
+                );
 
                 if (lookupMethod == null || !canAccessMethod(from, lookupMethod, lookup, lookupMethod))
                 {
@@ -304,9 +334,8 @@ public class InliningUtils
                     break;
                 }
             }
-            if (abstractInsnNode instanceof LdcInsnNode)
+            if (abstractInsnNode instanceof LdcInsnNode ldc)
             {
-                LdcInsnNode ldc = (LdcInsnNode) abstractInsnNode;
 
                 if (ldc.cst instanceof Type)
                 {

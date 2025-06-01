@@ -29,15 +29,19 @@ public class HideMembers implements IClassTransformer
 {
     private static final String PROCESSOR_NAME = "hide_members";
     private static final Random random = new Random();
-    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, "ui.transformers.hide_members.description", DeprecationLevel.AVAILABLE, true);
+    private static final EnabledValue V_ENABLED = new EnabledValue(
+            PROCESSOR_NAME,
+            "ui.transformers.hide_members.description",
+            DeprecationLevel.AVAILABLE,
+            true
+    );
+    private final Obfuscator inst;
 
     static
     {
         ValueManager.registerOwner(PROCESSOR_NAME, "ui.transformers.hide_members");
         ValueManager.registerClass(HideMembers.class);
     }
-
-    private final Obfuscator inst;
 
     public HideMembers(Obfuscator inst)
     {

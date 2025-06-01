@@ -60,37 +60,16 @@ public class UniqueNameProvider
 
         try
         {
-            this.classNames = Files.readLines(new File(settings.getClassNamesDictionary().get()), StandardCharsets.UTF_8);
+            this.classNames = Files.readLines(
+                    new File(settings.getClassNamesDictionary().get()),
+                    StandardCharsets.UTF_8
+            );
             this.names = Files.readLines(new File(settings.getNamesDictionary().get()), StandardCharsets.UTF_8);
         }
         catch (IOException e)
         {
             throw new RuntimeException("Failed to load names: " + e.getLocalizedMessage(), e);
         }
-    }
-
-    private static void normalizeSettings(JObfSettings settings)
-    {
-        if (settings.getGeneratorChars().get().isEmpty())
-        {
-            settings.getGeneratorChars().setValue("Il");
-            throw new IllegalStateException("The generator chars are empty. Changing them to 'Il'");
-        }
-    }
-
-    private static String generateUniqueName(String candidate, Predicate<? super String> check)
-    {
-        String name = candidate;
-        int tryna = 0;
-        while (true)
-        {
-            if (check.test(name))
-                name = candidate + "$" + ++tryna;
-            else
-                break;
-        }
-
-        return name;
     }
 
     public String generateClassName()
@@ -139,7 +118,7 @@ public class UniqueNameProvider
         return generateUniqueName(
                 nameCandidate,
                 s -> method.methods.stream()
-                        .anyMatch(m -> m.name.equals(s) && m.desc.equals(desc))
+                                   .anyMatch(m -> m.name.equals(s) && m.desc.equals(desc))
         );
     }
 
@@ -148,7 +127,7 @@ public class UniqueNameProvider
         return generateUniqueName(
                 nameCandidate,
                 s -> method.fields.stream()
-                        .anyMatch(f -> f.name.equals(s))
+                                  .anyMatch(f -> f.name.equals(s))
         );
     }
 
@@ -157,7 +136,7 @@ public class UniqueNameProvider
         return generateUniqueName(
                 nameCandidate,
                 s -> method.localVariables.stream()
-                        .anyMatch(l -> l.name.equals(s))
+                                          .anyMatch(l -> l.name.equals(s))
         );
     }
 
@@ -167,5 +146,29 @@ public class UniqueNameProvider
             this.usedMethods.put(newName, this.usedMethods.get(old));
         if (this.usedFields.containsKey(old))
             this.usedFields.put(newName, this.usedFields.get(old));
+    }
+
+    private static void normalizeSettings(JObfSettings settings)
+    {
+        if (settings.getGeneratorChars().get().isEmpty())
+        {
+            settings.getGeneratorChars().setValue("Il");
+            throw new IllegalStateException("The generator chars are empty. Changing them to 'Il'");
+        }
+    }
+
+    private static String generateUniqueName(String candidate, Predicate<? super String> check)
+    {
+        String name = candidate;
+        int tryna = 0;
+        while (true)
+        {
+            if (check.test(name))
+                name = candidate + "$" + ++tryna;
+            else
+                break;
+        }
+
+        return name;
     }
 }

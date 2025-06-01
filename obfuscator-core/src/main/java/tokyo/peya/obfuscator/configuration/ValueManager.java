@@ -11,7 +11,6 @@
 
 package tokyo.peya.obfuscator.configuration;
 
-import lombok.Getter;
 import tokyo.peya.obfuscator.Localisation;
 
 import java.lang.reflect.Field;
@@ -35,9 +34,8 @@ public class ValueManager
 
             Object obj = field.get(object);
 
-            if (obj instanceof Value)
+            if (obj instanceof Value<?> value)
             {
-                Value<?> value = (Value<?>) obj;
                 if (!ownerLocalisationMap.containsKey(value.getOwner()))
                     throw new IllegalArgumentException("Owner " + value.getOwner() + " not recognised.");
                 values.add(value);

@@ -29,7 +29,6 @@ import org.objectweb.asm.tree.ClassNode;
 import org.slf4j.LoggerFactory;
 import tokyo.peya.obfuscator.configuration.ConfigManager;
 import tokyo.peya.obfuscator.configuration.Configuration;
-import tokyo.peya.obfuscator.processor.Packager;
 import tokyo.peya.obfuscator.processor.Processors;
 import tokyo.peya.obfuscator.templating.Templates;
 import tokyo.peya.obfuscator.ui.GUI;
@@ -48,7 +47,9 @@ import java.util.List;
 @Slf4j(topic = "Main")
 public class JavaObfuscator
 {
-    public static final String SHORT_VERSION = (JavaObfuscator.class.getPackage().getImplementationVersion() == null ? "DEV": "v" + JavaObfuscator.class.getPackage().getImplementationVersion()) + " by superblaubeere27 & Peyang";
+    public static final String SHORT_VERSION = (JavaObfuscator.class.getPackage()
+                                                                    .getImplementationVersion() == null ? "DEV": "v" + JavaObfuscator.class.getPackage()
+                                                                                                                                           .getImplementationVersion()) + " by superblaubeere27 & Peyang";
     public static final String VERSION = "Java Obfuscator " + SHORT_VERSION;
 
     public static boolean VERBOSE;
@@ -77,8 +78,16 @@ public class JavaObfuscator
         parser.accepts("jarOut").withRequiredArg();
         parser.accepts("config").withOptionalArg().ofType(File.class);
         parser.accepts("cp").withOptionalArg().describedAs("ClassPath").ofType(File.class);
-        parser.accepts("scriptFile").withOptionalArg().describedAs("[Not documented] JS script file").ofType(File.class);
-        parser.accepts("threads").withOptionalArg().ofType(Integer.class).defaultsTo(Runtime.getRuntime().availableProcessors()).describedAs("Thread count; Please don't use more threads than you have cores. It might hang up your system");
+        parser.accepts("scriptFile")
+              .withOptionalArg()
+              .describedAs("[Not documented] JS script file")
+              .ofType(File.class);
+        parser.accepts("threads")
+              .withOptionalArg()
+              .ofType(Integer.class)
+              .defaultsTo(Runtime.getRuntime().availableProcessors())
+              .describedAs(
+                      "Thread count; Please don't use more threads than you have cores. It might hang up your system");
         parser.accepts("mapping").withOptionalArg().ofType(File.class).describedAs("Mapping file");
         parser.accepts("verbose").withOptionalArg();
         parser.accepts("help").forHelp();
@@ -165,14 +174,14 @@ public class JavaObfuscator
     {
 
         log.info("\n" +
-                "        _      __                     _             \n" +
-                "       | |    / _|                   | |            \n" +
-                "   ___ | |__ | |_ _   _ ___  ___ __ _| |_ ___  _ __ \n" +
-                "  / _ \\| '_ \\|  _| | | / __|/ __/ _` | __/ _ \\| '__|\n" +
-                " | (_) | |_) | | | |_| \\__ \\ (_| (_| | || (_) | |   \n" +
-                "  \\___/|_.__/|_|  \\__,_|___/\\___\\__,_|\\__\\___/|_|   \n" +
-                "   " + SHORT_VERSION + (embedded ? " (EMBEDDED)": "") +
-                "\n\n");
+                         "        _      __                     _             \n" +
+                         "       | |    / _|                   | |            \n" +
+                         "   ___ | |__ | |_ _   _ ___  ___ __ _| |_ ___  _ __ \n" +
+                         "  / _ \\| '_ \\|  _| | | / __|/ __/ _` | __/ _ \\| '__|\n" +
+                         " | (_) | |_) | | | |_| \\__ \\ (_| (_| | || (_) | |   \n" +
+                         "  \\___/|_.__/|_|  \\__,_|___/\\___\\__,_|\\__\\___/|_|   \n" +
+                         "   " + SHORT_VERSION + (embedded ? " (EMBEDDED)": "") +
+                         "\n\n");
     }
 
     public static boolean runObfuscator(String jarIn,
@@ -184,12 +193,14 @@ public class JavaObfuscator
                                         int threads,
                                         File mapping) throws IOException, InterruptedException
     {
-        log.info("\n" + ConsoleUtils.formatBox("Configuration", false, Arrays.asList(
-                "Input:      " + jarIn,
-                "Output:     " + jarOut,
-                "Config:     " + (configPath != null ? configPath.getPath(): ""),
-                "Script?:     " + (scriptContent != null ? "Yes": "No")
-        )));
+        log.info("\n" + ConsoleUtils.formatBox(
+                "Configuration", false, Arrays.asList(
+                        "Input:      " + jarIn,
+                        "Output:     " + jarOut,
+                        "Config:     " + (configPath != null ? configPath.getPath(): ""),
+                        "Script?:     " + (scriptContent != null ? "Yes": "No")
+                )
+        ));
 
         Configuration config = new Configuration(
                 libraries,
@@ -208,20 +219,25 @@ public class JavaObfuscator
                 return false;
             }
 
-            config = ConfigManager.loadConfig(new String(ByteStreams.toByteArray(Files.newInputStream(configPath.toPath())), StandardCharsets.UTF_8));
+            config = ConfigManager.loadConfig(new String(
+                    ByteStreams.toByteArray(Files.newInputStream(configPath.toPath())),
+                    StandardCharsets.UTF_8
+            ));
         }
         else
         {
-            log.warn("\n" + ConsoleUtils.formatBox("No config file", true, Arrays.asList(
-                    "You didn't specify a configuration, so the ",
-                    "obfuscator is using the default configuration.",
-                    " ",
-                    "This might cause the output jar to be invalid.",
-                    "If you want to create a config, please start the",
-                    "obfuscator in GUI Mode (run it without cli args).",
-                    "",
-                    !embedded ? "The program will resume in 2 sec": "Continue..."
-            )) + "\n");
+            log.warn("\n" + ConsoleUtils.formatBox(
+                    "No config file", true, Arrays.asList(
+                            "You didn't specify a configuration, so the ",
+                            "obfuscator is using the default configuration.",
+                            " ",
+                            "This might cause the output jar to be invalid.",
+                            "If you want to create a config, please start the",
+                            "obfuscator in GUI Mode (run it without cli args).",
+                            "",
+                            !embedded ? "The program will resume in 2 sec": "Continue..."
+                    )
+            ) + "\n");
             if (!embedded)
                 Thread.sleep(2000);
         }
@@ -261,15 +277,18 @@ public class JavaObfuscator
         int threads = config.getNThreads();
         if (threads > Runtime.getRuntime().availableProcessors())
         {
-            log.warn("\n" + ConsoleUtils.formatBox("WARNING", true, Arrays.asList(
-                    "You selected more threads than your cpu has cores.",
-                    "",
-                    "I would strongly advise against it because",
-                    "it WILL make the obfuscation slower and also",
-                    "might hang up your system. " + threads + " threads > " + Runtime.getRuntime().availableProcessors() + " cores",
-                    "",
-                    "The program will resume in 10s. Please think about your decision"
-            )) + "\n");
+            log.warn("\n" + ConsoleUtils.formatBox(
+                    "WARNING", true, Arrays.asList(
+                            "You selected more threads than your cpu has cores.",
+                            "",
+                            "I would strongly advise against it because",
+                            "it WILL make the obfuscation slower and also",
+                            "might hang up your system. " + threads + " threads > " + Runtime.getRuntime()
+                                                                                             .availableProcessors() + " cores",
+                            "",
+                            "The program will resume in 10s. Please think about your decision"
+                    )
+            ) + "\n");
             Thread.sleep(10000);
         }
 
@@ -291,7 +310,6 @@ public class JavaObfuscator
         JavaObfuscator.currentSession = null;
         return succeed;
     }
-
 
     private static void syncLogger()
     {

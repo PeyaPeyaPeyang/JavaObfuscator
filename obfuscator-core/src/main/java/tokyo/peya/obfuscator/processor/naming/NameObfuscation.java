@@ -57,22 +57,122 @@ public class NameObfuscation implements INameObfuscationProcessor
 {
     private static final String PROCESSOR_NAME = "name_obfuscation";
     private static final Random random = new Random();
-    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, "ui.transformers.name.description", DeprecationLevel.AVAILABLE, false);
-    private static final StringValue V_EXCLUDED_CLASSES = new StringValue(PROCESSOR_NAME, "excluded_classes", "ui.transformers.name.excluded_classes", DeprecationLevel.AVAILABLE, "me.name.Class\nme.name.*\nio.netty.**", 5);
-    private static final StringValue V_EXCLUDED_METHODS = new StringValue(PROCESSOR_NAME, "excluded_methods", "ui.transformers.name.excluded_methods", DeprecationLevel.AVAILABLE, "me.name.Class.method\nme.name.Class**\nme.name.Class.*", 5);
-    private static final StringValue V_EXCLUDED_FIELDS = new StringValue(PROCESSOR_NAME, "excluded_fields", "ui.transformers.name.excluded_fields", DeprecationLevel.AVAILABLE, "me.name.Class.field\nme.name.Class.*\nme.name.**", 5);
-    private static final BooleanValue V_ALLOW_MISSING_LIBRARIES = new BooleanValue(PROCESSOR_NAME, "allow_missing_libraries", "ui.transformers.name.allow_missing_libraries",DeprecationLevel.AVAILABLE, false);
-    private static final BooleanValue V_REMAP_CLASSES = new BooleanValue(PROCESSOR_NAME, "enabled_for_class_names", "ui.transformers.name.enable_class", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_REMAP_METHODS = new BooleanValue(PROCESSOR_NAME, "enabled_for_method_names", "ui.transformers.name.enable_method", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_REMAP_FIELDS = new BooleanValue(PROCESSOR_NAME, "enabled_for_field_names", "ui.transformers.name.enable_field", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_RANDOM_PACKAGE = new BooleanValue(PROCESSOR_NAME, "randomise_package_structure", "ui.transformers.name.randomise_package", DeprecationLevel.AVAILABLE, false);
-    private static final StringValue V_NEW_PACKAGE = new StringValue(PROCESSOR_NAME, "new_packages", "ui.transformers.name.new_packages", DeprecationLevel.AVAILABLE, "", 5);
-    private static final BooleanValue V_RANDOM_SOURCE_FILE = new BooleanValue(PROCESSOR_NAME, "randomise_source_file_names", "ui.transformers.name.randomise_source_file", DeprecationLevel.AVAILABLE, false);
-    private static final BooleanValue V_RANDOM_DEBUG_SOURCE_FILE = new BooleanValue(PROCESSOR_NAME, "randomise_debug_source_file_names",  "ui.transformers.name.randomise_debug_source_file", DeprecationLevel.AVAILABLE, false);
-    private static final StringValue V_NEW_SOURCE_FILE = new StringValue(PROCESSOR_NAME, "new_source_and_debug_file_names", "ui.transformers.name.new_source_names", DeprecationLevel.AVAILABLE, "", 5);
+    private static final EnabledValue V_ENABLED = new EnabledValue(
+            PROCESSOR_NAME,
+            "ui.transformers.name.description",
+            DeprecationLevel.AVAILABLE,
+            false
+    );
+    private static final StringValue V_EXCLUDED_CLASSES = new StringValue(
+            PROCESSOR_NAME,
+            "excluded_classes",
+            "ui.transformers.name.excluded_classes",
+            DeprecationLevel.AVAILABLE,
+            "me.name.Class\nme.name.*\nio.netty.**",
+            5
+    );
+    private static final StringValue V_EXCLUDED_METHODS = new StringValue(
+            PROCESSOR_NAME,
+            "excluded_methods",
+            "ui.transformers.name.excluded_methods",
+            DeprecationLevel.AVAILABLE,
+            "me.name.Class.method\nme.name.Class**\nme.name.Class.*",
+            5
+    );
+    private static final StringValue V_EXCLUDED_FIELDS = new StringValue(
+            PROCESSOR_NAME,
+            "excluded_fields",
+            "ui.transformers.name.excluded_fields",
+            DeprecationLevel.AVAILABLE,
+            "me.name.Class.field\nme.name.Class.*\nme.name.**",
+            5
+    );
+    private static final BooleanValue V_ALLOW_MISSING_LIBRARIES = new BooleanValue(
+            PROCESSOR_NAME,
+            "allow_missing_libraries",
+            "ui.transformers.name.allow_missing_libraries",
+            DeprecationLevel.AVAILABLE,
+            false
+    );
+    private static final BooleanValue V_REMAP_CLASSES = new BooleanValue(
+            PROCESSOR_NAME,
+            "enabled_for_class_names",
+            "ui.transformers.name.enable_class",
+            DeprecationLevel.AVAILABLE,
+            true
+    );
+    private static final BooleanValue V_REMAP_METHODS = new BooleanValue(
+            PROCESSOR_NAME,
+            "enabled_for_method_names",
+            "ui.transformers.name.enable_method",
+            DeprecationLevel.AVAILABLE,
+            true
+    );
+    private static final BooleanValue V_REMAP_FIELDS = new BooleanValue(
+            PROCESSOR_NAME,
+            "enabled_for_field_names",
+            "ui.transformers.name.enable_field",
+            DeprecationLevel.AVAILABLE,
+            true
+    );
+    private static final BooleanValue V_RANDOM_PACKAGE = new BooleanValue(
+            PROCESSOR_NAME,
+            "randomise_package_structure",
+            "ui.transformers.name.randomise_package",
+            DeprecationLevel.AVAILABLE,
+            false
+    );
+    private static final StringValue V_NEW_PACKAGE = new StringValue(
+            PROCESSOR_NAME,
+            "new_packages",
+            "ui.transformers.name.new_packages",
+            DeprecationLevel.AVAILABLE,
+            "",
+            5
+    );
+    private static final BooleanValue V_RANDOM_SOURCE_FILE = new BooleanValue(
+            PROCESSOR_NAME,
+            "randomise_source_file_names",
+            "ui.transformers.name.randomise_source_file",
+            DeprecationLevel.AVAILABLE,
+            false
+    );
+    private static final BooleanValue V_RANDOM_DEBUG_SOURCE_FILE = new BooleanValue(
+            PROCESSOR_NAME,
+            "randomise_debug_source_file_names",
+            "ui.transformers.name.randomise_debug_source_file",
+            DeprecationLevel.AVAILABLE,
+            false
+    );
+    private static final StringValue V_NEW_SOURCE_FILE = new StringValue(
+            PROCESSOR_NAME,
+            "new_source_and_debug_file_names",
+            "ui.transformers.name.new_source_names",
+            DeprecationLevel.AVAILABLE,
+            "",
+            5
+    );
 
-    private static final BooleanValue V_SAVE_MAPPINGS = new BooleanValue(PROCESSOR_NAME, "save_mappings", "ui.transformers.name.save_mappings", DeprecationLevel.AVAILABLE, false);
-    private static final FilePathValue V_MAPPINGS_FILE_TO_SAVE = new FilePathValue(PROCESSOR_NAME, "mappings_file_to_save", "ui.transformers.name.mappings_file", DeprecationLevel.AVAILABLE, null);
+    private static final BooleanValue V_SAVE_MAPPINGS = new BooleanValue(
+            PROCESSOR_NAME,
+            "save_mappings",
+            "ui.transformers.name.save_mappings",
+            DeprecationLevel.AVAILABLE,
+            false
+    );
+    private static final FilePathValue V_MAPPINGS_FILE_TO_SAVE = new FilePathValue(
+            PROCESSOR_NAME,
+            "mappings_file_to_save",
+            "ui.transformers.name.mappings_file",
+            DeprecationLevel.AVAILABLE,
+            null
+    );
+    private final Obfuscator obfuscator;
+    private final List<Pattern> excludedClassesPatterns = new ArrayList<>();
+    private final List<Pattern> excludedMethodsPatterns = new ArrayList<>();
+    private final List<Pattern> excludedFieldsPatterns = new ArrayList<>();
+    private List<String> packageNames;
+    private List<String> sourceFileNames;
 
     static
     {
@@ -80,50 +180,9 @@ public class NameObfuscation implements INameObfuscationProcessor
         ValueManager.registerClass(NameObfuscation.class);
     }
 
-    private final Obfuscator obfuscator;
-    private final List<Pattern> excludedClassesPatterns = new ArrayList<>();
-    private final List<Pattern> excludedMethodsPatterns = new ArrayList<>();
-    private final List<Pattern> excludedFieldsPatterns = new ArrayList<>();
-
-    private List<String> packageNames;
-    private List<String> sourceFileNames;
-
     public NameObfuscation(Obfuscator obfuscator)
     {
         this.obfuscator = obfuscator;
-    }
-
-    private static boolean hasNativeMethodInClass(ClassNode classNode)
-    {
-        return classNode.methods.stream().anyMatch(methodNode -> Modifier.isNative(methodNode.access));
-    }
-
-    private static String recogniseMappingEntry(HashMap<String, String> mappings, String original, String mapped)
-    {
-        String[] entryContents = original.split("\\.");
-        if (entryContents.length <= 1)
-            return "CL: " + mapped + " " + original;
-
-        String className = entryContents[0];
-        String memberName = entryContents[1];
-        String fieldDesc = entryContents.length > 2 ? entryContents[2]: null;
-
-        String mappedClass = mappings.get(className);
-
-        if (fieldDesc != null)
-            return "FD: " + mappedClass + "/" + mapped + " " + className + "/" + memberName + " " + fieldDesc;
-        else
-        {
-            int descStart = memberName.indexOf('(');
-            if (descStart != -1)
-            {
-                String methodDesc = memberName.substring(descStart);
-                memberName = memberName.substring(0, descStart);
-                return "MD: " + mappedClass + "/" + mapped + " " + methodDesc + " " + className + "/" + memberName + " " + methodDesc;
-            }
-            else
-                return "# MD: " + mappedClass + "/" + memberName + " " + mapped;
-        }
     }
 
     public void setupRandomizers()
@@ -227,12 +286,18 @@ public class NameObfuscation implements INameObfuscationProcessor
                     this.saveMappingsFile(mappingFile, mappings);
             }
 
-            log.info(String.format("... Finished generating mappings (%s)", Utils.formatTime(System.currentTimeMillis() - current)));
+            log.info(String.format(
+                    "... Finished generating mappings (%s)",
+                    Utils.formatTime(System.currentTimeMillis() - current)
+            ));
 
             log.info("Applying mappings...");
             current = System.currentTimeMillis();
             this.writeClasses(mappings, classWrappers, nodes);
-            log.info(String.format("... Finished applying mappings (%s)", Utils.formatTime(System.currentTimeMillis() - current)));
+            log.info(String.format(
+                    "... Finished applying mappings (%s)",
+                    Utils.formatTime(System.currentTimeMillis() - current)
+            ));
         }
         finally
         {
@@ -245,8 +310,8 @@ public class NameObfuscation implements INameObfuscationProcessor
     private void processClasses(Collection<? extends ClassWrapper> classWrappers, Map<String, String> mappings)
     {
         classWrappers.stream()
-                .filter(classWrapper -> !this.isClassExcluded(classWrapper))
-                .forEach(classWrapper -> this.processClass(classWrapper, mappings));
+                     .filter(classWrapper -> !this.isClassExcluded(classWrapper))
+                     .forEach(classWrapper -> this.processClass(classWrapper, mappings));
     }
 
     private void processClass(ClassWrapper clazz, Map<String, String> mappings)
@@ -331,8 +396,8 @@ public class NameObfuscation implements INameObfuscationProcessor
                         || !canRenameMethodTree(mappings, new HashSet<>(), method, classWrapper.originalName);
 
         classWrapper.methods.stream()
-                .filter(isExclude.negate())
-                .forEach(methodWrapper -> this.processMethod(methodWrapper, classWrapper, mappings));
+                            .filter(isExclude.negate())
+                            .forEach(methodWrapper -> this.processMethod(methodWrapper, classWrapper, mappings));
     }
 
     private void processMethod(MethodWrapper methodWrapper, ClassWrapper ownerClass, Map<String, String> mappings)
@@ -352,7 +417,8 @@ public class NameObfuscation implements INameObfuscationProcessor
                     new HashSet<>(),
                     methodWrapper,
                     ownerClass.originalName,
-                    this.obfuscator.getNameProvider().generateMethodName(ownerClass.classNode,  methodWrapper.originalDescription)
+                    this.obfuscator.getNameProvider()
+                                   .generateMethodName(ownerClass.classNode, methodWrapper.originalDescription)
             );
     }
 
@@ -363,8 +429,8 @@ public class NameObfuscation implements INameObfuscationProcessor
                         || !canRenameFieldTree(mappings, new HashSet<>(), field, classWrapper.originalName);
 
         classWrapper.fields.stream()
-                .filter(isExclude.negate())
-                .forEach(fieldWrapper -> processField(fieldWrapper, classWrapper, mappings));
+                           .filter(isExclude.negate())
+                           .forEach(fieldWrapper -> processField(fieldWrapper, classWrapper, mappings));
     }
 
     private void processField(FieldWrapper field, ClassWrapper ownerClass, Map<String, String> mappings)
@@ -382,7 +448,8 @@ public class NameObfuscation implements INameObfuscationProcessor
         );
     }
 
-    private void writeClasses(HashMap<String, String> mappings, List<? extends ClassWrapper> classWrappers, Map<? super String, ? super ClassNode> ledger)
+    private void writeClasses(HashMap<String, String> mappings, List<? extends ClassWrapper> classWrappers,
+                              Map<? super String, ? super ClassNode> ledger)
     {
         Remapper simpleRemapper = new MemberRemapper(mappings);
 
@@ -390,7 +457,8 @@ public class NameObfuscation implements INameObfuscationProcessor
             writeClass(classWrapper, simpleRemapper, ledger);
     }
 
-    private void writeClass(ClassWrapper classWrapper, Remapper simpleRemapper, Map<? super String, ? super ClassNode> ledger)
+    private void writeClass(ClassWrapper classWrapper, Remapper simpleRemapper,
+                            Map<? super String, ? super ClassNode> ledger)
     {
         ClassNode classNode = classWrapper.classNode;
         boolean isPackagerRelatedClass = this.obfuscator.getPackager().isPackagerClassDecrypter(classNode);
@@ -448,9 +516,13 @@ public class NameObfuscation implements INameObfuscationProcessor
     private void saveMappingsFile(String file, HashMap<String, String> mappings)
     {
         String[] mappingEntries = mappings.entrySet().stream()
-                .map(entry -> recogniseMappingEntry(mappings, entry.getKey(), entry.getValue()))
-                .distinct()
-                .toArray(String[]::new);
+                                          .map(entry -> recogniseMappingEntry(
+                                                  mappings,
+                                                  entry.getKey(),
+                                                  entry.getValue()
+                                          ))
+                                          .distinct()
+                                          .toArray(String[]::new);
 
         try (FileOutputStream fos = new FileOutputStream(file))
         {
@@ -505,7 +577,8 @@ public class NameObfuscation implements INameObfuscationProcessor
         return false;
     }
 
-    private boolean canRenameMethodTree(Map<String, String> mappings, Set<ClassTree> visited, MethodWrapper methodWrapper, String owner)
+    private boolean canRenameMethodTree(Map<String, String> mappings, Set<ClassTree> visited,
+                                        MethodWrapper methodWrapper, String owner)
     {
         ClassTree tree = this.obfuscator.getTree(owner);
 
@@ -543,7 +616,8 @@ public class NameObfuscation implements INameObfuscationProcessor
         return true;
     }
 
-    private void renameMethodTree(Map<String, String> mappings, Set<ClassTree> visited, MethodWrapper MethodWrapper, String className,
+    private void renameMethodTree(Map<String, String> mappings, Set<ClassTree> visited, MethodWrapper MethodWrapper,
+                                  String className,
                                   String newName)
     {
         ClassTree tree = this.obfuscator.getTree(className);
@@ -561,7 +635,8 @@ public class NameObfuscation implements INameObfuscationProcessor
 
     }
 
-    private boolean canRenameFieldTree(Map<String, String> mappings, Set<ClassTree> visited, FieldWrapper fieldWrapper, String owner)
+    private boolean canRenameFieldTree(Map<String, String> mappings, Set<ClassTree> visited, FieldWrapper fieldWrapper,
+                                       String owner)
     {
         ClassTree tree = this.obfuscator.getTree(owner);
 
@@ -594,7 +669,8 @@ public class NameObfuscation implements INameObfuscationProcessor
         return true;
     }
 
-    private void renameFieldTree(HashSet<ClassTree> visited, FieldWrapper fieldWrapper, String owner, String newName, Map<String, String> mappings)
+    private void renameFieldTree(HashSet<ClassTree> visited, FieldWrapper fieldWrapper, String owner, String newName,
+                                 Map<String, String> mappings)
     {
         ClassTree tree = this.obfuscator.getTree(owner);
 
@@ -607,5 +683,38 @@ public class NameObfuscation implements INameObfuscationProcessor
             renameFieldTree(visited, fieldWrapper, parentClass, newName, mappings);
         for (String subClass : tree.subClasses)
             renameFieldTree(visited, fieldWrapper, subClass, newName, mappings);
+    }
+
+    private static boolean hasNativeMethodInClass(ClassNode classNode)
+    {
+        return classNode.methods.stream().anyMatch(methodNode -> Modifier.isNative(methodNode.access));
+    }
+
+    private static String recogniseMappingEntry(HashMap<String, String> mappings, String original, String mapped)
+    {
+        String[] entryContents = original.split("\\.");
+        if (entryContents.length <= 1)
+            return "CL: " + mapped + " " + original;
+
+        String className = entryContents[0];
+        String memberName = entryContents[1];
+        String fieldDesc = entryContents.length > 2 ? entryContents[2]: null;
+
+        String mappedClass = mappings.get(className);
+
+        if (fieldDesc != null)
+            return "FD: " + mappedClass + "/" + mapped + " " + className + "/" + memberName + " " + fieldDesc;
+        else
+        {
+            int descStart = memberName.indexOf('(');
+            if (descStart != -1)
+            {
+                String methodDesc = memberName.substring(descStart);
+                memberName = memberName.substring(0, descStart);
+                return "MD: " + mappedClass + "/" + mapped + " " + methodDesc + " " + className + "/" + memberName + " " + methodDesc;
+            }
+            else
+                return "# MD: " + mappedClass + "/" + memberName + " " + mapped;
+        }
     }
 }

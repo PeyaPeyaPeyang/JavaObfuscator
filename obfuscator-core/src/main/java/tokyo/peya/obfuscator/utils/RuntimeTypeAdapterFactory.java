@@ -134,24 +134,6 @@ public final class RuntimeTypeAdapterFactory<T> implements TypeAdapterFactory
     }
 
     /**
-     * Creates a new runtime type adapter using for {@code baseType} using {@code
-     * typeFieldName} as the type field name. Type field names are case sensitive.
-     */
-    public static <T> RuntimeTypeAdapterFactory<T> of(Class<T> baseType, String typeFieldName)
-    {
-        return new RuntimeTypeAdapterFactory<>(baseType, typeFieldName);
-    }
-
-    /**
-     * Creates a new runtime type adapter for {@code baseType} using {@code "type"} as
-     * the type field name.
-     */
-    public static <T> RuntimeTypeAdapterFactory<T> of(Class<T> baseType)
-    {
-        return new RuntimeTypeAdapterFactory<>(baseType, "type");
-    }
-
-    /**
      * Registers {@code type} identified by {@code label}. Labels are case
      * sensitive.
      *
@@ -209,11 +191,12 @@ public final class RuntimeTypeAdapterFactory<T> implements TypeAdapterFactory
             public R read(JsonReader in)
             {
                 JsonElement jsonElement = Streams.parse(in);
-                JsonElement labelJsonElement = jsonElement.getAsJsonObject().remove(RuntimeTypeAdapterFactory.this.typeFieldName);
+                JsonElement labelJsonElement = jsonElement.getAsJsonObject()
+                                                          .remove(RuntimeTypeAdapterFactory.this.typeFieldName);
                 if (labelJsonElement == null)
                 {
                     throw new JsonParseException("cannot deserialize " + RuntimeTypeAdapterFactory.this.baseType
-                            + " because it does not define a field named " + RuntimeTypeAdapterFactory.this.typeFieldName);
+                                                         + " because it does not define a field named " + RuntimeTypeAdapterFactory.this.typeFieldName);
                 }
                 String label = labelJsonElement.getAsString();
                 @SuppressWarnings("unchecked") // registration requires that subtype extends T
@@ -221,7 +204,7 @@ public final class RuntimeTypeAdapterFactory<T> implements TypeAdapterFactory
                 if (delegate == null)
                 {
                     throw new JsonParseException("cannot deserialize " + RuntimeTypeAdapterFactory.this.baseType + " subtype named "
-                            + label + "; did you forget to register a subtype?");
+                                                         + label + "; did you forget to register a subtype?");
                 }
                 return delegate.fromJsonTree(jsonElement);
             }
@@ -236,13 +219,13 @@ public final class RuntimeTypeAdapterFactory<T> implements TypeAdapterFactory
                 if (delegate == null)
                 {
                     throw new JsonParseException("cannot serialize " + srcType.getName()
-                            + "; did you forget to register a subtype?");
+                                                         + "; did you forget to register a subtype?");
                 }
                 JsonObject jsonObject = delegate.toJsonTree(value).getAsJsonObject();
                 if (jsonObject.has(RuntimeTypeAdapterFactory.this.typeFieldName))
                 {
                     throw new JsonParseException("cannot serialize " + srcType.getName()
-                            + " because it already defines a field named " + RuntimeTypeAdapterFactory.this.typeFieldName);
+                                                         + " because it already defines a field named " + RuntimeTypeAdapterFactory.this.typeFieldName);
                 }
                 JsonObject clone = new JsonObject();
                 clone.add(RuntimeTypeAdapterFactory.this.typeFieldName, new JsonPrimitive(label));
@@ -253,5 +236,23 @@ public final class RuntimeTypeAdapterFactory<T> implements TypeAdapterFactory
                 Streams.write(clone, out);
             }
         }.nullSafe();
+    }
+
+    /**
+     * Creates a new runtime type adapter using for {@code baseType} using {@code
+     * typeFieldName} as the type field name. Type field names are case sensitive.
+     */
+    public static <T> RuntimeTypeAdapterFactory<T> of(Class<T> baseType, String typeFieldName)
+    {
+        return new RuntimeTypeAdapterFactory<>(baseType, typeFieldName);
+    }
+
+    /**
+     * Creates a new runtime type adapter for {@code baseType} using {@code "type"} as
+     * the type field name.
+     */
+    public static <T> RuntimeTypeAdapterFactory<T> of(Class<T> baseType)
+    {
+        return new RuntimeTypeAdapterFactory<>(baseType, "type");
     }
 }

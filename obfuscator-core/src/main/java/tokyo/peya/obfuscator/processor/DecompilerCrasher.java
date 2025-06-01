@@ -30,9 +30,26 @@ public class DecompilerCrasher implements IClassTransformer
     private static final String PROCESSOR_NAME = "decompiler_crasher";
 
     private static final String EMPTY_STRINGS;
-    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, "ui.transformers.decompiler_crasher.description", DeprecationLevel.AVAILABLE, false);
-    private static final BooleanValue V_INVALID_SIGNATURES = new BooleanValue(PROCESSOR_NAME, "invalid_signatures", "ui.transformers.decompiler_crasher.invalid_signatures", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_EMPTY_ANNOTATION = new BooleanValue(PROCESSOR_NAME, "empty_annotation_spam", "ui.transformers.decompiler_crasher.empty_annotation_spam", DeprecationLevel.AVAILABLE, true);
+    private static final EnabledValue V_ENABLED = new EnabledValue(
+            PROCESSOR_NAME,
+            "ui.transformers.decompiler_crasher.description",
+            DeprecationLevel.AVAILABLE,
+            false
+    );
+    private static final BooleanValue V_INVALID_SIGNATURES = new BooleanValue(
+            PROCESSOR_NAME,
+            "invalid_signatures",
+            "ui.transformers.decompiler_crasher.invalid_signatures",
+            DeprecationLevel.AVAILABLE,
+            true
+    );
+    private static final BooleanValue V_EMPTY_ANNOTATION = new BooleanValue(
+            PROCESSOR_NAME,
+            "empty_annotation_spam",
+            "ui.transformers.decompiler_crasher.empty_annotation_spam",
+            DeprecationLevel.AVAILABLE,
+            true
+    );
 
     static
     {

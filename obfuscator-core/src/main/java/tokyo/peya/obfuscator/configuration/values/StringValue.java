@@ -26,9 +26,10 @@ public class StringValue extends Value<String>
         this.textFieldLines = 1;
     }
 
-    public StringValue(String owner, String name, String localisationKey, DeprecationLevel deprecation, String object, int textFieldLines)
+    public StringValue(String owner, String name, String localisationKey, DeprecationLevel deprecation, String object,
+                       int textFieldLines)
     {
-        super(owner, name,  localisationKey, deprecation, object);
+        super(owner, name, localisationKey, deprecation, object);
         this.textFieldLines = textFieldLines;
     }
 

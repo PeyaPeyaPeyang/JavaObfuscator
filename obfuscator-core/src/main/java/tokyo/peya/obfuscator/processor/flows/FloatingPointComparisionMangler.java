@@ -45,7 +45,13 @@ class FloatingPointComparisionMangler
 
                 // Invokes the comparision method instead of the comparision opcode
                 // e.g: invokestatic    Test.compare:(DD)I
-                node.instructions.insert(insnNode, new MethodInsnNode(Opcodes.INVOKESTATIC, cn.name, comparisionMethod.name, comparisionMethod.desc, false));
+                node.instructions.insert(insnNode, new MethodInsnNode(
+                        Opcodes.INVOKESTATIC,
+                        cn.name,
+                        comparisionMethod.name,
+                        comparisionMethod.desc,
+                        false
+                ));
                 node.instructions.remove(insnNode);
             }
         }
@@ -78,8 +84,10 @@ class FloatingPointComparisionMangler
         Type type = opcode == Opcodes.LCMP ? Type.LONG_TYPE: (opcode == Opcodes.FCMPG || opcode == Opcodes.FCMPL) ? Type.FLOAT_TYPE: Type.DOUBLE_TYPE;
         String desc = "(" + type + type + ")I";
 
-        MethodNode methodNode = new MethodNode(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC,
-                nameProvider.toUniqueMethodName(cn,
+        MethodNode methodNode = new MethodNode(
+                Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC,
+                nameProvider.toUniqueMethodName(
+                        cn,
                         "compare" + opCodeToName(opcode), desc
                 ),
                 desc, null, new String[0]
@@ -97,21 +105,15 @@ class FloatingPointComparisionMangler
 
     private static String opCodeToName(int code)
     {
-        switch (code)
+        return switch (code)
         {
-            case Opcodes.LCMP:
-                return "LCMP";
-            case Opcodes.FCMPL:
-                return "FCMPL";
-            case Opcodes.FCMPG:
-                return "FCMPG";
-            case Opcodes.DCMPL:
-                return "DCMPL";
-            case Opcodes.DCMPG:
-                return "DCMPG";
-            default:
-                return "UNKNOWN";
-        }
+            case Opcodes.LCMP -> "LCMP";
+            case Opcodes.FCMPL -> "FCMPL";
+            case Opcodes.FCMPG -> "FCMPG";
+            case Opcodes.DCMPL -> "DCMPL";
+            case Opcodes.DCMPG -> "DCMPG";
+            default -> "UNKNOWN";
+        };
     }
 
 }

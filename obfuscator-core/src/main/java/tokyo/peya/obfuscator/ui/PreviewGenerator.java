@@ -36,7 +36,8 @@ public class PreviewGenerator
 {
     public static final ClassNode DEFAULT_HELLO_WORLD_CLASS;
 
-    static {
+    static
+    {
         ClassNode helloWorldClass;
         try
         {
@@ -92,7 +93,7 @@ public class PreviewGenerator
 
     private static byte[] pickOneClassEntryFromZip(Path inputFile)
     {
-        try (ZipFile zipFile = new ZipFile(inputFile.toFile());)
+        try (ZipFile zipFile = new ZipFile(inputFile.toFile()))
         {
             Random random = new Random();
             Enumeration<? extends ZipEntry> entries = zipFile.entries();
@@ -153,7 +154,7 @@ public class PreviewGenerator
         if (node == null)
             throw new IllegalArgumentException("ClassNode cannot be null");
 
-        Fernflower fernflower  = new Fernflower(
+        Fernflower fernflower = new Fernflower(
                 new InMemoryResultSaver(),
                 new HashMap<>()
                 {{
@@ -179,7 +180,7 @@ public class PreviewGenerator
         compiler.setDebuggingInformation(true, true, true);
         compiler.cook(sourceCode);
 
-        ClassLoader  classLoader = compiler.getClassLoader();
+        ClassLoader classLoader = compiler.getClassLoader();
         Field field = ByteArrayClassLoader.class.getDeclaredField("classes");
         field.setAccessible(true);
         // noinspection unchecked
@@ -206,8 +207,8 @@ public class PreviewGenerator
         }
     }
 
-
-    static class InMemoryResultSaver implements IResultSaver {
+    static class InMemoryResultSaver implements IResultSaver
+    {
         @Override
         public void saveClassFile(String s, String s1, String s2, String s3, int[] ints)
         {

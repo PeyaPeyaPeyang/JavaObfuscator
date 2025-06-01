@@ -19,7 +19,6 @@ import org.objectweb.asm.tree.IincInsnNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.IntInsnNode;
-import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.VarInsnNode;
 import org.objectweb.asm.tree.analysis.Analyzer;
@@ -136,7 +135,8 @@ class LocalVariableMangler
         callback.setForceComputeFrames();
     }
 
-    private static void replaceIncrements(InsnList methodInstructions, IincInsnNode iincInsnNode, HashMap<Integer, int[]> slotMap,
+    private static void replaceIncrements(InsnList methodInstructions, IincInsnNode iincInsnNode,
+                                          HashMap<Integer, int[]> slotMap,
                                           HashMap<Integer, Type> localVarMap)
     {
         int[] value = slotMap.get(iincInsnNode.var);
@@ -160,7 +160,8 @@ class LocalVariableMangler
     }
 
     private static void replaceStoreInstructions(InsnList methodInstructions, VarInsnNode varInsnNode,
-                                                 HashMap<Integer, int[]> slotMap, HashMap<Integer, Type> localVarMap) {
+                                                 HashMap<Integer, int[]> slotMap, HashMap<Integer, Type> localVarMap)
+    {
 
         int[] value = slotMap.get(varInsnNode.var);
         Type type = localVarMap.get(varInsnNode.var);
@@ -168,14 +169,17 @@ class LocalVariableMangler
         InsnList replace = new InsnList();
 
         // long または double の値を正しく格納する: [value] -> [arrayREF, index, value]
-        if (type.getSize() == 2) {
+        if (type.getSize() == 2)
+        {
             // long/double（2 スタックスロット分を占有）の場合
             replace.add(new InsnNode(Opcodes.DUP2)); // long/double の値を複製
             replace.add(new VarInsnNode(Opcodes.ALOAD, value[0])); // 配列参照を読み込む
             replace.add(NodeUtils.generateIntPush(value[1])); // インデックスをプッシュ
             replace.add(new InsnNode(Opcodes.DUP2_X2)); // スタックの順序を調整
             replace.add(new InsnNode(Opcodes.POP2));    // 不要な値を除去
-        } else {
+        }
+        else
+        {
             // int/float の場合
             replace.add(new VarInsnNode(Opcodes.ALOAD, value[0])); // 配列参照を読み込む
             replace.add(NodeUtils.generateIntPush(value[1]));      // インデックスをプッシュ
@@ -189,7 +193,7 @@ class LocalVariableMangler
     }
 
     private static void replaceLoadInstructions(InsnList methodInstructions, VarInsnNode varInsnNode,
-                                  HashMap<Integer, int[]> slotMap, HashMap<Integer, Type> localVarMap)
+                                                HashMap<Integer, int[]> slotMap, HashMap<Integer, Type> localVarMap)
     {
         int[] value = slotMap.get(varInsnNode.var);
 
@@ -239,7 +243,7 @@ class LocalVariableMangler
     }
 
     private static HashMap<Integer, Type> scanLoads(InsnList methodInstructions, VariableProvider provider,
-                                  Frame<SourceValue>[] frames)
+                                                    Frame<SourceValue>[] frames)
     {
         HashMap<Integer, Type> localVarMapToStore = new HashMap<>();
 
@@ -282,14 +286,18 @@ class LocalVariableMangler
 
         return localVarMapToStore;
     }
+
     private static Type guessTypeFromFrame(SourceValue value)
     {
         for (AbstractInsnNode insn : value.insns)
-            switch (insn.getOpcode()) {
-                case Opcodes.LSTORE, Opcodes.LLOAD, Opcodes.LADD, Opcodes.LSUB -> {
+            switch (insn.getOpcode())
+            {
+                case Opcodes.LSTORE, Opcodes.LLOAD, Opcodes.LADD, Opcodes.LSUB ->
+                {
                     return Type.LONG_TYPE;
                 }
-                case Opcodes.DSTORE, Opcodes.DLOAD, Opcodes.DADD, Opcodes.DSUB -> {
+                case Opcodes.DSTORE, Opcodes.DLOAD, Opcodes.DADD, Opcodes.DSUB ->
+                {
                     return Type.DOUBLE_TYPE;
                 }
             }

@@ -37,20 +37,25 @@ public class StaticInitialisationTransformer implements IClassTransformer
     private static final String PROCESSOR_NAME = "static_initialisation";
 
     private static final Random random = new Random();
+    private static final EnabledValue V_ENABLED = new EnabledValue(
+            PROCESSOR_NAME,
+            "ui.transformers.flow_obfuscator.static_init.description",
+            DeprecationLevel.AVAILABLE,
+            true
+    );
     private final Obfuscator inst;
 
-    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME,  "ui.transformers.flow_obfuscator.static_init.description", DeprecationLevel.AVAILABLE, true);
-
-    static {
+    static
+    {
         ValueManager.registerOwner(PROCESSOR_NAME, "ui.transformers.flow_obfuscator.static_init");
         ValueManager.registerClass(StaticInitialisationTransformer.class);
     }
-    
+
     public StaticInitialisationTransformer(Obfuscator inst)
     {
         this.inst = inst;
     }
-    
+
     @Override
     public void process(ProcessorCallback callback, ClassNode node)
     {
@@ -76,7 +81,12 @@ public class StaticInitialisationTransformer implements IClassTransformer
                 toAdd.add(new LdcInsnNode(fieldNodeObjectEntry.getValue()));
             if (fieldNodeObjectEntry.getValue() instanceof Integer)
                 toAdd.add(NodeUtils.generateIntPush((Integer) fieldNodeObjectEntry.getValue()));
-            toAdd.add(new FieldInsnNode(Opcodes.PUTSTATIC, node.name, fieldNodeObjectEntry.getKey().name, fieldNodeObjectEntry.getKey().desc));
+            toAdd.add(new FieldInsnNode(
+                    Opcodes.PUTSTATIC,
+                    node.name,
+                    fieldNodeObjectEntry.getKey().name,
+                    fieldNodeObjectEntry.getKey().desc
+            ));
         }
         MethodNode clInit = NodeUtils.getMethod(node, "<clinit>");
         if (clInit == null)

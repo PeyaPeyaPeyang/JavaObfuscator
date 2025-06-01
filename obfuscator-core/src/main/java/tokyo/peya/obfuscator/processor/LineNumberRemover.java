@@ -39,10 +39,34 @@ public class LineNumberRemover implements IClassTransformer
     private static final String PROCESSOR_NAME = "line_number_remover";
     private static final Random random = new Random();
     private static final ArrayList<String> TYPES = new ArrayList<>();
-    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, "ui.transformers.line_number_remover.description", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_RENAME_VALUES = new BooleanValue(PROCESSOR_NAME, "rename_local_variables", "ui.transformers.line_number_remover.rename_local_vars", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_REMOVE_LINE_NUMBERS = new BooleanValue(PROCESSOR_NAME, "remove_line_numbers", "ui.transformers.line_number_remover.remove_line_nums", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_ADD_LOCAL_VARIABLES = new BooleanValue(PROCESSOR_NAME, "add_confusing_local_variables", "ui.transformers.line_number_remover.add_local_vars", DeprecationLevel.AVAILABLE, true);
+    private static final EnabledValue V_ENABLED = new EnabledValue(
+            PROCESSOR_NAME,
+            "ui.transformers.line_number_remover.description",
+            DeprecationLevel.AVAILABLE,
+            true
+    );
+    private static final BooleanValue V_RENAME_VALUES = new BooleanValue(
+            PROCESSOR_NAME,
+            "rename_local_variables",
+            "ui.transformers.line_number_remover.rename_local_vars",
+            DeprecationLevel.AVAILABLE,
+            true
+    );
+    private static final BooleanValue V_REMOVE_LINE_NUMBERS = new BooleanValue(
+            PROCESSOR_NAME,
+            "remove_line_numbers",
+            "ui.transformers.line_number_remover.remove_line_nums",
+            DeprecationLevel.AVAILABLE,
+            true
+    );
+    private static final BooleanValue V_ADD_LOCAL_VARIABLES = new BooleanValue(
+            PROCESSOR_NAME,
+            "add_confusing_local_variables",
+            "ui.transformers.line_number_remover.add_local_vars",
+            DeprecationLevel.AVAILABLE,
+            true
+    );
+    private final Obfuscator instance;
 
     static
     {
@@ -63,8 +87,6 @@ public class LineNumberRemover implements IClassTransformer
         ValueManager.registerOwner(PROCESSOR_NAME, "ui.transformers.line_number_remover");
         ValueManager.registerClass(LineNumberRemover.class);
     }
-
-    private final Obfuscator instance;
 
     public LineNumberRemover(Obfuscator instance)
     {
@@ -89,7 +111,7 @@ public class LineNumberRemover implements IClassTransformer
                     method.instructions.remove(insnNode);
 
                 if (abstractInsnNode instanceof VarInsnNode insnNode && !varMap.containsKey(insnNode.var))
-                        varMap.put(insnNode.var, TYPES.get(random.nextInt(TYPES.size())));
+                    varMap.put(insnNode.var, TYPES.get(random.nextInt(TYPES.size())));
                 if (abstractInsnNode instanceof LabelNode insnNode)
                 {
                     if (firstLabel == null)
@@ -105,7 +127,15 @@ public class LineNumberRemover implements IClassTransformer
                     method.localVariables = new ArrayList<>();
 
                 for (Map.Entry<Integer, String> integerStringEntry : varMap.entrySet())
-                    method.localVariables.add(new LocalVariableNode(this.instance.getNameProvider().generateLocalVariableName(method), integerStringEntry.getValue(), null, firstLabel, lastLabel, integerStringEntry.getKey()));
+                    method.localVariables.add(new LocalVariableNode(
+                            this.instance.getNameProvider()
+                                         .generateLocalVariableName(method),
+                            integerStringEntry.getValue(),
+                            null,
+                            firstLabel,
+                            lastLabel,
+                            integerStringEntry.getKey()
+                    ));
             }
 
             if (V_RENAME_VALUES.get())

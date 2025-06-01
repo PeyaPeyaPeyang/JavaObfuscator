@@ -22,14 +22,52 @@ import tokyo.peya.obfuscator.configuration.values.StringValue;
 public class JObfSettings
 {
     private static final String PROCESSOR_NAME = "general";
-    private final StringValue excludedClasses = new StringValue(PROCESSOR_NAME, "excluded_classes", "ui.transformers.general.excluded_classes", DeprecationLevel.AVAILABLE, "me.name.Class\nme.name.*\nio.netty.**", 5);
-    private final StringValue generatorChars = new StringValue(PROCESSOR_NAME, "generator_characters", "ui.transformers.general.generator_char", DeprecationLevel.AVAILABLE, "Il");
-    private final BooleanValue useCustomDictionary = new BooleanValue(PROCESSOR_NAME, "custom_dictionary", "ui.transformers.general.use_custom_dictionary", DeprecationLevel.AVAILABLE, false);
-    private final FilePathValue classNamesDictionary = new FilePathValue(PROCESSOR_NAME, "class_names_dictionary", "ui.transformers.general.class_names_dictionary", DeprecationLevel.AVAILABLE, "");
-    private final FilePathValue namesDictionary = new FilePathValue(PROCESSOR_NAME, "name_dictionary",  "ui.transformers.general.other_names_dictionary", DeprecationLevel.AVAILABLE, "");
-    private final BooleanValue useStore = new BooleanValue(PROCESSOR_NAME, "Use_store", "ui.transformers.general.use_store", DeprecationLevel.AVAILABLE, false);
+    private final StringValue excludedClasses = new StringValue(
+            PROCESSOR_NAME,
+            "excluded_classes",
+            "ui.transformers.general.excluded_classes",
+            DeprecationLevel.AVAILABLE,
+            "me.name.Class\nme.name.*\nio.netty.**",
+            5
+    );
+    private final StringValue generatorChars = new StringValue(
+            PROCESSOR_NAME,
+            "generator_characters",
+            "ui.transformers.general.generator_char",
+            DeprecationLevel.AVAILABLE,
+            "Il"
+    );
+    private final BooleanValue useCustomDictionary = new BooleanValue(
+            PROCESSOR_NAME,
+            "custom_dictionary",
+            "ui.transformers.general.use_custom_dictionary",
+            DeprecationLevel.AVAILABLE,
+            false
+    );
+    private final FilePathValue classNamesDictionary = new FilePathValue(
+            PROCESSOR_NAME,
+            "class_names_dictionary",
+            "ui.transformers.general.class_names_dictionary",
+            DeprecationLevel.AVAILABLE,
+            ""
+    );
+    private final FilePathValue namesDictionary = new FilePathValue(
+            PROCESSOR_NAME,
+            "name_dictionary",
+            "ui.transformers.general.other_names_dictionary",
+            DeprecationLevel.AVAILABLE,
+            ""
+    );
+    private final BooleanValue useStore = new BooleanValue(
+            PROCESSOR_NAME,
+            "Use_store",
+            "ui.transformers.general.use_store",
+            DeprecationLevel.AVAILABLE,
+            false
+    );
 
-    static {
+    static
+    {
         ValueManager.registerOwner(PROCESSOR_NAME, "ui.transformers.general");
         ValueManager.registerClass(JObfSettings.class);
     }

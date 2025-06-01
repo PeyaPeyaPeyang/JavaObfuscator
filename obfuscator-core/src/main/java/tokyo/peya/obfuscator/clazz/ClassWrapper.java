@@ -67,12 +67,14 @@ public class ClassWrapper
         this.originalClass = originalClass;
 
         ClassWrapper instance = this;
-        classNode.methods.forEach(methodNode -> this.methods.add(new MethodWrapper(methodNode, instance, methodNode.name,
+        classNode.methods.forEach(methodNode -> this.methods.add(new MethodWrapper(
+                methodNode, instance, methodNode.name,
                 methodNode.desc
         )));
         if (classNode.fields != null)
         {
-            classNode.fields.forEach(fieldNode -> this.fields.add(new FieldWrapper(fieldNode, instance, fieldNode.name,
+            classNode.fields.forEach(fieldNode -> this.fields.add(new FieldWrapper(
+                    fieldNode, instance, fieldNode.name,
                     fieldNode.desc
             )));
         }

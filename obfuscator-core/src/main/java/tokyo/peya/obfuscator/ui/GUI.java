@@ -81,6 +81,7 @@ import java.util.ResourceBundle;
 
 public class GUI extends JFrame
 {
+    private static Method $$$cachedGetBundleMethod$$$;
     public JTextPane logArea;
     private JTabbedPane tabbedPane1;
     private JPanel panel1;
@@ -115,26 +116,6 @@ public class GUI extends JFrame
     static
     {
         injectUnicodeFont();
-    }
-
-    private static void injectUnicodeFont()
-    {
-        String[] candidates = {
-                "Yu Gothic UI",
-                "Noto Sans CJK JP",
-                "MS Gothic",
-                "Arial"
-        };
-
-        String selectedFont = Arrays.stream(candidates)
-                                    .filter(font -> Arrays.asList(GraphicsEnvironment.getLocalGraphicsEnvironment()
-                                                                                     .getAvailableFontFamilyNames())
-                                                          .contains(font))
-                                    .findFirst()
-                                    .orElse("Arial");
-
-        UIManager.getLookAndFeelDefaults()
-                 .put("defaultFont", new Font(selectedFont, Font.PLAIN, 12));
     }
 
     public GUI()
@@ -404,7 +385,7 @@ public class GUI extends JFrame
     private void buildConfig()
     {
         this.configPanel.setText(ConfigManager.generateConfig(
-                createConfiguration(),
+                                         createConfiguration(),
                                          this.prettyPrintCheckBox.isSelected()
                                  )
         );
@@ -1311,8 +1292,6 @@ public class GUI extends JFrame
         label2.setLabelFor(outputTextField);
     }
 
-    private static Method $$$cachedGetBundleMethod$$$ = null;
-
     private String $$$getMessageFromBundle$$$(String path, String key)
     {
         ResourceBundle bundle;
@@ -1466,9 +1445,8 @@ public class GUI extends JFrame
 
                          for (Value<?> value : entry.getValue())
                          {
-                             if (value instanceof BooleanValue)
+                             if (value instanceof BooleanValue booleanValue)
                              {
-                                 BooleanValue booleanValue = (BooleanValue) value;
 
                                  JCheckBox checkBox = new JCheckBox(
                                          Localisation.get(booleanValue.getLocalisationKey()),
@@ -1488,9 +1466,8 @@ public class GUI extends JFrame
                                  rows++;
                              }
 
-                             if (value instanceof FilePathValue)
+                             if (value instanceof FilePathValue stringValue)
                              {
-                                 FilePathValue stringValue = (FilePathValue) value;
 
                                  JTextField textBox = new JTextField(stringValue.get());
 
@@ -1538,9 +1515,8 @@ public class GUI extends JFrame
 
                                  rows += 4;
                              }
-                             else if (value instanceof StringValue)
+                             else if (value instanceof StringValue stringValue)
                              {
-                                 StringValue stringValue = (StringValue) value;
                                  boolean isMultiLine = stringValue.getTextFieldLines() > 1;
 
                                  JTextField textBox = new JTextField(stringValue.get());
@@ -1611,6 +1587,26 @@ public class GUI extends JFrame
 //            }
 
 //        }
+    }
+
+    private static void injectUnicodeFont()
+    {
+        String[] candidates = {
+                "Yu Gothic UI",
+                "Noto Sans CJK JP",
+                "MS Gothic",
+                "Arial"
+        };
+
+        String selectedFont = Arrays.stream(candidates)
+                                    .filter(font -> Arrays.asList(GraphicsEnvironment.getLocalGraphicsEnvironment()
+                                                                                     .getAvailableFontFamilyNames())
+                                                          .contains(font))
+                                    .findFirst()
+                                    .orElse("Arial");
+
+        UIManager.getLookAndFeelDefaults()
+                 .put("defaultFont", new Font(selectedFont, Font.PLAIN, 12));
     }
 
 }

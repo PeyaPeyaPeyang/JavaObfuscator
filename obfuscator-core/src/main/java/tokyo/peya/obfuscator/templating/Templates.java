@@ -32,7 +32,12 @@ public class Templates
         {
             for (String name : getResourceFiles())
             {
-                TEMPLATES.add(new Template(name.replace(".json", ""), new String(ByteStreams.toByteArray(Templates.class.getResourceAsStream("/templates/" + name)), StandardCharsets.UTF_8)));
+                TEMPLATES.add(new Template(name.replace(".json", ""),
+                                           new String(
+                                                   ByteStreams.toByteArray(Templates.class.getResourceAsStream(
+                                                           "/templates/" + name)), StandardCharsets.UTF_8
+                                           )
+                ));
             }
         }
         catch (IOException e)

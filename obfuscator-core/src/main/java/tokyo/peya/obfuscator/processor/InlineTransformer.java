@@ -28,7 +28,6 @@ import tokyo.peya.obfuscator.Obfuscator;
 import tokyo.peya.obfuscator.ProcessorCallback;
 import tokyo.peya.obfuscator.annotations.ObfuscationTransformer;
 import tokyo.peya.obfuscator.configuration.DeprecationLevel;
-import tokyo.peya.obfuscator.configuration.ValueManager;
 import tokyo.peya.obfuscator.configuration.values.EnabledValue;
 import tokyo.peya.obfuscator.utils.InliningUtils;
 import tokyo.peya.obfuscator.utils.NodeUtils;
@@ -46,16 +45,20 @@ public class InlineTransformer implements IClassTransformer
 {
     private static final Random random = new Random();
 
-    private static final EnabledValue V_ENABLED = new EnabledValue("Inlining", "Doesn't work, please don't use this", DeprecationLevel.DEPRECATED, false);
+    private static final EnabledValue V_ENABLED = new EnabledValue(
+            "Inlining",
+            "Doesn't work, please don't use this",
+            DeprecationLevel.DEPRECATED,
+            false
+    );
 
     private static final List<String> exceptions = new ArrayList<>();
+    private final Obfuscator inst;
 
     static
     {
         // ValueManager.registerClass(InlineTransformer.class);
     }
-
-    private final Obfuscator inst;
 
     public InlineTransformer(Obfuscator inst)
     {
@@ -101,9 +104,8 @@ public class InlineTransformer implements IClassTransformer
 
                 for (AbstractInsnNode abstractInsnNode : method.instructions.toArray())
                 {
-                    if (abstractInsnNode instanceof MethodInsnNode)
+                    if (abstractInsnNode instanceof MethodInsnNode insnNode)
                     {
-                        MethodInsnNode insnNode = (MethodInsnNode) abstractInsnNode;
 
                         ClassNode lookupClass = Utils.lookupClass(insnNode.owner);
 
@@ -117,8 +119,16 @@ public class InlineTransformer implements IClassTransformer
                                 || !InliningUtils.canInlineMethod(node, lookupClass, lookupMethod))
                             continue;
 
-                        InsnList inline = InliningUtils.inline(lookupMethod, lookupClass, method, frames[method.instructions.indexOf(abstractInsnNode)]);
-                        inline.insertBefore(inline.getFirst(), NodeUtils.debugString("--- INLINE (" + lookupClass.name + "." + lookupMethod.name + lookupMethod.desc + ") ---"));
+                        InsnList inline = InliningUtils.inline(
+                                lookupMethod,
+                                lookupClass,
+                                method,
+                                frames[method.instructions.indexOf(abstractInsnNode)]
+                        );
+                        inline.insertBefore(
+                                inline.getFirst(),
+                                NodeUtils.debugString("--- INLINE (" + lookupClass.name + "." + lookupMethod.name + lookupMethod.desc + ") ---")
+                        );
                         inline.add(NodeUtils.debugString("--- END ---"));
 
 //                    System.out.println(NodeUtils.prettyprint(inline));
@@ -133,7 +143,10 @@ public class InlineTransformer implements IClassTransformer
                 }
                 for (Map.Entry<AbstractInsnNode, InsnList> abstractInsnNodeInsnListEntry : replacements.entrySet())
                 {
-                    method.instructions.insert(abstractInsnNodeInsnListEntry.getKey(), abstractInsnNodeInsnListEntry.getValue());
+                    method.instructions.insert(
+                            abstractInsnNodeInsnListEntry.getKey(),
+                            abstractInsnNodeInsnListEntry.getValue()
+                    );
                     method.instructions.remove(abstractInsnNodeInsnListEntry.getKey());
                 }
             }

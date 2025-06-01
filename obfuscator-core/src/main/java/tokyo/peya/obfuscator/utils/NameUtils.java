@@ -18,7 +18,8 @@ public class NameUtils
      * By ItzSomebody
      */
     private static final char[] DICT_SPACES = {
-            '\u2000', '\u2001', '\u2002', '\u2003', '\u2004', '\u2005', '\u2006', '\u2007', '\u2008', '\u2009', '\u200A', '\u200B', '\u200C', '\u200D', '\u200E', '\u200F'
+            '\u2000', '\u2001', '\u2002', '\u2003', '\u2004', '\u2005', '\u2006', '\u2007', '\u2008', '\u2009',
+            '\u200A', '\u200B', '\u200C', '\u200D', '\u200E', '\u200F'
     };
     private static final Random RANDOM = new Random();
 

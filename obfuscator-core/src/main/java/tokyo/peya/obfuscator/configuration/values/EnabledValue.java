@@ -17,7 +17,6 @@ public class EnabledValue extends BooleanValue
 {
     private final String featureDescriptionKey;
 
-
     public EnabledValue(String owner, String featureDescriptionKey, DeprecationLevel deprecation, Boolean object)
     {
         super(owner, "enabled", "ui.transformers.enabled", deprecation, object);

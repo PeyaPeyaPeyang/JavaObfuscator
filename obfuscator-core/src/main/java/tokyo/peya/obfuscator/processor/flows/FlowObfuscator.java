@@ -25,7 +25,6 @@ import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.VarInsnNode;
 import tokyo.peya.obfuscator.IClassTransformer;
-import tokyo.peya.obfuscator.Localisation;
 import tokyo.peya.obfuscator.Obfuscator;
 import tokyo.peya.obfuscator.ProcessorCallback;
 import tokyo.peya.obfuscator.annotations.ObfuscationTransformer;
@@ -45,15 +44,69 @@ public class FlowObfuscator implements IClassTransformer
 {
     private static final String PROCESSOR_NAME = "FlowObfuscator";
     private static final Random random = new Random();
-    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME,  "ui.transformers.flow_obfuscator.description", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_MANGLE_COMPARISONS = new BooleanValue(PROCESSOR_NAME, "mangle_comparisons",  "ui.transformers.flow_obfuscator.mangle_comparisons", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_REPLACE_GOTO = new BooleanValue(PROCESSOR_NAME, "replace_goto", "ui.transformers.flow_obfuscator.replace_goto", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_REPLACE_IF = new BooleanValue(PROCESSOR_NAME, "replace_if", "ui.transformers.flow_obfuscator.replace_if", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_BAD_POP = new BooleanValue(PROCESSOR_NAME, "bad_pop", "ui.transformers.flow_obfuscator.bad_pop", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_BAD_CONCAT = new BooleanValue(PROCESSOR_NAME, "bad_concat", "ui.transformers.flow_obfuscator.bad_concat", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_MANGLE_SWITCHES_ENABLED = new BooleanValue(PROCESSOR_NAME, "mangle_switches", "ui.transformers.flow_obfuscator.mangle_switches", DeprecationLevel.SOME_DEPRECATION, false);
-    private static final BooleanValue V_MANGLE_RETURN = new BooleanValue(PROCESSOR_NAME, "mangle_return", "ui.transformers.flow_obfuscator.mangle_return", DeprecationLevel.SOME_DEPRECATION, false);
-    private static final BooleanValue V_MANGLE_LOCALS = new BooleanValue(PROCESSOR_NAME, "Mangle_local_variables", "ui.transformers.flow_obfuscator.mangle_local_variables", DeprecationLevel.SOME_DEPRECATION, false);
+    private static final EnabledValue V_ENABLED = new EnabledValue(
+            PROCESSOR_NAME,
+            "ui.transformers.flow_obfuscator.description",
+            DeprecationLevel.AVAILABLE,
+            true
+    );
+    private static final BooleanValue V_MANGLE_COMPARISONS = new BooleanValue(
+            PROCESSOR_NAME,
+            "mangle_comparisons",
+            "ui.transformers.flow_obfuscator.mangle_comparisons",
+            DeprecationLevel.AVAILABLE,
+            true
+    );
+    private static final BooleanValue V_REPLACE_GOTO = new BooleanValue(
+            PROCESSOR_NAME,
+            "replace_goto",
+            "ui.transformers.flow_obfuscator.replace_goto",
+            DeprecationLevel.AVAILABLE,
+            true
+    );
+    private static final BooleanValue V_REPLACE_IF = new BooleanValue(
+            PROCESSOR_NAME,
+            "replace_if",
+            "ui.transformers.flow_obfuscator.replace_if",
+            DeprecationLevel.AVAILABLE,
+            true
+    );
+    private static final BooleanValue V_BAD_POP = new BooleanValue(
+            PROCESSOR_NAME,
+            "bad_pop",
+            "ui.transformers.flow_obfuscator.bad_pop",
+            DeprecationLevel.AVAILABLE,
+            true
+    );
+    private static final BooleanValue V_BAD_CONCAT = new BooleanValue(
+            PROCESSOR_NAME,
+            "bad_concat",
+            "ui.transformers.flow_obfuscator.bad_concat",
+            DeprecationLevel.AVAILABLE,
+            true
+    );
+    private static final BooleanValue V_MANGLE_SWITCHES_ENABLED = new BooleanValue(
+            PROCESSOR_NAME,
+            "mangle_switches",
+            "ui.transformers.flow_obfuscator.mangle_switches",
+            DeprecationLevel.SOME_DEPRECATION,
+            false
+    );
+    private static final BooleanValue V_MANGLE_RETURN = new BooleanValue(
+            PROCESSOR_NAME,
+            "mangle_return",
+            "ui.transformers.flow_obfuscator.mangle_return",
+            DeprecationLevel.SOME_DEPRECATION,
+            false
+    );
+    private static final BooleanValue V_MANGLE_LOCALS = new BooleanValue(
+            PROCESSOR_NAME,
+            "Mangle_local_variables",
+            "ui.transformers.flow_obfuscator.mangle_local_variables",
+            DeprecationLevel.SOME_DEPRECATION,
+            false
+    );
+    private final Obfuscator inst;
 
     static
     {
@@ -61,11 +114,146 @@ public class FlowObfuscator implements IClassTransformer
         ValueManager.registerClass(FlowObfuscator.class);
     }
 
-    private final Obfuscator inst;
-
     public FlowObfuscator(Obfuscator inst)
     {
         this.inst = inst;
+    }
+
+    @Override
+    public void process(ProcessorCallback callback, ClassNode node)
+    {
+        if (!V_ENABLED.get())
+            return;
+
+        HashMap<Integer, MethodNode> jumpMethodMap = new HashMap<>();
+
+        List<MethodNode> toAdd = new ArrayList<>();
+
+        for (MethodNode method : node.methods)
+        {
+            if (V_MANGLE_LOCALS.get())
+                LocalVariableMangler.mangleLocalVariables(callback, node, method);
+            if (V_MANGLE_RETURN.get())
+                ReturnMangler.mangleReturn(callback, method);
+            if (V_MANGLE_SWITCHES_ENABLED.get())
+                SwitchMangler.mangleSwitches(method);
+            if (V_MANGLE_COMPARISONS.get())
+                toAdd.addAll(FloatingPointComparisionMangler.mangleComparisions(
+                        this.inst.getNameProvider(),
+                        node,
+                        method
+                ));
+            //JumpReplacer.process(node, method);
+
+            for (AbstractInsnNode abstractInsnNode : method.instructions.toArray())
+            {
+                // 無意味な（普通に読んだらエラーの） POP 命令を GOTO 命令後に設置する（∴実行されない POP だがデコンパイラはクラッシュ）
+                if (V_BAD_POP.get())
+                {
+                    if (abstractInsnNode instanceof JumpInsnNode && abstractInsnNode.getOpcode() == Opcodes.GOTO)
+                    {
+                        method.instructions.insertBefore(abstractInsnNode, new LdcInsnNode(""));
+                        method.instructions.insertBefore(
+                                abstractInsnNode,
+                                new MethodInsnNode(
+                                        Opcodes.INVOKEVIRTUAL,
+                                        "java/lang/String",
+                                        "length",
+                                        "()I",
+                                        false
+                                )
+                        );
+                        method.instructions.insertBefore(abstractInsnNode, new InsnNode(Opcodes.POP));
+                    }
+                    else if (abstractInsnNode.getOpcode() == Opcodes.POP)
+                    {
+                        method.instructions.insertBefore(abstractInsnNode, new LdcInsnNode(""));
+                        method.instructions.insertBefore(
+                                abstractInsnNode,
+                                new MethodInsnNode(
+                                        Opcodes.INVOKEVIRTUAL,
+                                        "java/lang/String",
+                                        "length",
+                                        "()I",
+                                        false
+                                )
+                        );
+                        method.instructions.insert(abstractInsnNode, new InsnNode(Opcodes.POP2));
+                        method.instructions.remove(abstractInsnNode);
+                    }
+                }
+                if (V_REPLACE_GOTO.get() && abstractInsnNode instanceof JumpInsnNode insnNode && abstractInsnNode.getOpcode() == Opcodes.GOTO)
+                {
+                    final InsnList insnList = new InsnList();
+                    insnList.add(ifGoto(insnNode.label, method, Type.getReturnType(method.desc)));
+                    method.instructions.insert(insnNode, insnList);
+                    method.instructions.remove(insnNode);
+                }
+                if (abstractInsnNode instanceof MethodInsnNode insnNode && V_BAD_CONCAT.get())
+                {
+
+                    if (insnNode.owner.equals("java/lang/StringBuilder") && insnNode.name.equals("toString"))
+                    {
+                        method.instructions.insert(
+                                insnNode,
+                                new MethodInsnNode(
+                                        Opcodes.INVOKESTATIC,
+                                        "java/lang/String",
+                                        "valueOf",
+                                        "(Ljava/lang/Object;)Ljava/lang/String;",
+                                        false
+                                )
+                        );
+                        method.instructions.remove(insnNode);
+                    }
+                }
+                if (V_REPLACE_IF.get() && abstractInsnNode instanceof JumpInsnNode insnNode && (abstractInsnNode.getOpcode() >= Opcodes.IFEQ && abstractInsnNode.getOpcode() <= Opcodes.IF_ACMPNE || abstractInsnNode.getOpcode() >= Opcodes.IFNULL && abstractInsnNode.getOpcode() <= Opcodes.IFNONNULL))
+                {
+
+                    MethodNode wrapper = jumpMethodMap.get(insnNode.getOpcode());
+
+                    if (wrapper == null)
+                    {
+                        wrapper = ifWrapper(insnNode.getOpcode());
+
+                        if (wrapper != null)
+                        {
+                            wrapper.name = this.inst.getNameProvider().toUniqueMethodName(
+                                    node,
+                                    "compareOf" + insnNode.getOpcode(),
+                                    wrapper.desc
+                            );
+                            jumpMethodMap.put(insnNode.getOpcode(), wrapper);
+                        }
+                    }
+
+                    if (wrapper != null)
+                    {
+                        final InsnList insnList = new InsnList();
+                        insnList.add(NodeUtils.methodCall(node, wrapper));
+                        insnList.add(new JumpInsnNode(Opcodes.IFEQ, insnNode.label));
+                        method.instructions.insert(insnNode, insnList);
+                        method.instructions.remove(insnNode);
+                    }
+                }
+//                if (abstractInsnNode instanceof MethodInsnNode || abstractInsnNode instanceof FieldInsnNode) {
+//                    method.instructions.insertBefore(abstractInsnNode, new LdcInsnNode(""));
+//                    method.instructions.insertBefore(abstractInsnNode, new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/String", "length", "()I", false));
+//                    method.instructions.insertBefore(abstractInsnNode, new InsnNode(Opcodes.POP));
+//                }
+            }
+//            method.desc = method.desc.replace('Z', 'I');
+        }
+
+        node.methods.addAll(jumpMethodMap.values());
+        node.methods.addAll(toAdd);
+
+    }
+
+    @Override
+    public ObfuscationTransformer getType()
+    {
+        return ObfuscationTransformer.FLOW_OBFUSCATION;
     }
 
     public static InsnList generateIfGoto(int i, LabelNode label)
@@ -279,7 +467,13 @@ public class FlowObfuscator implements IClassTransformer
     {
         if (opcode >= Opcodes.IFEQ && opcode <= Opcodes.IFLE)
         {
-            MethodNode method = new MethodNode(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC, "", "(I)Z", null, new String[0]);
+            MethodNode method = new MethodNode(
+                    Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC,
+                    "",
+                    "(I)Z",
+                    null,
+                    new String[0]
+            );
             LabelNode label1 = new LabelNode();
             LabelNode label2 = new LabelNode();
             method.instructions.add(new VarInsnNode(Opcodes.ILOAD, 0));
@@ -290,13 +484,25 @@ public class FlowObfuscator implements IClassTransformer
             method.instructions.add(new FrameNode(Opcodes.F_NEW, 1, new Object[]{Opcodes.INTEGER}, 0, new Object[]{}));
             method.instructions.add(new InsnNode(Opcodes.ICONST_0));
             method.instructions.add(label2);
-            method.instructions.add(new FrameNode(Opcodes.F_NEW, 1, new Object[]{Opcodes.INTEGER}, 1, new Object[]{Opcodes.INTEGER}));
+            method.instructions.add(new FrameNode(
+                    Opcodes.F_NEW,
+                    1,
+                    new Object[]{Opcodes.INTEGER},
+                    1,
+                    new Object[]{Opcodes.INTEGER}
+            ));
             method.instructions.add(new InsnNode(Opcodes.IRETURN));
             return method;
         }
         if (opcode >= Opcodes.IFNULL && opcode <= Opcodes.IFNONNULL)
         {
-            MethodNode method = new MethodNode(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC, "", "(Ljava/lang/Object;)Z", null, new String[0]);
+            MethodNode method = new MethodNode(
+                    Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC,
+                    "",
+                    "(Ljava/lang/Object;)Z",
+                    null,
+                    new String[0]
+            );
             LabelNode label1 = new LabelNode();
             LabelNode label2 = new LabelNode();
             method.instructions.add(new VarInsnNode(Opcodes.ALOAD, 0));
@@ -304,16 +510,34 @@ public class FlowObfuscator implements IClassTransformer
             method.instructions.add(new InsnNode(Opcodes.ICONST_1));
             method.instructions.add(new JumpInsnNode(Opcodes.GOTO, label2));
             method.instructions.add(label1);
-            method.instructions.add(new FrameNode(Opcodes.F_NEW, 1, new Object[]{"java/lang/Object"}, 0, new Object[]{}));
+            method.instructions.add(new FrameNode(
+                    Opcodes.F_NEW,
+                    1,
+                    new Object[]{"java/lang/Object"},
+                    0,
+                    new Object[]{}
+            ));
             method.instructions.add(new InsnNode(Opcodes.ICONST_0));
             method.instructions.add(label2);
-            method.instructions.add(new FrameNode(Opcodes.F_NEW, 1, new Object[]{"java/lang/Object"}, 1, new Object[]{Opcodes.INTEGER}));
+            method.instructions.add(new FrameNode(
+                    Opcodes.F_NEW,
+                    1,
+                    new Object[]{"java/lang/Object"},
+                    1,
+                    new Object[]{Opcodes.INTEGER}
+            ));
             method.instructions.add(new InsnNode(Opcodes.IRETURN));
             return method;
         }
         if (opcode >= Opcodes.IF_ACMPEQ && opcode <= Opcodes.IF_ACMPNE)
         {
-            MethodNode method = new MethodNode(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC, "", "(Ljava/lang/Object;Ljava/lang/Object;)Z", null, new String[0]);
+            MethodNode method = new MethodNode(
+                    Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC,
+                    "",
+                    "(Ljava/lang/Object;Ljava/lang/Object;)Z",
+                    null,
+                    new String[0]
+            );
             LabelNode label1 = new LabelNode();
             LabelNode label2 = new LabelNode();
             method.instructions.add(new VarInsnNode(Opcodes.ALOAD, 0));
@@ -322,16 +546,34 @@ public class FlowObfuscator implements IClassTransformer
             method.instructions.add(new InsnNode(Opcodes.ICONST_1));
             method.instructions.add(new JumpInsnNode(Opcodes.GOTO, label2));
             method.instructions.add(label1);
-            method.instructions.add(new FrameNode(Opcodes.F_NEW, 2, new Object[]{"java/lang/Object", "java/lang/Object"}, 0, new Object[]{}));
+            method.instructions.add(new FrameNode(
+                    Opcodes.F_NEW,
+                    2,
+                    new Object[]{"java/lang/Object", "java/lang/Object"},
+                    0,
+                    new Object[]{}
+            ));
             method.instructions.add(new InsnNode(Opcodes.ICONST_0));
             method.instructions.add(label2);
-            method.instructions.add(new FrameNode(Opcodes.F_NEW, 2, new Object[]{"java/lang/Object", "java/lang/Object"}, 1, new Object[]{Opcodes.INTEGER}));
+            method.instructions.add(new FrameNode(
+                    Opcodes.F_NEW,
+                    2,
+                    new Object[]{"java/lang/Object", "java/lang/Object"},
+                    1,
+                    new Object[]{Opcodes.INTEGER}
+            ));
             method.instructions.add(new InsnNode(Opcodes.IRETURN));
             return method;
         }
         if (opcode >= Opcodes.IF_ICMPEQ && opcode <= Opcodes.IF_ICMPLE)
         {
-            MethodNode method = new MethodNode(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC, "", "(II)Z", null, new String[0]);
+            MethodNode method = new MethodNode(
+                    Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC,
+                    "",
+                    "(II)Z",
+                    null,
+                    new String[0]
+            );
             LabelNode label1 = new LabelNode();
             LabelNode label2 = new LabelNode();
             method.instructions.add(new VarInsnNode(Opcodes.ILOAD, 0));
@@ -340,122 +582,25 @@ public class FlowObfuscator implements IClassTransformer
             method.instructions.add(new InsnNode(Opcodes.ICONST_1));
             method.instructions.add(new JumpInsnNode(Opcodes.GOTO, label2));
             method.instructions.add(label1);
-            method.instructions.add(new FrameNode(Opcodes.F_NEW, 2, new Object[]{Opcodes.INTEGER, Opcodes.INTEGER}, 0, new Object[]{}));
+            method.instructions.add(new FrameNode(
+                    Opcodes.F_NEW,
+                    2,
+                    new Object[]{Opcodes.INTEGER, Opcodes.INTEGER},
+                    0,
+                    new Object[]{}
+            ));
             method.instructions.add(new InsnNode(Opcodes.ICONST_0));
             method.instructions.add(label2);
-            method.instructions.add(new FrameNode(Opcodes.F_NEW, 2, new Object[]{Opcodes.INTEGER, Opcodes.INTEGER}, 1, new Object[]{Opcodes.INTEGER}));
+            method.instructions.add(new FrameNode(
+                    Opcodes.F_NEW,
+                    2,
+                    new Object[]{Opcodes.INTEGER, Opcodes.INTEGER},
+                    1,
+                    new Object[]{Opcodes.INTEGER}
+            ));
             method.instructions.add(new InsnNode(Opcodes.IRETURN));
             return method;
         }
         return null;
-    }
-
-    @Override
-    public void process(ProcessorCallback callback, ClassNode node)
-    {
-        if (!V_ENABLED.get())
-            return;
-
-        HashMap<Integer, MethodNode> jumpMethodMap = new HashMap<>();
-
-        List<MethodNode> toAdd = new ArrayList<>();
-
-        for (MethodNode method : node.methods)
-        {
-            if (V_MANGLE_LOCALS.get())
-                LocalVariableMangler.mangleLocalVariables(callback, node, method);
-            if (V_MANGLE_RETURN.get())
-                ReturnMangler.mangleReturn(callback, method);
-            if (V_MANGLE_SWITCHES_ENABLED.get())
-                SwitchMangler.mangleSwitches(method);
-            if (V_MANGLE_COMPARISONS.get())
-                toAdd.addAll(FloatingPointComparisionMangler.mangleComparisions(this.inst.getNameProvider(), node, method));
-            //JumpReplacer.process(node, method);
-
-            for (AbstractInsnNode abstractInsnNode : method.instructions.toArray())
-            {
-                // 無意味な（普通に読んだらエラーの） POP 命令を GOTO 命令後に設置する（∴実行されない POP だがデコンパイラはクラッシュ）
-                if (V_BAD_POP.get())
-                {
-                    if (abstractInsnNode instanceof JumpInsnNode && abstractInsnNode.getOpcode() == Opcodes.GOTO)
-                    {
-                        method.instructions.insertBefore(abstractInsnNode, new LdcInsnNode(""));
-                        method.instructions.insertBefore(abstractInsnNode, new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/String", "length", "()I", false));
-                        method.instructions.insertBefore(abstractInsnNode, new InsnNode(Opcodes.POP));
-                    }
-                    else if (abstractInsnNode.getOpcode() == Opcodes.POP)
-                    {
-                        method.instructions.insertBefore(abstractInsnNode, new LdcInsnNode(""));
-                        method.instructions.insertBefore(abstractInsnNode, new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/String", "length", "()I", false));
-                        method.instructions.insert(abstractInsnNode, new InsnNode(Opcodes.POP2));
-                        method.instructions.remove(abstractInsnNode);
-                    }
-                }
-                if (V_REPLACE_GOTO.get() && abstractInsnNode instanceof JumpInsnNode && abstractInsnNode.getOpcode() == Opcodes.GOTO)
-                {
-                    JumpInsnNode insnNode = (JumpInsnNode) abstractInsnNode;
-                    final InsnList insnList = new InsnList();
-                    insnList.add(ifGoto(insnNode.label, method, Type.getReturnType(method.desc)));
-                    method.instructions.insert(insnNode, insnList);
-                    method.instructions.remove(insnNode);
-                }
-                if (abstractInsnNode instanceof MethodInsnNode && V_BAD_CONCAT.get())
-                {
-                    MethodInsnNode insnNode = (MethodInsnNode) abstractInsnNode;
-
-                    if (insnNode.owner.equals("java/lang/StringBuilder") && insnNode.name.equals("toString"))
-                    {
-                        method.instructions.insert(insnNode, new MethodInsnNode(Opcodes.INVOKESTATIC, "java/lang/String", "valueOf", "(Ljava/lang/Object;)Ljava/lang/String;", false));
-                        method.instructions.remove(insnNode);
-                    }
-                }
-                if (V_REPLACE_IF.get() && abstractInsnNode instanceof JumpInsnNode && (abstractInsnNode.getOpcode() >= Opcodes.IFEQ && abstractInsnNode.getOpcode() <= Opcodes.IF_ACMPNE || abstractInsnNode.getOpcode() >= Opcodes.IFNULL && abstractInsnNode.getOpcode() <= Opcodes.IFNONNULL))
-                {
-                    JumpInsnNode insnNode = (JumpInsnNode) abstractInsnNode;
-
-                    MethodNode wrapper = jumpMethodMap.get(insnNode.getOpcode());
-
-                    if (wrapper == null)
-                    {
-                        wrapper = ifWrapper(insnNode.getOpcode());
-
-                        if (wrapper != null)
-                        {
-                            wrapper.name = this.inst.getNameProvider().toUniqueMethodName(
-                                    node,
-                                    "compareOf" + insnNode.getOpcode(),
-                                    wrapper.desc
-                            );
-                            jumpMethodMap.put(insnNode.getOpcode(), wrapper);
-                        }
-                    }
-
-                    if (wrapper != null)
-                    {
-                        final InsnList insnList = new InsnList();
-                        insnList.add(NodeUtils.methodCall(node, wrapper));
-                        insnList.add(new JumpInsnNode(Opcodes.IFEQ, insnNode.label));
-                        method.instructions.insert(insnNode, insnList);
-                        method.instructions.remove(insnNode);
-                    }
-                }
-//                if (abstractInsnNode instanceof MethodInsnNode || abstractInsnNode instanceof FieldInsnNode) {
-//                    method.instructions.insertBefore(abstractInsnNode, new LdcInsnNode(""));
-//                    method.instructions.insertBefore(abstractInsnNode, new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/String", "length", "()I", false));
-//                    method.instructions.insertBefore(abstractInsnNode, new InsnNode(Opcodes.POP));
-//                }
-            }
-//            method.desc = method.desc.replace('Z', 'I');
-        }
-
-        node.methods.addAll(jumpMethodMap.values());
-        node.methods.addAll(toAdd);
-
-    }
-
-    @Override
-    public ObfuscationTransformer getType()
-    {
-        return ObfuscationTransformer.FLOW_OBFUSCATION;
     }
 }

@@ -31,28 +31,45 @@ class StaticStringCallOptimiser
 
             for (AbstractInsnNode insnNode : method.instructions.toArray())
             {
-                if (insnNode instanceof MethodInsnNode)
+                if (insnNode instanceof MethodInsnNode methodInsnNode)
                 {
-                    MethodInsnNode methodInsnNode = (MethodInsnNode) insnNode;
                     AbstractInsnNode prev = Utils.getPrevious(methodInsnNode, 1);
 
-                    if (prev instanceof LdcInsnNode && ((LdcInsnNode) prev).cst instanceof String && (Utils.matchMethodNode(methodInsnNode, "java/lang/Object.hashCode:()I") || Utils.matchMethodNode(methodInsnNode, "java/lang/String.hashCode:()I")))
+                    if (prev instanceof LdcInsnNode && ((LdcInsnNode) prev).cst instanceof String && (Utils.matchMethodNode(
+                            methodInsnNode,
+                            "java/lang/Object.hashCode:()I"
+                    ) || Utils.matchMethodNode(methodInsnNode, "java/lang/String.hashCode:()I")))
                     {
-                        method.instructions.insert(insnNode, NodeUtils.generateIntPush(((LdcInsnNode) prev).cst.hashCode()));
+                        method.instructions.insert(
+                                insnNode,
+                                NodeUtils.generateIntPush(((LdcInsnNode) prev).cst.hashCode())
+                        );
                         method.instructions.remove(insnNode);
                         method.instructions.remove(prev);
                         found = true;
                     }
-                    if (prev instanceof LdcInsnNode && ((LdcInsnNode) prev).cst instanceof String && (Utils.matchMethodNode(methodInsnNode, "java/lang/String.toUpperCase:()Ljava/lang/String;")))
+                    if (prev instanceof LdcInsnNode && ((LdcInsnNode) prev).cst instanceof String && (Utils.matchMethodNode(
+                            methodInsnNode,
+                            "java/lang/String.toUpperCase:()Ljava/lang/String;"
+                    )))
                     {
-                        method.instructions.insert(insnNode, new LdcInsnNode(((String) ((LdcInsnNode) prev).cst).toUpperCase()));
+                        method.instructions.insert(
+                                insnNode,
+                                new LdcInsnNode(((String) ((LdcInsnNode) prev).cst).toUpperCase())
+                        );
                         method.instructions.remove(insnNode);
                         method.instructions.remove(prev);
                         found = true;
                     }
-                    if (prev instanceof LdcInsnNode && ((LdcInsnNode) prev).cst instanceof String && (Utils.matchMethodNode(methodInsnNode, "java/lang/String.toLowerCase:()Ljava/lang/String;")))
+                    if (prev instanceof LdcInsnNode && ((LdcInsnNode) prev).cst instanceof String && (Utils.matchMethodNode(
+                            methodInsnNode,
+                            "java/lang/String.toLowerCase:()Ljava/lang/String;"
+                    )))
                     {
-                        method.instructions.insert(insnNode, new LdcInsnNode(((String) ((LdcInsnNode) prev).cst).toLowerCase()));
+                        method.instructions.insert(
+                                insnNode,
+                                new LdcInsnNode(((String) ((LdcInsnNode) prev).cst).toLowerCase())
+                        );
                         method.instructions.remove(insnNode);
                         method.instructions.remove(prev);
                         found = true;

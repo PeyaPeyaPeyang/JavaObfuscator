@@ -25,42 +25,119 @@ class ComparisionReplacer
     {
         for (AbstractInsnNode insnNode : method.instructions.toArray())
         {
-            if (insnNode instanceof MethodInsnNode)
+            if (insnNode instanceof MethodInsnNode methodInsnNode)
             {
-                MethodInsnNode methodInsnNode = (MethodInsnNode) insnNode;
 
-                if (replaceEquals && Utils.matchMethodNode(methodInsnNode, "java/lang/String.equals:(Ljava/lang/Object;)Z"))
+                if (replaceEquals && Utils.matchMethodNode(
+                        methodInsnNode,
+                        "java/lang/String.equals:(Ljava/lang/Object;)Z"
+                ))
                 {
                     InsnList replacement = new InsnList();
 
-                    replacement.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/Object", "hashCode", "()I", false));
-                    replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false));
+                    replacement.add(new MethodInsnNode(
+                            Opcodes.INVOKEVIRTUAL,
+                            "java/lang/Object",
+                            "hashCode",
+                            "()I",
+                            false
+                    ));
+                    replacement.add(new MethodInsnNode(
+                            Opcodes.INVOKESTATIC,
+                            "java/lang/Integer",
+                            "valueOf",
+                            "(I)Ljava/lang/Integer;",
+                            false
+                    ));
 
                     replacement.add(new InsnNode(Opcodes.SWAP));
 
-                    replacement.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/String", "hashCode", "()I", false));
-                    replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false));
+                    replacement.add(new MethodInsnNode(
+                            Opcodes.INVOKEVIRTUAL,
+                            "java/lang/String",
+                            "hashCode",
+                            "()I",
+                            false
+                    ));
+                    replacement.add(new MethodInsnNode(
+                            Opcodes.INVOKESTATIC,
+                            "java/lang/Integer",
+                            "valueOf",
+                            "(I)Ljava/lang/Integer;",
+                            false
+                    ));
 
-                    replacement.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/Integer", "equals", "(Ljava/lang/Object;)Z", false));
+                    replacement.add(new MethodInsnNode(
+                            Opcodes.INVOKEVIRTUAL,
+                            "java/lang/Integer",
+                            "equals",
+                            "(Ljava/lang/Object;)Z",
+                            false
+                    ));
 
                     method.instructions.insert(insnNode, replacement);
                     method.instructions.remove(insnNode);
                 }
-                if (replaceEqualsIgnoreCase && Utils.matchMethodNode(methodInsnNode, "java/lang/String.equalsIgnoreCase:(Ljava/lang/String;)Z"))
+                if (replaceEqualsIgnoreCase && Utils.matchMethodNode(
+                        methodInsnNode,
+                        "java/lang/String.equalsIgnoreCase:(Ljava/lang/String;)Z"
+                ))
                 {
                     InsnList replacement = new InsnList();
 
-                    replacement.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/String", "toUpperCase", "()Ljava/lang/String;", false));
-                    replacement.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/Object", "hashCode", "()I", false));
-                    replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false));
+                    replacement.add(new MethodInsnNode(
+                            Opcodes.INVOKEVIRTUAL,
+                            "java/lang/String",
+                            "toUpperCase",
+                            "()Ljava/lang/String;",
+                            false
+                    ));
+                    replacement.add(new MethodInsnNode(
+                            Opcodes.INVOKEVIRTUAL,
+                            "java/lang/Object",
+                            "hashCode",
+                            "()I",
+                            false
+                    ));
+                    replacement.add(new MethodInsnNode(
+                            Opcodes.INVOKESTATIC,
+                            "java/lang/Integer",
+                            "valueOf",
+                            "(I)Ljava/lang/Integer;",
+                            false
+                    ));
 
                     replacement.add(new InsnNode(Opcodes.SWAP));
 
-                    replacement.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/String", "toUpperCase", "()Ljava/lang/String;", false));
-                    replacement.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/String", "hashCode", "()I", false));
-                    replacement.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false));
+                    replacement.add(new MethodInsnNode(
+                            Opcodes.INVOKEVIRTUAL,
+                            "java/lang/String",
+                            "toUpperCase",
+                            "()Ljava/lang/String;",
+                            false
+                    ));
+                    replacement.add(new MethodInsnNode(
+                            Opcodes.INVOKEVIRTUAL,
+                            "java/lang/String",
+                            "hashCode",
+                            "()I",
+                            false
+                    ));
+                    replacement.add(new MethodInsnNode(
+                            Opcodes.INVOKESTATIC,
+                            "java/lang/Integer",
+                            "valueOf",
+                            "(I)Ljava/lang/Integer;",
+                            false
+                    ));
 
-                    replacement.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/Integer", "equals", "(Ljava/lang/Object;)Z", false));
+                    replacement.add(new MethodInsnNode(
+                            Opcodes.INVOKEVIRTUAL,
+                            "java/lang/Integer",
+                            "equals",
+                            "(Ljava/lang/Object;)Z",
+                            false
+                    ));
 
                     method.instructions.insert(insnNode, replacement);
                     method.instructions.remove(insnNode);

@@ -98,7 +98,13 @@ public class NodeUtils
     {
         if (type.getSort() != Type.VOID && TYPE_TO_WRAPPER.containsKey(type))
         {
-            return new MethodInsnNode(Opcodes.INVOKESTATIC, TYPE_TO_WRAPPER.get(type), "valueOf", "(" + type + ")L" + TYPE_TO_WRAPPER.get(type) + ";", false);
+            return new MethodInsnNode(
+                    Opcodes.INVOKESTATIC,
+                    TYPE_TO_WRAPPER.get(type),
+                    "valueOf",
+                    "(" + type + ")L" + TYPE_TO_WRAPPER.get(type) + ";",
+                    false
+            );
         }
 
         return new InsnNode(Opcodes.NOP);
@@ -117,7 +123,13 @@ public class NodeUtils
         if (TYPE_TO_WRAPPER.containsKey(type))
         {
             String internalName = Utils.getInternalName(type);
-            return new MethodInsnNode(Opcodes.INVOKESTATIC, TYPE_TO_WRAPPER.get(type), internalName + "Value", "(L" + TYPE_TO_WRAPPER.get(type) + ";)" + type, false);
+            return new MethodInsnNode(
+                    Opcodes.INVOKESTATIC,
+                    TYPE_TO_WRAPPER.get(type),
+                    internalName + "Value",
+                    "(L" + TYPE_TO_WRAPPER.get(type) + ";)" + type,
+                    false
+            );
         }
 
         return new InsnNode(Opcodes.NOP);
@@ -171,7 +183,13 @@ public class NodeUtils
 
     public static MethodInsnNode toCallNode(final MethodNode method, final ClassNode classNode)
     {
-        return new MethodInsnNode(Modifier.isStatic(method.access) ? Opcodes.INVOKESTATIC: Opcodes.INVOKEVIRTUAL, classNode.name, method.name, method.desc, false);
+        return new MethodInsnNode(
+                Modifier.isStatic(method.access) ? Opcodes.INVOKESTATIC: Opcodes.INVOKEVIRTUAL,
+                classNode.name,
+                method.name,
+                method.desc,
+                false
+        );
     }
 
     public static InsnList removeFromOpcode(InsnList insnList, int code)
@@ -421,11 +439,26 @@ public class NodeUtils
         MethodNode clInit = NodeUtils.getOrCreateCLInit(node);
         if (clInit.instructions.getFirst() == null)
         {
-            clInit.instructions.add(new MethodInsnNode(Opcodes.INVOKESTATIC, node.name, method.name, method.desc, false));
+            clInit.instructions.add(new MethodInsnNode(
+                    Opcodes.INVOKESTATIC,
+                    node.name,
+                    method.name,
+                    method.desc,
+                    false
+            ));
             clInit.instructions.add(new InsnNode(Opcodes.RETURN));
         }
         else
-            clInit.instructions.insertBefore(clInit.instructions.getFirst(), new MethodInsnNode(Opcodes.INVOKESTATIC, node.name, method.name, method.desc, false));
+            clInit.instructions.insertBefore(
+                    clInit.instructions.getFirst(),
+                    new MethodInsnNode(
+                            Opcodes.INVOKESTATIC,
+                            node.name,
+                            method.name,
+                            method.desc,
+                            false
+                    )
+            );
 
     }
 

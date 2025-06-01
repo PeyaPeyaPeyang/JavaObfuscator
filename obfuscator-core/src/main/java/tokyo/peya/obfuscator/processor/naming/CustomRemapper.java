@@ -95,7 +95,8 @@ class CustomRemapper extends Remapper
 
     public boolean methodMappingExists(String owner, String oldName, String oldDesc)
     {
-        return this.mapMethod.containsKey(map(owner)) && this.mapMethod.get(map(owner)).containsKey(oldName + mapDesc(oldDesc));
+        return this.mapMethod.containsKey(map(owner)) && this.mapMethod.get(map(owner))
+                                                                       .containsKey(oldName + mapDesc(oldDesc));
     }
 
     /**
@@ -157,7 +158,8 @@ class CustomRemapper extends Remapper
 
     public boolean fieldMappingExists(String owner, String oldName, String oldDesc)
     {
-        return this.mapField.containsKey(map(owner)) && this.mapField.get(map(owner)).containsKey(oldName + mapDesc(oldDesc));
+        return this.mapField.containsKey(map(owner)) && this.mapField.get(map(owner))
+                                                                     .containsKey(oldName + mapDesc(oldDesc));
     }
 
     /**

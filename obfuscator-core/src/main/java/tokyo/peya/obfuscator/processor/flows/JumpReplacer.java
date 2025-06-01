@@ -54,9 +54,8 @@ public class JumpReplacer
 
         for (AbstractInsnNode insnNode : methodNode.instructions.toArray())
         {
-            if (insnNode instanceof JumpInsnNode)
+            if (insnNode instanceof JumpInsnNode jumpInsnNode)
             {
-                JumpInsnNode jumpInsnNode = (JumpInsnNode) insnNode;
 
                 if (jumpInsnNode.getOpcode() == Opcodes.GOTO)
                 {
@@ -134,9 +133,8 @@ public class JumpReplacer
 
         for (AbstractInsnNode insnNode : methodNode.instructions.toArray())
         {
-            if (insnNode instanceof JumpInsnNode)
+            if (insnNode instanceof JumpInsnNode jumpInsnNode)
             {
-                JumpInsnNode jumpInsnNode = (JumpInsnNode) insnNode;
 
                 int number = 0;
                 LabelNode label = null;

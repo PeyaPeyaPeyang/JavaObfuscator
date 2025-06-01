@@ -32,6 +32,10 @@ public class Appender extends AppenderBase<ILoggingEvent>
     private static final SimpleAttributeSet DEBUG_ATT;
     private static final SimpleAttributeSet TRACE_ATT;
     private static final SimpleAttributeSet RESTO_ATT;
+    /**
+     * log message formatter
+     */
+    private PatternLayout patternLayout;
 
     /**
      * Definição dos estilos de log
@@ -74,11 +78,6 @@ public class Appender extends AppenderBase<ILoggingEvent>
         RESTO_ATT.addAttribute(StyleConstants.CharacterConstants.Italic, Boolean.TRUE);
         RESTO_ATT.addAttribute(StyleConstants.CharacterConstants.Foreground, new Color(0, 0, 0));
     }
-
-    /**
-     * log message formatter
-     */
-    private PatternLayout patternLayout;
 
     /**
      * Code copied from {@link JTextPane#getLineCount()}
@@ -195,37 +194,43 @@ public class Appender extends AppenderBase<ILoggingEvent>
 
                 if (event.getLevel() == Level.ERROR)
                 {
-                    textArea.getDocument().insertString(textArea.getDocument().getLength(), formattedMsg,
+                    textArea.getDocument().insertString(
+                            textArea.getDocument().getLength(), formattedMsg,
                             ERROR_ATT
                     );
                 }
                 else if (event.getLevel() == Level.WARN)
                 {
-                    textArea.getDocument().insertString(textArea.getDocument().getLength(), formattedMsg,
+                    textArea.getDocument().insertString(
+                            textArea.getDocument().getLength(), formattedMsg,
                             WARN_ATT
                     );
                 }
                 else if (event.getLevel() == Level.INFO)
                 {
-                    textArea.getDocument().insertString(textArea.getDocument().getLength(), formattedMsg,
+                    textArea.getDocument().insertString(
+                            textArea.getDocument().getLength(), formattedMsg,
                             INFO_ATT
                     );
                 }
                 else if (event.getLevel() == Level.DEBUG)
                 {
-                    textArea.getDocument().insertString(textArea.getDocument().getLength(), formattedMsg,
+                    textArea.getDocument().insertString(
+                            textArea.getDocument().getLength(), formattedMsg,
                             DEBUG_ATT
                     );
                 }
                 else if (event.getLevel() == Level.TRACE)
                 {
-                    textArea.getDocument().insertString(textArea.getDocument().getLength(), formattedMsg,
+                    textArea.getDocument().insertString(
+                            textArea.getDocument().getLength(), formattedMsg,
                             TRACE_ATT
                     );
                 }
                 else
                 {
-                    textArea.getDocument().insertString(textArea.getDocument().getLength(), formattedMsg,
+                    textArea.getDocument().insertString(
+                            textArea.getDocument().getLength(), formattedMsg,
                             RESTO_ATT
                     );
                 }

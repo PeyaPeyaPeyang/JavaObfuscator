@@ -82,15 +82,19 @@ import static org.objectweb.asm.Opcodes.PUTSTATIC;
 public class InvokeDynamic implements IClassTransformer
 {
     private static final String PROCESSOR_NAME = "invoke_dynamic";
-    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, "ui.transformers.invoke_dynamic.description", DeprecationLevel.SOME_DEPRECATION, false);
+    private static final EnabledValue V_ENABLED = new EnabledValue(
+            PROCESSOR_NAME,
+            "ui.transformers.invoke_dynamic.description",
+            DeprecationLevel.SOME_DEPRECATION,
+            false
+    );
+    private final Obfuscator instance;
 
     static
     {
         ValueManager.registerOwner(PROCESSOR_NAME, "ui.transformers.invoke_dynamic");
         ValueManager.registerClass(InvokeDynamic.class);
     }
-
-    private final Obfuscator instance;
 
     public InvokeDynamic(Obfuscator instance)
     {
@@ -149,198 +153,19 @@ public class InvokeDynamic implements IClassTransformer
             return;  // 何も置換されなかった場合は処理を終了
 
         // 呼び出し定義の生成メソッドを作成
-        MethodNode generatorMethod = this.createInvocationsGenerator(classNode, methodInvocationsField, arrayInvocationsField, invocations, fieldTypes);
+        MethodNode generatorMethod = this.createInvocationsGenerator(
+                classNode,
+                methodInvocationsField,
+                arrayInvocationsField,
+                invocations,
+                fieldTypes
+        );
 
         // クラスにフィールドとメソッドを追加
         classNode.methods.add(bootstrap);
         classNode.methods.add(generatorMethod);
         classNode.fields.add(methodInvocationsField);
         classNode.fields.add(arrayInvocationsField);
-    }
-
-    private static boolean replaceMethodInvocation(MethodNode method, MethodInsnNode invocation, Handle bootstrap,
-                                                   Map<? super String, Integer> map)
-    {
-        int opcode = invocation.getOpcode();
-        boolean isVirtualOrInterface = opcode == INVOKEVIRTUAL || opcode == INVOKEINTERFACE;
-        boolean isStatic = opcode == INVOKESTATIC;
-
-        boolean isMethodCall = isVirtualOrInterface || isStatic;
-        if (!isMethodCall)
-            return false;
-
-        // path/to/MyClass/doSomething(Ljava/lang/String;)V -> path.to.MyClass:doSomething(Ljava/lang/String;)V:<SIG>
-        int methodTypeSign = getInvocationTypeByOpcode(opcode);
-        String name = invocation.owner.replace('/', '.') + ":"
-                + invocation.name + ":"
-                + invocation.desc + ":"
-                + NameUtils.generateSpaceString(methodTypeSign);
-
-
-        int index;
-        if (map.containsKey(name))
-            index = map.get(name);
-        else
-        {
-            index = map.size();  // 現在の要素数 = 次のインデックス
-            map.put(name, index);
-        }
-
-        String invocationDescriptor;
-        if (isVirtualOrInterface)
-        {
-            StringBuilder sb = new StringBuilder();
-            if (invocation.owner.startsWith("["))
-                sb.append("(");
-            else
-                sb.append("(L");
-            sb.append(invocation.owner);
-            if (invocation.owner.endsWith(";"))
-                sb.append(")");
-            else
-                sb.append(";");
-
-            sb.append(invocation.desc.substring(1));  // メソッドの引数部分を取得
-            invocationDescriptor = sb.toString();
-        }
-        else /* if (isStatic) */
-            invocationDescriptor = invocation.desc;  // 静的メソッドの場合はそのまま
-
-
-        String invocationName = Integer.toString(index);
-        method.instructions.insert(
-                invocation,
-                new InvokeDynamicInsnNode(invocationName, invocationDescriptor, bootstrap)
-        );
-        method.instructions.remove(invocation);
-
-        return true;
-    }
-
-    private static boolean replaceFieldReference(MethodNode method, FieldInsnNode field, Handle bootstrap,
-                                                 Map<? super String, Integer> map, Map<? super Type, Integer> typeMap)
-    {
-        int opcode = field.getOpcode();
-        boolean isGet = opcode == GETFIELD || opcode == GETSTATIC;
-        boolean isPut = opcode == PUTFIELD || opcode == PUTSTATIC;
-        if (!(isGet || isPut))
-            return false;
-
-        if (isPut && !isFieldWritable(field))
-            return false; // フィールドが書き込み可能でない場合は何もしない
-
-        Type fieldType = Type.getType(field.desc);
-        int typeIndex;
-
-        if (typeMap.containsKey(fieldType))
-            typeIndex = typeMap.get(fieldType);
-        else
-        {
-            typeIndex = typeMap.size();  // 現在の要素数 = 次のインデックス
-            typeMap.put(fieldType, typeIndex);
-        }
-
-        int methodTypeSign = getInvocationTypeByOpcode(opcode);
-        String name = field.owner.replace('/', '.') + ":" +
-                field.name + ":" +
-                typeIndex + ":" +
-                NameUtils.generateSpaceString(methodTypeSign);
-
-        int index;
-        if (map.containsKey(name))
-            index = map.get(name);
-        else
-        {
-            index = map.size();  // 現在の要素数 = 次のインデックス
-            map.put(name, index);
-        }
-
-        String invocationName = Integer.toString(index);
-        String invocationDescriptor = switch (opcode) {
-            // 値の取得
-            case GETSTATIC -> "()" + field.desc; // 静的フィールドの取
-            case GETFIELD -> "(L" + field.owner + ";)" + field.desc; // インスタンスフィールド
-
-            // 値の設定
-            case PUTSTATIC -> "(" + field.desc + ")V"; // 静的フィールド
-            case PUTFIELD -> "(L" + field.owner + ";" + field.desc + ")V"; // インスタンスフィールド
-            default -> throw new IllegalStateException("Unexpected value: " + opcode);
-        };
-
-        method.instructions.insert(
-                field,
-                new InvokeDynamicInsnNode(invocationName, invocationDescriptor, bootstrap)
-        );
-        method.instructions.remove(field);
-
-        return true;
-    }
-    private static boolean isFieldWritable(FieldInsnNode fieldInsnNode)
-    {
-        ClassNode owner = Utils.lookupClass(fieldInsnNode.owner);
-        FieldNode field = null;
-
-        if (owner != null)
-            field = Utils.getField(owner, fieldInsnNode.name);
-
-        if (field == null)
-            log.warn("Field {}.{} wasn't found. Please add it as library", fieldInsnNode.owner, fieldInsnNode.name);
-        else if (Modifier.isFinal(field.access))
-            log.warn("Field {}.{} is final. It cannot be modified.", fieldInsnNode.owner, fieldInsnNode.name);
-        else
-            return true; // フィールドが存在し、finalでない場合は書き込み可能
-
-        return false;
-    }
-
-    private static int getInvocationTypeByOpcode(int opcode)
-    {
-        return switch (opcode)
-        {
-            case INVOKESTATIC -> 1; // 静的メソッドの呼び出し
-            case INVOKEVIRTUAL, INVOKEINTERFACE -> 2; // インスタンスメソッド/インタフェースの呼び出し
-            case GETFIELD -> 3; // フィールド値の取得
-            case GETSTATIC -> 4; // 静的フィールド値の取得
-            case PUTFIELD -> 5; // フィールド値の設定
-            case PUTSTATIC -> 6; // 静的フィールド値の設定
-            default -> throw new IllegalArgumentException("Unsupported opcode: " + opcode);
-        };
-    }
-
-    private static int replaceMethodInstructions(MethodNode method,
-                                                 Handle bootstrap,
-                                                 HashMap<? super String, Integer> methodMap,
-                                                 HashMap<? super Type, Integer> fieldTypeMap)
-    {
-        int count = 0;
-        for (AbstractInsnNode abstractInsnNode : method.instructions.toArray())
-        {
-            boolean isReplaced = false;
-            if (abstractInsnNode instanceof MethodInsnNode methodInsnNode)
-                isReplaced = replaceMethodInvocation(method, methodInsnNode, bootstrap, methodMap);
-            else if (abstractInsnNode instanceof FieldInsnNode fieldInsnNode)
-                isReplaced = replaceFieldReference(method, fieldInsnNode, bootstrap, methodMap, fieldTypeMap);
-
-            if (isReplaced)
-                count++;
-        }
-        return count;
-    }
-
-    private static long replaceMethodInstructions(ClassNode clazz,
-                                                  Handle bootstrap,
-                                                  HashMap<? super String, Integer> methodMap,
-                                                  HashMap<? super Type, Integer> fieldTypeMap)
-    {
-        long count = 0;
-        for (MethodNode method : clazz.methods)
-        {
-            if (method.instructions == null || method.instructions.size() == 0)
-                continue;
-
-            count += replaceMethodInstructions(method, bootstrap, methodMap, fieldTypeMap);
-        }
-        return count;
     }
 
     private MethodNode createInvocationsGenerator(ClassNode classNode, FieldNode arrayField, FieldNode typeArrayField,
@@ -370,69 +195,6 @@ public class InvokeDynamic implements IClassTransformer
         return generatorMethod;
     }
 
-    private static InsnList generateMethodInvocationsList(ClassNode classNode, FieldNode methodsField, Map<String, Integer> map)
-    {
-        InsnList instructions = new InsnList();
-
-        List<Map.Entry<String, Integer>> list = new ArrayList<>(map.entrySet());
-        Collections.shuffle(list);
-
-        // サイズ list.size() の String 配列を生成し, フィールドに格納する
-        instructions.add(NodeUtils.generateIntPush(list.size()));
-        instructions.add(new TypeInsnNode(Opcodes.ANEWARRAY, "java/lang/String"));
-        instructions.add(new FieldInsnNode(PUTSTATIC, classNode.name, methodsField.name, methodsField.desc));
-
-        // 以下, 配列に要素を格納する処理
-        for (Map.Entry<String, Integer> integerStringEntry : list)
-        {
-            // フィールドを取得し, インデックスを指定して値を格納する
-            instructions.add(new FieldInsnNode(GETSTATIC, classNode.name, methodsField.name, methodsField.desc));
-
-            instructions.add(NodeUtils.generateIntPush(integerStringEntry.getValue()));
-            instructions.add(new LdcInsnNode(integerStringEntry.getKey()));
-
-            instructions.add(new InsnNode(Opcodes.AASTORE));
-        }
-        return instructions;
-    }
-
-    private static InsnList generateFieldInvocationsList(ClassNode classNode, FieldNode fieldField, Map<Type, Integer> map)
-    {
-        InsnList instructions = new InsnList();
-
-        List<Map.Entry<Type, Integer>> list = new ArrayList<>(map.entrySet());
-        Collections.shuffle(list);
-
-        // サイズ list.size() の配列を生成し, フィールドに格納する
-        instructions.add(NodeUtils.generateIntPush(list.size()));
-        instructions.add(new TypeInsnNode(Opcodes.ANEWARRAY, "java/lang/Class"));
-        instructions.add(new FieldInsnNode(PUTSTATIC, classNode.name, fieldField.name, fieldField.desc));
-
-        // 以下, 配列に要素を格納する処理
-        for (Map.Entry<Type, Integer> integerStringEntry : list)
-        {
-            // フィールドを取得し, インデックスを指定して値を格納する
-            instructions.add(new FieldInsnNode(GETSTATIC, classNode.name, fieldField.name, fieldField.desc));
-
-            instructions.add(NodeUtils.generateIntPush(integerStringEntry.getValue()));
-            {
-                // 型の情報を LdcInsnNode で格納する
-                Type type = integerStringEntry.getKey();
-
-                // プリミティブ型の場合はボクシングしないと, スタックに積めない。
-                // 以下, プリミティブ型 -> ボクシング型の変換。
-                int sort = type.getSort();
-                if (sort == Type.ARRAY || sort == Type.OBJECT)  // プリミティブではない場合
-                    instructions.add(new LdcInsnNode(type));
-                else
-                    instructions.add(NodeUtils.getTypeNode(type));
-            }
-
-            instructions.add(new InsnNode(Opcodes.AASTORE));
-        }
-        return instructions;
-    }
-
     private MethodNode generateBootstrapMethod(FieldNode arrayField, FieldNode typeField, ClassNode node)
     {
         String className = node.name;
@@ -445,15 +207,16 @@ public class InvokeDynamic implements IClassTransformer
 
         MethodNode mv;
         {
-            mv = new MethodNode(ACC_PRIVATE + ACC_STATIC,
-                                this.instance.getNameProvider().toUniqueMethodName(
-                                        node,
-                                        "invokedynamic",
-                                        "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;"
-                                ),
-                                "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;",
-                                null,
-                                new String[]{"java/lang/NoSuchMethodException", "java/lang/IllegalAccessException"}
+            mv = new MethodNode(
+                    ACC_PRIVATE + ACC_STATIC,
+                    this.instance.getNameProvider().toUniqueMethodName(
+                            node,
+                            "invokedynamic",
+                            "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;"
+                    ),
+                    "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;",
+                    null,
+                    new String[]{"java/lang/NoSuchMethodException", "java/lang/IllegalAccessException"}
             );
             mv.visitCode();
             Label l0 = new Label();
@@ -474,7 +237,13 @@ public class InvokeDynamic implements IClassTransformer
             mv.visitInsn(AALOAD);
 
             mv.visitLdcInsn(":"); // デリミタ, #split() の引数
-            mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/String", "split", "(Ljava/lang/String;)[Ljava/lang/String;", false);
+            mv.visitMethodInsn(
+                    INVOKEVIRTUAL,
+                    "java/lang/String",
+                    "split",
+                    "(Ljava/lang/String;)[Ljava/lang/String;",
+                    false
+            );
             mv.visitVarInsn(ASTORE, 3);  // 3: split = ...
 
             Label l3 = new Label();
@@ -485,7 +254,13 @@ public class InvokeDynamic implements IClassTransformer
             mv.visitVarInsn(ALOAD, 3);
             mv.visitInsn(ICONST_0);
             mv.visitInsn(AALOAD);
-            mv.visitMethodInsn(INVOKESTATIC, "java/lang/Class", "forName", "(Ljava/lang/String;)Ljava/lang/Class;", false);
+            mv.visitMethodInsn(
+                    INVOKESTATIC,
+                    "java/lang/Class",
+                    "forName",
+                    "(Ljava/lang/String;)Ljava/lang/Class;",
+                    false
+            );
             mv.visitVarInsn(ASTORE, 4);  // 4: classIn = ...
 
             Label l4 = new Label();
@@ -566,7 +341,13 @@ public class InvokeDynamic implements IClassTransformer
             mv.visitVarInsn(ALOAD, 4);  // 4: classIn
             mv.visitVarInsn(ALOAD, 5);  // 5: name
             mv.visitVarInsn(ALOAD, 8);  // 8: methodType
-            mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/invoke/MethodHandles$Lookup", "findVirtual", "(Ljava/lang/Class;Ljava/lang/String;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/MethodHandle;", false);
+            mv.visitMethodInsn(
+                    INVOKEVIRTUAL,
+                    "java/lang/invoke/MethodHandles$Lookup",
+                    "findVirtual",
+                    "(Ljava/lang/Class;Ljava/lang/String;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/MethodHandle;",
+                    false
+            );
             mv.visitVarInsn(ASTORE, 6);  // 6: methodHandle = ...
             Label l13 = new Label();
             mv.visitJumpInsn(GOTO, l13);  // if 本文終わり, (else 後の) l13 へジャンプ
@@ -576,17 +357,18 @@ public class InvokeDynamic implements IClassTransformer
             mv.visitLineNumber(29, l11);
 
             // スタックに残っている値を確認, VerifyError を防ぐためのフレームを設定
-            mv.visitFrame(Opcodes.F_FULL, 9, new Object[]{
-                                  "java/lang/invoke/MethodHandles$Lookup",
-                                  "java/lang/String",
-                                  "java/lang/invoke/MethodType",
-                                  "[Ljava/lang/String;",
-                                  "java/lang/Class",
-                                  "java/lang/String",
-                                  "java/lang/invoke/MethodHandle",
-                                  Opcodes.INTEGER,
-                                  "java/lang/invoke/MethodType"
-                          }, 0, new Object[]{}
+            mv.visitFrame(
+                    Opcodes.F_FULL, 9, new Object[]{
+                            "java/lang/invoke/MethodHandles$Lookup",
+                            "java/lang/String",
+                            "java/lang/invoke/MethodType",
+                            "[Ljava/lang/String;",
+                            "java/lang/Class",
+                            "java/lang/String",
+                            "java/lang/invoke/MethodHandle",
+                            Opcodes.INTEGER,
+                            "java/lang/invoke/MethodType"
+                    }, 0, new Object[]{}
             );
 
             // methodHandle = lookup.findStatic(classIn, name, methodType);
@@ -596,10 +378,10 @@ public class InvokeDynamic implements IClassTransformer
             mv.visitVarInsn(ALOAD, 8);  // 8: methodType
             mv.visitMethodInsn(
                     INVOKEVIRTUAL,
-                               "java/lang/invoke/MethodHandles$Lookup",
-                               "findStatic",
-                               "(Ljava/lang/Class;Ljava/lang/String;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/MethodHandle;",
-                               false
+                    "java/lang/invoke/MethodHandles$Lookup",
+                    "findStatic",
+                    "(Ljava/lang/Class;Ljava/lang/String;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/MethodHandle;",
+                    false
             );
             mv.visitVarInsn(ASTORE, 6); // 6: methodHandle = ...
 
@@ -732,7 +514,7 @@ public class InvokeDynamic implements IClassTransformer
             mv.visitVarInsn(ALOAD, 8);  // 8: typeLookup
             mv.visitMethodInsn(
                     INVOKEVIRTUAL,
-                               "java/lang/invoke/MethodHandles$Lookup",
+                    "java/lang/invoke/MethodHandles$Lookup",
                     "findStaticSetter",
                     "(Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/invoke/MethodHandle;",
                     false
@@ -753,7 +535,7 @@ public class InvokeDynamic implements IClassTransformer
             mv.visitVarInsn(ALOAD, 6); // 6: methodHandle
             mv.visitMethodInsn(
                     INVOKESPECIAL,
-                               "java/lang/invoke/ConstantCallSite",
+                    "java/lang/invoke/ConstantCallSite",
                     "<init>",
                     "(Ljava/lang/invoke/MethodHandle;)V",
                     false
@@ -769,11 +551,13 @@ public class InvokeDynamic implements IClassTransformer
             mv.visitLineNumber(46, l2);
 
             // スタックに残っている値を確認, VerifyError を防ぐためのフレームを設定
-            mv.visitFrame(Opcodes.F_FULL, 3, new Object[]{
-                    "java/lang/invoke/MethodHandles$Lookup",
-                    "java/lang/String",
-                    "java/lang/invoke/MethodType"
-            }, 1, new Object[]{"java/lang/Exception"});
+            mv.visitFrame(
+                    Opcodes.F_FULL, 3, new Object[]{
+                            "java/lang/invoke/MethodHandles$Lookup",
+                            "java/lang/String",
+                            "java/lang/invoke/MethodType"
+                    }, 1, new Object[]{"java/lang/Exception"}
+            );
             mv.visitVarInsn(ASTORE, 3);  // 3: ex = Exception
 
             Label l22 = new Label();
@@ -824,6 +608,258 @@ public class InvokeDynamic implements IClassTransformer
     public ObfuscationTransformer getType()
     {
         return ObfuscationTransformer.INVOKE_DYNAMIC;
+    }
+
+    private static boolean replaceMethodInvocation(MethodNode method, MethodInsnNode invocation, Handle bootstrap,
+                                                   Map<? super String, Integer> map)
+    {
+        int opcode = invocation.getOpcode();
+        boolean isVirtualOrInterface = opcode == INVOKEVIRTUAL || opcode == INVOKEINTERFACE;
+        boolean isStatic = opcode == INVOKESTATIC;
+
+        boolean isMethodCall = isVirtualOrInterface || isStatic;
+        if (!isMethodCall)
+            return false;
+
+        // path/to/MyClass/doSomething(Ljava/lang/String;)V -> path.to.MyClass:doSomething(Ljava/lang/String;)V:<SIG>
+        int methodTypeSign = getInvocationTypeByOpcode(opcode);
+        String name = invocation.owner.replace('/', '.') + ":"
+                + invocation.name + ":"
+                + invocation.desc + ":"
+                + NameUtils.generateSpaceString(methodTypeSign);
+
+
+        int index;
+        if (map.containsKey(name))
+            index = map.get(name);
+        else
+        {
+            index = map.size();  // 現在の要素数 = 次のインデックス
+            map.put(name, index);
+        }
+
+        String invocationDescriptor;
+        if (isVirtualOrInterface)
+        {
+            StringBuilder sb = new StringBuilder();
+            if (invocation.owner.startsWith("["))
+                sb.append("(");
+            else
+                sb.append("(L");
+            sb.append(invocation.owner);
+            if (invocation.owner.endsWith(";"))
+                sb.append(")");
+            else
+                sb.append(";");
+
+            sb.append(invocation.desc.substring(1));  // メソッドの引数部分を取得
+            invocationDescriptor = sb.toString();
+        }
+        else /* if (isStatic) */
+            invocationDescriptor = invocation.desc;  // 静的メソッドの場合はそのまま
+
+
+        String invocationName = Integer.toString(index);
+        method.instructions.insert(
+                invocation,
+                new InvokeDynamicInsnNode(invocationName, invocationDescriptor, bootstrap)
+        );
+        method.instructions.remove(invocation);
+
+        return true;
+    }
+
+    private static boolean replaceFieldReference(MethodNode method, FieldInsnNode field, Handle bootstrap,
+                                                 Map<? super String, Integer> map, Map<? super Type, Integer> typeMap)
+    {
+        int opcode = field.getOpcode();
+        boolean isGet = opcode == GETFIELD || opcode == GETSTATIC;
+        boolean isPut = opcode == PUTFIELD || opcode == PUTSTATIC;
+        if (!(isGet || isPut))
+            return false;
+
+        if (isPut && !isFieldWritable(field))
+            return false; // フィールドが書き込み可能でない場合は何もしない
+
+        Type fieldType = Type.getType(field.desc);
+        int typeIndex;
+
+        if (typeMap.containsKey(fieldType))
+            typeIndex = typeMap.get(fieldType);
+        else
+        {
+            typeIndex = typeMap.size();  // 現在の要素数 = 次のインデックス
+            typeMap.put(fieldType, typeIndex);
+        }
+
+        int methodTypeSign = getInvocationTypeByOpcode(opcode);
+        String name = field.owner.replace('/', '.') + ":" +
+                field.name + ":" +
+                typeIndex + ":" +
+                NameUtils.generateSpaceString(methodTypeSign);
+
+        int index;
+        if (map.containsKey(name))
+            index = map.get(name);
+        else
+        {
+            index = map.size();  // 現在の要素数 = 次のインデックス
+            map.put(name, index);
+        }
+
+        String invocationName = Integer.toString(index);
+        String invocationDescriptor = switch (opcode)
+        {
+            // 値の取得
+            case GETSTATIC -> "()" + field.desc; // 静的フィールドの取
+            case GETFIELD -> "(L" + field.owner + ";)" + field.desc; // インスタンスフィールド
+
+            // 値の設定
+            case PUTSTATIC -> "(" + field.desc + ")V"; // 静的フィールド
+            case PUTFIELD -> "(L" + field.owner + ";" + field.desc + ")V"; // インスタンスフィールド
+            default -> throw new IllegalStateException("Unexpected value: " + opcode);
+        };
+
+        method.instructions.insert(
+                field,
+                new InvokeDynamicInsnNode(invocationName, invocationDescriptor, bootstrap)
+        );
+        method.instructions.remove(field);
+
+        return true;
+    }
+
+    private static boolean isFieldWritable(FieldInsnNode fieldInsnNode)
+    {
+        ClassNode owner = Utils.lookupClass(fieldInsnNode.owner);
+        FieldNode field = null;
+
+        if (owner != null)
+            field = Utils.getField(owner, fieldInsnNode.name);
+
+        if (field == null)
+            log.warn("Field {}.{} wasn't found. Please add it as library", fieldInsnNode.owner, fieldInsnNode.name);
+        else if (Modifier.isFinal(field.access))
+            log.warn("Field {}.{} is final. It cannot be modified.", fieldInsnNode.owner, fieldInsnNode.name);
+        else
+            return true; // フィールドが存在し、finalでない場合は書き込み可能
+
+        return false;
+    }
+
+    private static int getInvocationTypeByOpcode(int opcode)
+    {
+        return switch (opcode)
+        {
+            case INVOKESTATIC -> 1; // 静的メソッドの呼び出し
+            case INVOKEVIRTUAL, INVOKEINTERFACE -> 2; // インスタンスメソッド/インタフェースの呼び出し
+            case GETFIELD -> 3; // フィールド値の取得
+            case GETSTATIC -> 4; // 静的フィールド値の取得
+            case PUTFIELD -> 5; // フィールド値の設定
+            case PUTSTATIC -> 6; // 静的フィールド値の設定
+            default -> throw new IllegalArgumentException("Unsupported opcode: " + opcode);
+        };
+    }
+
+    private static int replaceMethodInstructions(MethodNode method,
+                                                 Handle bootstrap,
+                                                 HashMap<? super String, Integer> methodMap,
+                                                 HashMap<? super Type, Integer> fieldTypeMap)
+    {
+        int count = 0;
+        for (AbstractInsnNode abstractInsnNode : method.instructions.toArray())
+        {
+            boolean isReplaced = false;
+            if (abstractInsnNode instanceof MethodInsnNode methodInsnNode)
+                isReplaced = replaceMethodInvocation(method, methodInsnNode, bootstrap, methodMap);
+            else if (abstractInsnNode instanceof FieldInsnNode fieldInsnNode)
+                isReplaced = replaceFieldReference(method, fieldInsnNode, bootstrap, methodMap, fieldTypeMap);
+
+            if (isReplaced)
+                count++;
+        }
+        return count;
+    }
+
+    private static long replaceMethodInstructions(ClassNode clazz,
+                                                  Handle bootstrap,
+                                                  HashMap<? super String, Integer> methodMap,
+                                                  HashMap<? super Type, Integer> fieldTypeMap)
+    {
+        long count = 0;
+        for (MethodNode method : clazz.methods)
+        {
+            if (method.instructions == null || method.instructions.size() == 0)
+                continue;
+
+            count += replaceMethodInstructions(method, bootstrap, methodMap, fieldTypeMap);
+        }
+        return count;
+    }
+
+    private static InsnList generateMethodInvocationsList(ClassNode classNode, FieldNode methodsField,
+                                                          Map<String, Integer> map)
+    {
+        InsnList instructions = new InsnList();
+
+        List<Map.Entry<String, Integer>> list = new ArrayList<>(map.entrySet());
+        Collections.shuffle(list);
+
+        // サイズ list.size() の String 配列を生成し, フィールドに格納する
+        instructions.add(NodeUtils.generateIntPush(list.size()));
+        instructions.add(new TypeInsnNode(Opcodes.ANEWARRAY, "java/lang/String"));
+        instructions.add(new FieldInsnNode(PUTSTATIC, classNode.name, methodsField.name, methodsField.desc));
+
+        // 以下, 配列に要素を格納する処理
+        for (Map.Entry<String, Integer> integerStringEntry : list)
+        {
+            // フィールドを取得し, インデックスを指定して値を格納する
+            instructions.add(new FieldInsnNode(GETSTATIC, classNode.name, methodsField.name, methodsField.desc));
+
+            instructions.add(NodeUtils.generateIntPush(integerStringEntry.getValue()));
+            instructions.add(new LdcInsnNode(integerStringEntry.getKey()));
+
+            instructions.add(new InsnNode(Opcodes.AASTORE));
+        }
+        return instructions;
+    }
+
+    private static InsnList generateFieldInvocationsList(ClassNode classNode, FieldNode fieldField,
+                                                         Map<Type, Integer> map)
+    {
+        InsnList instructions = new InsnList();
+
+        List<Map.Entry<Type, Integer>> list = new ArrayList<>(map.entrySet());
+        Collections.shuffle(list);
+
+        // サイズ list.size() の配列を生成し, フィールドに格納する
+        instructions.add(NodeUtils.generateIntPush(list.size()));
+        instructions.add(new TypeInsnNode(Opcodes.ANEWARRAY, "java/lang/Class"));
+        instructions.add(new FieldInsnNode(PUTSTATIC, classNode.name, fieldField.name, fieldField.desc));
+
+        // 以下, 配列に要素を格納する処理
+        for (Map.Entry<Type, Integer> integerStringEntry : list)
+        {
+            // フィールドを取得し, インデックスを指定して値を格納する
+            instructions.add(new FieldInsnNode(GETSTATIC, classNode.name, fieldField.name, fieldField.desc));
+
+            instructions.add(NodeUtils.generateIntPush(integerStringEntry.getValue()));
+            {
+                // 型の情報を LdcInsnNode で格納する
+                Type type = integerStringEntry.getKey();
+
+                // プリミティブ型の場合はボクシングしないと, スタックに積めない。
+                // 以下, プリミティブ型 -> ボクシング型の変換。
+                int sort = type.getSort();
+                if (sort == Type.ARRAY || sort == Type.OBJECT)  // プリミティブではない場合
+                    instructions.add(new LdcInsnNode(type));
+                else
+                    instructions.add(NodeUtils.getTypeNode(type));
+            }
+
+            instructions.add(new InsnNode(Opcodes.AASTORE));
+        }
+        return instructions;
     }
 
 }

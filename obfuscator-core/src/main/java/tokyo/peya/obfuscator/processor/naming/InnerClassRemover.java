@@ -34,9 +34,27 @@ public class InnerClassRemover implements INameObfuscationProcessor, IClassTrans
 {
     private static final String PROCESSOR_NAME = "inner_class_remover";
     private static final Pattern INNER_CLASSES = Pattern.compile(".*[A-Za-z0-9_]+\\$[A-Za-z0-9_]+");
-    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, "ui.transformers.inner_class.description", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_REMAP = new BooleanValue(PROCESSOR_NAME, "relocate_classes",  "ui.transformers.inner_class.relocate_classes", DeprecationLevel.AVAILABLE, false);
-    private static final BooleanValue V_REMOVE_METADATA = new BooleanValue(PROCESSOR_NAME, "remove_metadata", "ui.transformers.inner_class.erase_metadata", DeprecationLevel.AVAILABLE, true);
+    private static final EnabledValue V_ENABLED = new EnabledValue(
+            PROCESSOR_NAME,
+            "ui.transformers.inner_class.description",
+            DeprecationLevel.AVAILABLE,
+            true
+    );
+    private static final BooleanValue V_REMAP = new BooleanValue(
+            PROCESSOR_NAME,
+            "relocate_classes",
+            "ui.transformers.inner_class.relocate_classes",
+            DeprecationLevel.AVAILABLE,
+            false
+    );
+    private static final BooleanValue V_REMOVE_METADATA = new BooleanValue(
+            PROCESSOR_NAME,
+            "remove_metadata",
+            "ui.transformers.inner_class.erase_metadata",
+            DeprecationLevel.AVAILABLE,
+            true
+    );
+    private final Obfuscator obfuscator;
 
     static
     {
@@ -44,29 +62,9 @@ public class InnerClassRemover implements INameObfuscationProcessor, IClassTrans
         ValueManager.registerClass(InnerClassRemover.class);
     }
 
-    private final Obfuscator obfuscator;
-
     public InnerClassRemover(Obfuscator obfuscator)
     {
         this.obfuscator = obfuscator;
-    }
-
-    private static boolean isInnerClass(String name)
-    {
-        return INNER_CLASSES.matcher(name).matches();
-    }
-
-    private static void normalizeModifiers(ClassNode classNode)
-    {
-        if (Modifier.isPrivate(classNode.access) || Modifier.isProtected(classNode.access))
-        {
-            classNode.access &= ~Opcodes.ACC_PRIVATE;
-            classNode.access &= ~Opcodes.ACC_PROTECTED;
-            classNode.access |= Opcodes.ACC_PUBLIC;
-        }
-
-        if (Modifier.isStatic(classNode.access))
-            classNode.access &= ~Opcodes.ACC_STATIC;  // Inner は static にできない
     }
 
     private boolean generateAndRegisterRandomName(ClassNode classNode, CustomRemapper remapper)
@@ -139,5 +137,23 @@ public class InnerClassRemover implements INameObfuscationProcessor, IClassTrans
     public ObfuscationTransformer getType()
     {
         return ObfuscationTransformer.INNER_CLASS_REMOVER;
+    }
+
+    private static boolean isInnerClass(String name)
+    {
+        return INNER_CLASSES.matcher(name).matches();
+    }
+
+    private static void normalizeModifiers(ClassNode classNode)
+    {
+        if (Modifier.isPrivate(classNode.access) || Modifier.isProtected(classNode.access))
+        {
+            classNode.access &= ~Opcodes.ACC_PRIVATE;
+            classNode.access &= ~Opcodes.ACC_PROTECTED;
+            classNode.access |= Opcodes.ACC_PUBLIC;
+        }
+
+        if (Modifier.isStatic(classNode.access))
+            classNode.access &= ~Opcodes.ACC_STATIC;  // Inner は static にできない
     }
 }

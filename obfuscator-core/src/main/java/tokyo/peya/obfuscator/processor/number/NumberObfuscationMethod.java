@@ -26,12 +26,12 @@ public enum NumberObfuscationMethod implements INumberObfuscator
                 {
                     insns.add(new LdcInsnNode(NameUtils.generateSpaceString(value)));
                     insns.add(new MethodInsnNode(
-                                    Opcodes.INVOKEVIRTUAL,
-                                    "java/lang/String",
-                                    "length",
-                                    "()I",
-                                    false
-                            )
+                                      Opcodes.INVOKEVIRTUAL,
+                                      "java/lang/String",
+                                      "length",
+                                      "()I",
+                                      false
+                              )
                     );
                 }
 

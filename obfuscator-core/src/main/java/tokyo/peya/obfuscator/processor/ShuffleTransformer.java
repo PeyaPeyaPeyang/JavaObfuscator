@@ -34,7 +34,12 @@ public class ShuffleTransformer implements IClassTransformer
     private static final String PROCESSOR_NAME = "shuffler";
     private static final Random RANDOM = new Random();
 
-    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, "ui.transformers.shuffler.description", DeprecationLevel.AVAILABLE, true);
+    private static final EnabledValue V_ENABLED = new EnabledValue(
+            PROCESSOR_NAME,
+            "ui.transformers.shuffler.description",
+            DeprecationLevel.AVAILABLE,
+            true
+    );
     private static final BooleanValue V_SHUFFLE_CLASS_STRUCTURE = new BooleanValue(
             PROCESSOR_NAME,
             "shuffle_class_structure",
@@ -71,6 +76,7 @@ public class ShuffleTransformer implements IClassTransformer
             DeprecationLevel.AVAILABLE,
             true
     );
+    private final Obfuscator instance;
 
     static
     {
@@ -78,11 +84,64 @@ public class ShuffleTransformer implements IClassTransformer
         ValueManager.registerClass(ShuffleTransformer.class);
     }
 
-    private final Obfuscator instance;
-
     public ShuffleTransformer(Obfuscator instance)
     {
         this.instance = instance;
+    }
+
+    @Override
+    public void process(ProcessorCallback callback, ClassNode node)
+    {
+        if (!V_ENABLED.get())
+            return;
+
+        boolean isEnum = (node.access & Opcodes.ACC_ENUM) != 0;
+        if (isEnum)
+            return;
+
+        if (V_SHUFFLE_CLASS_STRUCTURE.get())
+            processClassStructure(node);
+
+        if (V_SHUFFLE_METHOD_STRUCTURE.get())
+            for (MethodNode o : node.methods)
+                processMethod(o);
+
+        if (V_SHUFFLE_FIELD_STRUCTURE.get())
+            for (FieldNode o : node.fields)
+                processField(o);
+
+        if (V_SHUFFLE_DEBUG_CLASS_NAMES.get())
+            stealDebugNameFromAnotherClass(node);
+    }
+
+    private void stealDebugNameFromAnotherClass(ClassNode myNode)
+    {
+        Collection<ClassNode> classes = this.instance.getClasses().values();
+
+        int randomMaxBound = classes.size();
+        if (randomMaxBound <= 1)
+            return; // No other classes to steal from
+
+        ClassNode node = classes.stream()
+                                .skip(RANDOM.nextInt(classes.size()))
+                                .findFirst()
+                                .orElse(null);
+        assert node != null;
+
+        String theirSource = node.sourceFile;
+        String theirSourceDebug = node.sourceDebug;
+
+        node.sourceFile = myNode.sourceFile;
+        node.sourceDebug = myNode.sourceDebug;
+
+        myNode.sourceFile = theirSource;
+        myNode.sourceDebug = theirSourceDebug;
+    }
+
+    @Override
+    public ObfuscationTransformer getType()
+    {
+        return ObfuscationTransformer.SHUFFLE_MEMBERS;
     }
 
     private static void shuffleIfPresent(List<?> collection)
@@ -140,61 +199,6 @@ public class ShuffleTransformer implements IClassTransformer
             shuffleIfPresent(node.visibleAnnotations);
             shuffleIfPresent(node.visibleTypeAnnotations);
         }
-    }
-
-    @Override
-    public void process(ProcessorCallback callback, ClassNode node)
-    {
-        if (!V_ENABLED.get())
-            return;
-
-        boolean isEnum = (node.access & Opcodes.ACC_ENUM) != 0;
-        if (isEnum)
-            return;
-
-        if (V_SHUFFLE_CLASS_STRUCTURE.get())
-            processClassStructure(node);
-
-        if (V_SHUFFLE_METHOD_STRUCTURE.get())
-            for (MethodNode o : node.methods)
-                processMethod(o);
-
-        if (V_SHUFFLE_FIELD_STRUCTURE.get())
-            for (FieldNode o : node.fields)
-                processField(o);
-
-        if (V_SHUFFLE_DEBUG_CLASS_NAMES.get())
-            stealDebugNameFromAnotherClass(node);
-    }
-
-    private void stealDebugNameFromAnotherClass(ClassNode myNode)
-    {
-        Collection<ClassNode> classes = this.instance.getClasses().values();
-
-        int randomMaxBound = classes.size();
-        if (randomMaxBound <= 1)
-            return; // No other classes to steal from
-
-        ClassNode node = classes.stream()
-                .skip(RANDOM.nextInt(classes.size()))
-                .findFirst()
-                .orElse(null);
-        assert node != null;
-
-        String theirSource = node.sourceFile;
-        String theirSourceDebug = node.sourceDebug;
-
-        node.sourceFile = myNode.sourceFile;
-        node.sourceDebug = myNode.sourceDebug;
-
-        myNode.sourceFile = theirSource;
-        myNode.sourceDebug = theirSourceDebug;
-    }
-
-    @Override
-    public ObfuscationTransformer getType()
-    {
-        return ObfuscationTransformer.SHUFFLE_MEMBERS;
     }
 
 }

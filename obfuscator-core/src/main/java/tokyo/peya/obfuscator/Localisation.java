@@ -11,13 +11,14 @@ public class Localisation
 {
     private static ResourceBundle bundle;
 
+    static
+    {
+        setLocale(Locale.getDefault());
+    }
+
     public static void setLocale(Locale locale)
     {
         bundle = ResourceBundle.getBundle("langs/messages", locale);
-    }
-
-    static {
-        setLocale(Locale.getDefault());
     }
 
     public static String get(String key)

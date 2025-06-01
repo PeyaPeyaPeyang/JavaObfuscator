@@ -204,9 +204,8 @@ public class Utils
 
         for (AbstractInsnNode abstractInsnNode : insnList.toArray())
         {
-            if (abstractInsnNode instanceof LabelNode)
+            if (abstractInsnNode instanceof LabelNode label)
             {
-                LabelNode label = (LabelNode) abstractInsnNode;
 
                 labelNodeHashMap.put(label, new LabelNode());
             }
@@ -253,7 +252,11 @@ public class Utils
         if (currFolder == null)
             try
             {
-                currFolder = new File(Utils.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath());
+                currFolder = new File(Utils.class.getProtectionDomain()
+                                                 .getCodeSource()
+                                                 .getLocation()
+                                                 .toURI()
+                                                 .getPath());
             }
             catch (Exception ignored)
             {

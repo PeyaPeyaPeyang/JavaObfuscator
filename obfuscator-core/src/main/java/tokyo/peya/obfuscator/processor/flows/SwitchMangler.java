@@ -38,9 +38,8 @@ class SwitchMangler
 
         for (AbstractInsnNode abstractInsnNode : node.instructions.toArray())
         {
-            if (abstractInsnNode instanceof TableSwitchInsnNode)
+            if (abstractInsnNode instanceof TableSwitchInsnNode switchInsnNode)
             {
-                TableSwitchInsnNode switchInsnNode = (TableSwitchInsnNode) abstractInsnNode;
 
                 InsnList insnList = new InsnList();
                 insnList.add(new VarInsnNode(Opcodes.ISTORE, resultSlot));
@@ -61,9 +60,8 @@ class SwitchMangler
                 node.instructions.insert(abstractInsnNode, insnList);
                 node.instructions.remove(abstractInsnNode);
             }
-            if (abstractInsnNode instanceof LookupSwitchInsnNode)
+            if (abstractInsnNode instanceof LookupSwitchInsnNode switchInsnNode)
             {
-                LookupSwitchInsnNode switchInsnNode = (LookupSwitchInsnNode) abstractInsnNode;
 
                 InsnList insnList = new InsnList();
                 insnList.add(new VarInsnNode(Opcodes.ISTORE, resultSlot));

@@ -55,12 +55,42 @@ public class StringEncryptionTransformer implements IClassTransformer
 {
     private static final String PROCESSOR_NAME = "string_encryption";
     private static final Random random = new Random();
-    private static final EnabledValue V_ENABLED = new EnabledValue(PROCESSOR_NAME, "ui.transformers.string_encryption.description", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_ALGO_AES = new BooleanValue(PROCESSOR_NAME, "algorithm_aes", "ui.transformers.string_encryption.algo_aes", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_ALGO_XOR = new BooleanValue(PROCESSOR_NAME, "algorithm_xor", "ui.transformers.string_encryption.algo_xor", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_ALGO_BLOWFISH = new BooleanValue(PROCESSOR_NAME, "algorithm_blowfish", "ui.transformers.string_encryption.algo_blowfish", DeprecationLevel.AVAILABLE, true);
-    private static final BooleanValue V_ALGO_DES = new BooleanValue(PROCESSOR_NAME, "algorithm_des", "ui.transformers.string_encryption.algo_des", DeprecationLevel.AVAILABLE, true);
-
+    private static final EnabledValue V_ENABLED = new EnabledValue(
+            PROCESSOR_NAME,
+            "ui.transformers.string_encryption.description",
+            DeprecationLevel.AVAILABLE,
+            true
+    );
+    private static final BooleanValue V_ALGO_AES = new BooleanValue(
+            PROCESSOR_NAME,
+            "algorithm_aes",
+            "ui.transformers.string_encryption.algo_aes",
+            DeprecationLevel.AVAILABLE,
+            true
+    );
+    private static final BooleanValue V_ALGO_XOR = new BooleanValue(
+            PROCESSOR_NAME,
+            "algorithm_xor",
+            "ui.transformers.string_encryption.algo_xor",
+            DeprecationLevel.AVAILABLE,
+            true
+    );
+    private static final BooleanValue V_ALGO_BLOWFISH = new BooleanValue(
+            PROCESSOR_NAME,
+            "algorithm_blowfish",
+            "ui.transformers.string_encryption.algo_blowfish",
+            DeprecationLevel.AVAILABLE,
+            true
+    );
+    private static final BooleanValue V_ALGO_DES = new BooleanValue(
+            PROCESSOR_NAME,
+            "algorithm_des",
+            "ui.transformers.string_encryption.algo_des",
+            DeprecationLevel.AVAILABLE,
+            true
+    );
+    private final Obfuscator instance;
+    private final List<? extends IStringEncryptionAlgorithm> algorithms;
 
     static
     {
@@ -68,134 +98,10 @@ public class StringEncryptionTransformer implements IClassTransformer
         ValueManager.registerClass(StringEncryptionTransformer.class);
     }
 
-    private final Obfuscator instance;
-    private final List<? extends IStringEncryptionAlgorithm> algorithms;
-
     public StringEncryptionTransformer(Obfuscator instance)
     {
         this.instance = instance;
         this.algorithms = getAlgorithms();
-    }
-
-    private static InsnList generateDecrypterInvocation(ClassNode node,
-                                                        int constantNumber,
-                                                        String encryptedStringsField,
-                                                        String decryptionKey,
-                                                        String processorMethodName,
-                                                        String encryptedString)
-    {
-        InsnList toAdd = new InsnList();
-
-        LabelNode label = new LabelNode(new Label());
-        toAdd.add(label);
-        toAdd.add(new LineNumberNode(constantNumber, label));
-
-        /// aastore(&arrayField, index, &value) {
-        toAdd.add(new FieldInsnNode(
-                        Opcodes.GETSTATIC,
-                        node.name,
-                        encryptedStringsField,
-                        "[Ljava/lang/String;"
-                )
-
-        );
-        toAdd.add(NodeUtils.generateIntPush(constantNumber));
-
-        /// invokestatic(*string, *string) {
-        toAdd.add(new LdcInsnNode(encryptedString));
-        toAdd.add(new LdcInsnNode(decryptionKey));
-        toAdd.add(new MethodInsnNode(
-                        Opcodes.INVOKESTATIC,
-                        node.name,
-                        processorMethodName,
-                        "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;",
-                        false
-                )
-        );
-        /// }
-
-        toAdd.add(new InsnNode(Opcodes.AASTORE));
-        /// }
-
-        return toAdd;
-    }
-
-    private static void deployDecryptionMethods(ClassNode node, HashMap<IStringEncryptionAlgorithm, String> methods)
-    {
-        for (Map.Entry<IStringEncryptionAlgorithm, String> entry : methods.entrySet())
-        {
-            try
-            {
-                MethodNode method = NodeUtils.getMethod(NodeUtils.toNode(entry.getKey().getClass()), "decrypt");
-
-                if (method != null)
-                {
-                    method.access = Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC;
-                    method.name = entry.getValue();
-                    node.methods.add(method);
-                }
-                else
-                    throw new IllegalStateException("Could not find decryption method for " + entry.getKey().getClass().getName());
-            }
-            catch (IOException e)
-            {
-                throw new IllegalStateException("Could not find decryption method for " + entry.getKey().getClass().getName(), e);
-            }
-        }
-    }
-
-    private static String[] createStringConstantReferences(ClassNode node, String referenceName)
-    {
-        LinkedList<String> strings = new LinkedList<>();
-
-        int index = 0;
-        for (MethodNode method : node.methods)
-            for (AbstractInsnNode abstractInsnNode : method.instructions.toArray())
-            {
-                if (!(abstractInsnNode instanceof LdcInsnNode insnNode))
-                    continue;
-
-                if (!(insnNode.cst instanceof String string))
-                    continue;
-
-                if (string.length() >= 500)
-                {
-                    log.warn("A constant string value in class " + node.name +
-                            " is too long (\"" + string.substring(0, 10) +
-                            "...\", length: " + string.length() +
-                            "), skipping");
-                    continue;
-                }
-
-                InsnList insnList = new InsnList();
-
-                insnList.add(new FieldInsnNode(Opcodes.GETSTATIC, node.name, referenceName, "[Ljava/lang/String;"));
-                insnList.add(NodeUtils.generateIntPush(index));
-                insnList.add(new InsnNode(Opcodes.AALOAD));
-
-                method.instructions.insert(abstractInsnNode, insnList);
-                method.instructions.remove(abstractInsnNode);
-                strings.add(string);
-                index++;
-            }
-
-        return strings.toArray(new String[0]);
-    }
-
-    private static List<? extends IStringEncryptionAlgorithm> getAlgorithms()
-    {
-        List<IStringEncryptionAlgorithm> algorithms = new ArrayList<>();
-
-        if (V_ALGO_AES.get())
-            algorithms.add(new AESEncryptionAlgorithm());
-        if (V_ALGO_XOR.get())
-            algorithms.add(new XOREncryptionAlgorithm());
-        if (V_ALGO_BLOWFISH.get())
-            algorithms.add(new BlowfishEncryptionAlgorithm());
-        if (V_ALGO_DES.get())
-            algorithms.add(new DESEncryptionAlgorithm());
-
-        return algorithms;
     }
 
     private MethodNode createInitStringsMethod(ClassNode node, InsnList stringArrayInstructions)
@@ -232,13 +138,13 @@ public class StringEncryptionTransformer implements IClassTransformer
 
         boolean isInterface = (node.access & Opcodes.ACC_INTERFACE) != 0;
         node.fields.add(new FieldNode(
-                        (isInterface ? Opcodes.ACC_PUBLIC: Opcodes.ACC_PRIVATE)  // インターフェースの場合はプライベートにできない
-                                | (node.version > Opcodes.V1_8 ? 0: Opcodes.ACC_FINAL)
-                                | Opcodes.ACC_STATIC, encryptedStringsFieldName,
-                        "[Ljava/lang/String;",
-                        null,
-                        null
-                )
+                                (isInterface ? Opcodes.ACC_PUBLIC: Opcodes.ACC_PRIVATE)  // インターフェースの場合はプライベートにできない
+                                        | (node.version > Opcodes.V1_8 ? 0: Opcodes.ACC_FINAL)
+                                        | Opcodes.ACC_STATIC, encryptedStringsFieldName,
+                                "[Ljava/lang/String;",
+                                null,
+                                null
+                        )
         );
 
         HashMap<IStringEncryptionAlgorithm, String> encryptionMethodMap = new HashMap<>();
@@ -281,7 +187,12 @@ public class StringEncryptionTransformer implements IClassTransformer
         /// anewarray(count, &fieldArray) {
         instructions.add(NodeUtils.generateIntPush(constants));
         instructions.add(new TypeInsnNode(Opcodes.ANEWARRAY, "java/lang/String"));
-        instructions.add(new FieldInsnNode(Opcodes.PUTSTATIC, node.name, encryptedStringsFieldName, "[Ljava/lang/String;"));
+        instructions.add(new FieldInsnNode(
+                Opcodes.PUTSTATIC,
+                node.name,
+                encryptedStringsFieldName,
+                "[Ljava/lang/String;"
+        ));
         /// }
 
         if (this.algorithms.isEmpty())
@@ -290,7 +201,12 @@ public class StringEncryptionTransformer implements IClassTransformer
             for (int i = 0; i < constants; i++)
             {
                 /// aastore(&arrayField, index, &value)
-                instructions.add(new FieldInsnNode(Opcodes.GETSTATIC, node.name, encryptedStringsFieldName, "[Ljava/lang/String;"));
+                instructions.add(new FieldInsnNode(
+                        Opcodes.GETSTATIC,
+                        node.name,
+                        encryptedStringsFieldName,
+                        "[Ljava/lang/String;"
+                ));
                 instructions.add(NodeUtils.generateIntPush(i));
                 instructions.add(new LdcInsnNode(constantReferences[i]));
                 instructions.add(new InsnNode(Opcodes.AASTORE));
@@ -323,6 +239,133 @@ public class StringEncryptionTransformer implements IClassTransformer
     public ObfuscationTransformer getType()
     {
         return ObfuscationTransformer.STRING_ENCRYPTION;
+    }
+
+    private static InsnList generateDecrypterInvocation(ClassNode node,
+                                                        int constantNumber,
+                                                        String encryptedStringsField,
+                                                        String decryptionKey,
+                                                        String processorMethodName,
+                                                        String encryptedString)
+    {
+        InsnList toAdd = new InsnList();
+
+        LabelNode label = new LabelNode(new Label());
+        toAdd.add(label);
+        toAdd.add(new LineNumberNode(constantNumber, label));
+
+        /// aastore(&arrayField, index, &value) {
+        toAdd.add(new FieldInsnNode(
+                          Opcodes.GETSTATIC,
+                          node.name,
+                          encryptedStringsField,
+                          "[Ljava/lang/String;"
+                  )
+
+        );
+        toAdd.add(NodeUtils.generateIntPush(constantNumber));
+
+        /// invokestatic(*string, *string) {
+        toAdd.add(new LdcInsnNode(encryptedString));
+        toAdd.add(new LdcInsnNode(decryptionKey));
+        toAdd.add(new MethodInsnNode(
+                          Opcodes.INVOKESTATIC,
+                          node.name,
+                          processorMethodName,
+                          "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;",
+                          false
+                  )
+        );
+        /// }
+
+        toAdd.add(new InsnNode(Opcodes.AASTORE));
+        /// }
+
+        return toAdd;
+    }
+
+    private static void deployDecryptionMethods(ClassNode node, HashMap<IStringEncryptionAlgorithm, String> methods)
+    {
+        for (Map.Entry<IStringEncryptionAlgorithm, String> entry : methods.entrySet())
+        {
+            try
+            {
+                MethodNode method = NodeUtils.getMethod(NodeUtils.toNode(entry.getKey().getClass()), "decrypt");
+
+                if (method != null)
+                {
+                    method.access = Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC;
+                    method.name = entry.getValue();
+                    node.methods.add(method);
+                }
+                else
+                    throw new IllegalStateException("Could not find decryption method for " + entry.getKey()
+                                                                                                   .getClass()
+                                                                                                   .getName());
+            }
+            catch (IOException e)
+            {
+                throw new IllegalStateException(
+                        "Could not find decryption method for " + entry.getKey()
+                                                                       .getClass()
+                                                                       .getName(), e
+                );
+            }
+        }
+    }
+
+    private static String[] createStringConstantReferences(ClassNode node, String referenceName)
+    {
+        LinkedList<String> strings = new LinkedList<>();
+
+        int index = 0;
+        for (MethodNode method : node.methods)
+            for (AbstractInsnNode abstractInsnNode : method.instructions.toArray())
+            {
+                if (!(abstractInsnNode instanceof LdcInsnNode insnNode))
+                    continue;
+
+                if (!(insnNode.cst instanceof String string))
+                    continue;
+
+                if (string.length() >= 500)
+                {
+                    log.warn("A constant string value in class " + node.name +
+                                     " is too long (\"" + string.substring(0, 10) +
+                                     "...\", length: " + string.length() +
+                                     "), skipping");
+                    continue;
+                }
+
+                InsnList insnList = new InsnList();
+
+                insnList.add(new FieldInsnNode(Opcodes.GETSTATIC, node.name, referenceName, "[Ljava/lang/String;"));
+                insnList.add(NodeUtils.generateIntPush(index));
+                insnList.add(new InsnNode(Opcodes.AALOAD));
+
+                method.instructions.insert(abstractInsnNode, insnList);
+                method.instructions.remove(abstractInsnNode);
+                strings.add(string);
+                index++;
+            }
+
+        return strings.toArray(new String[0]);
+    }
+
+    private static List<? extends IStringEncryptionAlgorithm> getAlgorithms()
+    {
+        List<IStringEncryptionAlgorithm> algorithms = new ArrayList<>();
+
+        if (V_ALGO_AES.get())
+            algorithms.add(new AESEncryptionAlgorithm());
+        if (V_ALGO_XOR.get())
+            algorithms.add(new XOREncryptionAlgorithm());
+        if (V_ALGO_BLOWFISH.get())
+            algorithms.add(new BlowfishEncryptionAlgorithm());
+        if (V_ALGO_DES.get())
+            algorithms.add(new DESEncryptionAlgorithm());
+
+        return algorithms;
     }
 
 }
