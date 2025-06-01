@@ -800,7 +800,7 @@ public class InvokeDynamic implements IClassTransformer
 
 
             mv.visitLocalVariable("methodDesc", "Ljava/lang/invoke/MethodType;", null, l10, l13, 8);
-            mv.visitLocalVariable("typeLookup", "Ljava/lang/Class;", null, l15, l14, 8);
+            mv.visitLocalVariable("typeLookup", "Ljava/lang/Class;", "Ljava/lang/Class<*>;", l15, l14, 8);
             mv.visitLocalVariable("split", "[Ljava/lang/String;", null, l3, l2, 3);
 
             // catch ブロックが始まる前にスコープ・アウトする奴ら

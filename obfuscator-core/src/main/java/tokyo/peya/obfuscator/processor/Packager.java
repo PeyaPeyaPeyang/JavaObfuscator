@@ -74,7 +74,7 @@ public class Packager
             return;
 
         if (V_AUTO_FIND_MAIN_CLASS.get() && this.mainClass == null)
-            throw new RuntimeException("[Packager] Failed to resolve main class, please add it or specify it manually");
+            throw new IllegalArgumentException("[Packager] " + Localisation.get("ui.transformers.packager.no_main_class_found"));
     }
 
     static {
@@ -112,7 +112,7 @@ public class Packager
         if (this.instance.getClasses().keySet()
                 .stream()
                 .noneMatch(s -> s.equals(this.mainClass + ".class")))
-            throw new RuntimeException("[Packager] Failed to resolve main class, please add it or specify it manually");
+            throw new IllegalArgumentException("[Packager] " + Localisation.get("ui.transformers.packager.no_main_class_found"));
 
 
         String decryptionClassName = "ClassLoader";
