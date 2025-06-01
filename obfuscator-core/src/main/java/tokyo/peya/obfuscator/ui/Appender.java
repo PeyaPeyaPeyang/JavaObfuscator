@@ -142,28 +142,25 @@ public class Appender extends AppenderBase<ILoggingEvent>
     {
 
         if (end < start)
-        {
             throw new IllegalArgumentException("end before start");
-        }
+
         final Document doc = textPane.getDocument();
-        if (doc != null)
+        if (doc == null)
+            return;
+
+        try
         {
-            try
+            if (doc instanceof AbstractDocument docDocument)
+                docDocument.replace(start, end - start, str, null);
+            else
             {
-                if (doc instanceof AbstractDocument)
-                {
-                    ((AbstractDocument) doc).replace(start, end - start, str, null);
-                }
-                else
-                {
-                    doc.remove(start, end - start);
-                    doc.insertString(start, str, null);
-                }
+                doc.remove(start, end - start);
+                doc.insertString(start, str, null);
             }
-            catch (final BadLocationException e)
-            {
-                throw new IllegalArgumentException(e.getMessage());
-            }
+        }
+        catch (final BadLocationException e)
+        {
+            throw new IllegalArgumentException(e.getMessage());
         }
     }
 
@@ -179,9 +176,7 @@ public class Appender extends AppenderBase<ILoggingEvent>
             // Alias for JTextPane in the application frame
             final JTextPane textArea = JavaObfuscator.getGui();
             if (textArea == null)
-            {
                 return;
-            }
             try
             {
                 final int limite = 1000;
@@ -193,47 +188,35 @@ public class Appender extends AppenderBase<ILoggingEvent>
                 }
 
                 if (event.getLevel() == Level.ERROR)
-                {
                     textArea.getDocument().insertString(
                             textArea.getDocument().getLength(), formattedMsg,
                             ERROR_ATT
                     );
-                }
                 else if (event.getLevel() == Level.WARN)
-                {
                     textArea.getDocument().insertString(
                             textArea.getDocument().getLength(), formattedMsg,
                             WARN_ATT
                     );
-                }
                 else if (event.getLevel() == Level.INFO)
-                {
                     textArea.getDocument().insertString(
                             textArea.getDocument().getLength(), formattedMsg,
                             INFO_ATT
                     );
-                }
                 else if (event.getLevel() == Level.DEBUG)
-                {
                     textArea.getDocument().insertString(
                             textArea.getDocument().getLength(), formattedMsg,
                             DEBUG_ATT
                     );
-                }
                 else if (event.getLevel() == Level.TRACE)
-                {
                     textArea.getDocument().insertString(
                             textArea.getDocument().getLength(), formattedMsg,
                             TRACE_ATT
                     );
-                }
                 else
-                {
                     textArea.getDocument().insertString(
                             textArea.getDocument().getLength(), formattedMsg,
                             RESTO_ATT
                     );
-                }
 
             }
             catch (final BadLocationException e)
@@ -249,7 +232,6 @@ public class Appender extends AppenderBase<ILoggingEvent>
     @Override
     public void start()
     {
-
         this.patternLayout = new PatternLayout();
         this.patternLayout.setContext(getContext());
         this.patternLayout.setPattern("%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n");

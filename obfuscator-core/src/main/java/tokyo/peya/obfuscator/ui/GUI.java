@@ -320,7 +320,7 @@ public class GUI extends JFrame
             if (input == null || input.isEmpty())
             {
                 // サンプルコードを表示
-                String text = PreviewGenerator.classNodeToCode(PreviewGenerator.DEFAULT_HELLO_WORLD_CLASS);
+                String text = PreviewGenerator.classNodeToCode(PreviewGenerator.generatePreviewClass());
                 this.originalArea.setText(text);
                 return;
             }

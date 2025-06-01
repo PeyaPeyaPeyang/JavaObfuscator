@@ -10,9 +10,17 @@ import org.jetbrains.java.decompiler.main.Fernflower;
 import org.jetbrains.java.decompiler.main.extern.IContextSource;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
 import org.jetbrains.java.decompiler.main.extern.IResultSaver;
+import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.FieldVisitor;
+import org.objectweb.asm.Handle;
+import org.objectweb.asm.Label;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.RecordComponentVisitor;
 import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.MethodNode;
 import tokyo.peya.obfuscator.JavaObfuscator;
 import tokyo.peya.obfuscator.configuration.Configuration;
 import tokyo.peya.obfuscator.utils.NodeUtils;
@@ -21,6 +29,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
@@ -31,26 +40,35 @@ import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import static org.objectweb.asm.Opcodes.ACC_FINAL;
+import static org.objectweb.asm.Opcodes.ACC_PUBLIC;
+import static org.objectweb.asm.Opcodes.ACC_STATIC;
+import static org.objectweb.asm.Opcodes.ACC_SUPER;
+import static org.objectweb.asm.Opcodes.ALOAD;
+import static org.objectweb.asm.Opcodes.ARETURN;
+import static org.objectweb.asm.Opcodes.ASTORE;
+import static org.objectweb.asm.Opcodes.BIPUSH;
+import static org.objectweb.asm.Opcodes.DUP;
+import static org.objectweb.asm.Opcodes.GETSTATIC;
+import static org.objectweb.asm.Opcodes.GOTO;
+import static org.objectweb.asm.Opcodes.IADD;
+import static org.objectweb.asm.Opcodes.ICONST_1;
+import static org.objectweb.asm.Opcodes.ICONST_M1;
+import static org.objectweb.asm.Opcodes.IF_ICMPGT;
+import static org.objectweb.asm.Opcodes.IF_ICMPLT;
+import static org.objectweb.asm.Opcodes.IF_ICMPNE;
+import static org.objectweb.asm.Opcodes.ILOAD;
+import static org.objectweb.asm.Opcodes.INVOKESPECIAL;
+import static org.objectweb.asm.Opcodes.INVOKESTATIC;
+import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
+import static org.objectweb.asm.Opcodes.IRETURN;
+import static org.objectweb.asm.Opcodes.ISTORE;
+import static org.objectweb.asm.Opcodes.NEW;
+import static org.objectweb.asm.Opcodes.RETURN;
+
 @Slf4j(topic = "Obfuscator/PreviewGenerator")
 public class PreviewGenerator
 {
-    public static final ClassNode DEFAULT_HELLO_WORLD_CLASS;
-
-    static
-    {
-        ClassNode helloWorldClass;
-        try
-        {
-            int i = Main.MAX_NUMBER;
-            log.trace("Default hello world class max number: {}", i);
-            helloWorldClass = NodeUtils.toNode(Main.class);
-        }
-        catch (IOException e)
-        {
-            helloWorldClass = null;
-        }
-        DEFAULT_HELLO_WORLD_CLASS = helloWorldClass;
-    }
 
     public static ClassNode getRandomInputClass(Path inputFile)
     {
@@ -70,7 +88,7 @@ public class PreviewGenerator
             catch (IOException e)
             {
                 log.error("Failed to read class file: {}", e.getLocalizedMessage());
-                return DEFAULT_HELLO_WORLD_CLASS;
+                return generatePreviewClass();
             }
         }
 
@@ -85,7 +103,7 @@ public class PreviewGenerator
         if (classBytes == null)
         {
             log.debug("No class file found in jar, using default hello world class");
-            return DEFAULT_HELLO_WORLD_CLASS;
+            return generatePreviewClass();
         }
 
         return toClassNode(classBytes);
@@ -205,6 +223,211 @@ public class PreviewGenerator
         {
             log.error("Compile error: {}", s);
         }
+    }
+
+    public static ClassNode generatePreviewClass()
+    {
+        ClassNode cn = new ClassNode();
+
+        cn.visit(Opcodes.V1_8, ACC_PUBLIC | ACC_SUPER, "Main", null, "java/lang/Object", null);
+
+        cn.visitSource("Main.java", null);
+
+        cn.visitInnerClass("java/lang/invoke/MethodHandles$Lookup", "java/lang/invoke/MethodHandles", "Lookup", ACC_PUBLIC | ACC_FINAL | ACC_STATIC);
+
+        {
+            FieldVisitor fv = cn.visitField(ACC_PUBLIC | ACC_FINAL | ACC_STATIC, "MAX_NUMBER", "I", null, 100);
+            fv.visitEnd();
+        }
+
+        MethodVisitor mv;
+        {
+            mv = cn.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
+            mv.visitCode();
+            Label label0 = new Label();
+            mv.visitLabel(label0);
+            mv.visitLineNumber(4, label0);
+            mv.visitVarInsn(ALOAD, 0);
+            mv.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
+            mv.visitInsn(RETURN);
+            Label label1 = new Label();
+            mv.visitLabel(label1);
+            mv.visitLocalVariable("this", "LMain;", null, label0, label1, 0);
+            mv.visitMaxs(1, 1);
+            mv.visitEnd();
+        }
+        {
+            mv = cn.visitMethod(ACC_PUBLIC | ACC_STATIC, "main", "([Ljava/lang/String;)V", null, null);
+            mv.visitCode();
+            Label label0 = new Label();
+            mv.visitLabel(label0);
+            mv.visitLineNumber(8, label0);
+            mv.visitLdcInsn("Hello, World!");
+            mv.visitVarInsn(ASTORE, 1);
+            Label label1 = new Label();
+            mv.visitLabel(label1);
+            mv.visitLineNumber(11, label1);
+            mv.visitFrame(Opcodes.F_APPEND,1, new Object[] {"java/lang/String"}, 0, null);
+            mv.visitTypeInsn(NEW, "java/util/Random");
+            mv.visitInsn(DUP);
+            mv.visitMethodInsn(INVOKESPECIAL, "java/util/Random", "<init>", "()V", false);
+            mv.visitIntInsn(BIPUSH, 100);
+            mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/Random", "nextInt", "(I)I", false);
+            mv.visitInsn(ICONST_1);
+            mv.visitInsn(IADD);
+            mv.visitVarInsn(ISTORE, 2);
+            Label label2 = new Label();
+            mv.visitLabel(label2);
+            mv.visitLineNumber(12, label2);
+            mv.visitFieldInsn(GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
+            mv.visitVarInsn(ILOAD, 2);
+            mv.visitInvokeDynamicInsn("makeConcatWithConstants", "(I)Ljava/lang/String;", new Handle(Opcodes.H_INVOKESTATIC, "java/lang/invoke/StringConcatFactory", "makeConcatWithConstants", "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/invoke/CallSite;", false), new Object[]{"Random number is \u0001"});
+            mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/String;)V", false);
+            Label label3 = new Label();
+            mv.visitLabel(label3);
+            mv.visitLineNumber(13, label3);
+            mv.visitFieldInsn(GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
+            mv.visitLdcInsn("Enter a number between 1 and 100: ");
+            mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "print", "(Ljava/lang/String;)V", false);
+            Label label4 = new Label();
+            mv.visitLabel(label4);
+            mv.visitLineNumber(14, label4);
+            mv.visitMethodInsn(INVOKESTATIC, "Main", "getUserInput", "()Ljava/lang/String;", false);
+            mv.visitVarInsn(ASTORE, 3);
+            Label label5 = new Label();
+            mv.visitLabel(label5);
+            mv.visitLineNumber(15, label5);
+            mv.visitVarInsn(ALOAD, 3);
+            mv.visitMethodInsn(INVOKESTATIC, "Main", "parseInt", "(Ljava/lang/String;)I", false);
+            mv.visitVarInsn(ISTORE, 4);
+            Label label6 = new Label();
+            mv.visitLabel(label6);
+            mv.visitLineNumber(16, label6);
+            mv.visitVarInsn(ILOAD, 4);
+            mv.visitInsn(ICONST_1);
+            Label label7 = new Label();
+            mv.visitJumpInsn(IF_ICMPLT, label7);
+            mv.visitVarInsn(ILOAD, 4);
+            mv.visitIntInsn(BIPUSH, 100);
+            mv.visitJumpInsn(IF_ICMPGT, label7);
+            Label label8 = new Label();
+            mv.visitLabel(label8);
+            mv.visitLineNumber(17, label8);
+            mv.visitVarInsn(ILOAD, 4);
+            mv.visitVarInsn(ILOAD, 2);
+            Label label9 = new Label();
+            mv.visitJumpInsn(IF_ICMPNE, label9);
+            Label label10 = new Label();
+            mv.visitLabel(label10);
+            mv.visitLineNumber(18, label10);
+            mv.visitFieldInsn(GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
+            mv.visitLdcInsn("You guessed the number!");
+            mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/String;)V", false);
+            Label label11 = new Label();
+            mv.visitLabel(label11);
+            mv.visitLineNumber(19, label11);
+            mv.visitFieldInsn(GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
+            mv.visitVarInsn(ALOAD, 1);
+            mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/String;)V", false);
+            Label label12 = new Label();
+            mv.visitLabel(label12);
+            mv.visitLineNumber(20, label12);
+            mv.visitInsn(RETURN);
+            mv.visitLabel(label9);
+            mv.visitLineNumber(23, label9);
+            mv.visitFrame(Opcodes.F_APPEND,3, new Object[] {Opcodes.INTEGER, "java/lang/String", Opcodes.INTEGER}, 0, null);
+            mv.visitFieldInsn(GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
+            mv.visitLdcInsn("Try again!");
+            mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/String;)V", false);
+            Label label13 = new Label();
+            mv.visitJumpInsn(GOTO, label13);
+            mv.visitLabel(label7);
+            mv.visitLineNumber(25, label7);
+            mv.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
+            mv.visitFieldInsn(GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
+            mv.visitLdcInsn("Please enter a number between 1 and 100.");
+            mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/String;)V", false);
+            mv.visitLabel(label13);
+            mv.visitLineNumber(27, label13);
+            mv.visitFrame(Opcodes.F_CHOP,3, null, 0, null);
+            mv.visitJumpInsn(GOTO, label1);
+            Label label14 = new Label();
+            mv.visitLabel(label14);
+            mv.visitLocalVariable("randomNumber", "I", null, label2, label13, 2);
+            mv.visitLocalVariable("userInputString", "Ljava/lang/String;", null, label5, label13, 3);
+            mv.visitLocalVariable("userInput", "I", null, label6, label13, 4);
+            mv.visitLocalVariable("args", "[Ljava/lang/String;", null, label0, label14, 0);
+            mv.visitLocalVariable("helloWorld", "Ljava/lang/String;", null, label1, label14, 1);
+            mv.visitMaxs(2, 5);
+            mv.visitEnd();
+        }
+        {
+            mv = cn.visitMethod(ACC_PUBLIC | ACC_STATIC, "getUserInput", "()Ljava/lang/String;", null, null);
+            mv.visitCode();
+            Label label0 = new Label();
+            mv.visitLabel(label0);
+            mv.visitLineNumber(31, label0);
+            mv.visitTypeInsn(NEW, "java/util/Scanner");
+            mv.visitInsn(DUP);
+            mv.visitFieldInsn(GETSTATIC, "java/lang/System", "in", "Ljava/io/InputStream;");
+            mv.visitMethodInsn(INVOKESPECIAL, "java/util/Scanner", "<init>", "(Ljava/io/InputStream;)V", false);
+            mv.visitVarInsn(ASTORE, 0);
+            Label label1 = new Label();
+            mv.visitLabel(label1);
+            mv.visitLineNumber(32, label1);
+            mv.visitFieldInsn(GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
+            mv.visitLdcInsn("Enter a string: ");
+            mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "print", "(Ljava/lang/String;)V", false);
+            Label label2 = new Label();
+            mv.visitLabel(label2);
+            mv.visitLineNumber(33, label2);
+            mv.visitVarInsn(ALOAD, 0);
+            mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/Scanner", "nextLine", "()Ljava/lang/String;", false);
+            mv.visitInsn(ARETURN);
+            Label label3 = new Label();
+            mv.visitLabel(label3);
+            mv.visitLocalVariable("scanner", "Ljava/util/Scanner;", null, label1, label3, 0);
+            mv.visitMaxs(3, 1);
+            mv.visitEnd();
+        }
+        {
+            mv = cn.visitMethod(ACC_PUBLIC | ACC_STATIC, "parseInt", "(Ljava/lang/String;)I", null, null);
+            mv.visitCode();
+            Label label0 = new Label();
+            Label label1 = new Label();
+            Label label2 = new Label();
+            mv.visitTryCatchBlock(label0, label1, label2, "java/lang/NumberFormatException");
+            mv.visitLabel(label0);
+            mv.visitLineNumber(38, label0);
+            mv.visitVarInsn(ALOAD, 0);
+            mv.visitMethodInsn(INVOKESTATIC, "java/lang/Integer", "parseInt", "(Ljava/lang/String;)I", false);
+            mv.visitLabel(label1);
+            mv.visitInsn(IRETURN);
+            mv.visitLabel(label2);
+            mv.visitLineNumber(39, label2);
+            mv.visitFrame(Opcodes.F_SAME1, 0, null, 1, new Object[] {"java/lang/NumberFormatException"});
+            mv.visitVarInsn(ASTORE, 1);
+            Label label3 = new Label();
+            mv.visitLabel(label3);
+            mv.visitLineNumber(40, label3);
+            mv.visitFieldInsn(GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
+            mv.visitLdcInsn("Invalid input. Please enter a number.");
+            mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/String;)V", false);
+            Label label4 = new Label();
+            mv.visitLabel(label4);
+            mv.visitLineNumber(41, label4);
+            mv.visitInsn(ICONST_M1);
+            mv.visitInsn(IRETURN);
+            Label label5 = new Label();
+            mv.visitLabel(label5);
+            mv.visitLocalVariable("var2", "Ljava/lang/NumberFormatException;", null, label3, label5, 1);
+            mv.visitLocalVariable("input", "Ljava/lang/String;", null, label0, label5, 0);
+            mv.visitMaxs(2, 2);
+            mv.visitEnd();
+        }
+        cn.visitEnd();
+
+        return cn;
     }
 
     static class InMemoryResultSaver implements IResultSaver
