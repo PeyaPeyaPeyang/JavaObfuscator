@@ -113,8 +113,7 @@ public class Packager
             throw new IllegalArgumentException("[Packager] " + Localisation.get(
                     "ui.transformers.packager.no_main_class_found"));
 
-
-        String decryptionClassName = "ClassLoader";
+        String decryptionClassName = "BootstrapLoader";
         String keyFieldName = "KEYS";
         String xorMethodName = "decrypt";
         String getBytesMethodName = "getBytes";
@@ -197,7 +196,7 @@ public class Packager
             mv.visitMethodInsn(
                     Opcodes.INVOKEVIRTUAL,
                     "java/lang/ClassLoader",
-                    "loadClass",
+                    "findClass",
                     "(Ljava/lang/String;)Ljava/lang/Class;",
                     false
             );
@@ -252,7 +251,7 @@ public class Packager
             Label l8 = new Label();
             mv.visitLabel(l8);
             mv.visitLocalVariable("args", "[Ljava/lang/String;", null, l0, l8, 0);
-            mv.visitLocalVariable("classLoader", "Ljava/lang/ClassLoader;", null, l3, l1, 1);
+            mv.visitLocalVariable("classLoader", "L" + decryptionClassName + ";", null, l3, l1, 1);
             mv.visitLocalVariable("entryPoint", "Ljava/lang/Class;", "Ljava/lang/Class<*>;", l4, l1, 2);
             mv.visitLocalVariable("e", "Ljava/lang/Exception;", null, l7, l6, 1);
             mv.visitMaxs(10, 3);
@@ -273,21 +272,25 @@ public class Packager
             mv.visitTryCatchBlock(l0, l1, l2, "java/lang/Exception");
             mv.visitLabel(l0);
             mv.visitLineNumber(27, l0);
+            mv.visitVarInsn(Opcodes.ALOAD, 1);
+            mv.visitLdcInsn("UTF-8");
+            mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/String", "getBytes", "(Ljava/lang/String;)[B", false);
+            /*
             mv.visitTypeInsn(Opcodes.NEW, "java/lang/String");
             mv.visitInsn(Opcodes.DUP);
             mv.visitVarInsn(Opcodes.ALOAD, 1);
             mv.visitLdcInsn("UTF-8");
             mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/String", "getBytes", "(Ljava/lang/String;)[B", false);
-            mv.visitFieldInsn(Opcodes.GETSTATIC, decryptionClassName, keyFieldName, "[B");
-            mv.visitMethodInsn(Opcodes.INVOKESTATIC, decryptionClassName, xorMethodName, "([B[B)[B", false);
-            mv.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/String", "<init>", "([B)V", false);
+            mv.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/String", "<init>", "([B)V", false);*/
             mv.visitMethodInsn(
                     Opcodes.INVOKESTATIC,
                     decryptionClassName,
                     getBytesMethodName,
-                    "(Ljava/lang/String;)[B",
+                    "([B)[B",
                     false
             );
+            mv.visitFieldInsn(Opcodes.GETSTATIC, decryptionClassName, keyFieldName, "[B");
+            mv.visitMethodInsn(Opcodes.INVOKESTATIC, decryptionClassName, xorMethodName, "([B[B)[B", false);
             mv.visitVarInsn(Opcodes.ASTORE, 2);
             Label l3 = new Label();
             mv.visitLabel(l3);
@@ -295,8 +298,8 @@ public class Packager
             mv.visitVarInsn(Opcodes.ALOAD, 0);
             mv.visitVarInsn(Opcodes.ALOAD, 1);
             mv.visitVarInsn(Opcodes.ALOAD, 2);
-            mv.visitFieldInsn(Opcodes.GETSTATIC, decryptionClassName, keyFieldName, "[B");
-            mv.visitMethodInsn(Opcodes.INVOKESTATIC, decryptionClassName, xorMethodName, "([B[B)[B", false);
+            //mv.visitFieldInsn(Opcodes.GETSTATIC, decryptionClassName, keyFieldName, "[B");
+            //mv.visitMethodInsn(Opcodes.INVOKESTATIC, decryptionClassName, xorMethodName, "([B[B)[B", false);
             mv.visitInsn(Opcodes.ICONST_0);
             mv.visitVarInsn(Opcodes.ALOAD, 2);
             mv.visitInsn(Opcodes.ARRAYLENGTH);
@@ -313,7 +316,7 @@ public class Packager
             mv.visitLineNumber(30, l2);
             mv.visitFrame(Opcodes.F_SAME1, 0, null, 1, new Object[]{"java/lang/Exception"});
             mv.visitVarInsn(Opcodes.ASTORE, 2);
-//            mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Throwable", "printStackTrace", "()V", false);
+            // mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Throwable", "printStackTrace", "()V", false);
             Label l4 = new Label();
             mv.visitLabel(l4);
             mv.visitLineNumber(31, l4);
@@ -402,11 +405,27 @@ public class Packager
             mv = cw.visitMethod(
                     Opcodes.ACC_PRIVATE + Opcodes.ACC_STATIC,
                     getBytesMethodName,
-                    "(Ljava/lang/String;)[B",
+                    "([B)[B",
                     null,
                     new String[]{"java/io/IOException"}
             );
             mv.visitCode();
+            // .class を付ける
+            mv.visitTypeInsn(Opcodes.NEW, "java/lang/String");
+            mv.visitInsn(Opcodes.DUP);
+            mv.visitVarInsn(Opcodes.ALOAD, 0);
+            mv.visitFieldInsn(Opcodes.GETSTATIC, decryptionClassName, keyFieldName, "[B");
+            mv.visitMethodInsn(Opcodes.INVOKESTATIC, decryptionClassName, xorMethodName, "([B[B)[B", false);
+            mv.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/String", "<init>", "([B)V", false);
+            mv.visitLdcInsn(".class");
+            mv.visitMethodInsn(
+                    Opcodes.INVOKEVIRTUAL,
+                    "java/lang/String",
+                    "concat",
+                    "(Ljava/lang/String;)Ljava/lang/String;",
+                    false
+            );
+            mv.visitVarInsn(Opcodes.ASTORE, 0);
             Label l0 = new Label();
             mv.visitLabel(l0);
             mv.visitLineNumber(47, l0);
