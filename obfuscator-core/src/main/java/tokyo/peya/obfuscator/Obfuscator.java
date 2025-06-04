@@ -28,12 +28,14 @@ import tokyo.peya.obfuscator.clazz.ClassWrapper;
 import tokyo.peya.obfuscator.clazz.ModifiedClassWriter;
 import tokyo.peya.obfuscator.configuration.Configuration;
 import tokyo.peya.obfuscator.configuration.ValueManager;
+import tokyo.peya.obfuscator.processor.InvokeDynamic;
 import tokyo.peya.obfuscator.processor.Packager;
 import tokyo.peya.obfuscator.processor.Processors;
 import tokyo.peya.obfuscator.processor.naming.INameObfuscationProcessor;
 import tokyo.peya.obfuscator.ui.PreviewGenerator;
 import tokyo.peya.obfuscator.utils.ExcludePattern;
 import tokyo.peya.obfuscator.utils.MissingClassException;
+import tokyo.peya.obfuscator.utils.ParallelExecutor;
 import tokyo.peya.obfuscator.utils.Utils;
 
 import java.io.BufferedInputStream;
@@ -85,6 +87,7 @@ public class Obfuscator
     private final Configuration config;
     private final UniqueNameProvider nameProvider;
     private final Packager packager;
+    private final InvokeDynamic invokeDynamic;
     private final HashMap<String, byte[]> files;
     private final Map<String, ClassWrapper> classPath;
     private final HashMap<String, ClassNode> classes;
@@ -110,6 +113,7 @@ public class Obfuscator
 
         this.nameProvider = new UniqueNameProvider(SETTINGS);
         this.packager = new Packager(this);
+        this.invokeDynamic = new InvokeDynamic(this);
         this.files = new HashMap<>();
         this.classPath = new HashMap<>();
         this.classes = new HashMap<>();
@@ -346,52 +350,29 @@ public class Obfuscator
     private Map<String, ClassWrapper> parseClassPath(final LinkedList<byte[]> byteList, int threads)
     {
         log.info(Localisation.get("logs.obfuscation.classpath.parsing_class"));
+        return ParallelExecutor.runInParallelAndMerge(
+                threads, () -> () -> {
+                    Map<String, ClassWrapper> localMap = new HashMap<>();
+                    while (true)
+                    {
+                        byte[] bytes;
+                        synchronized (byteList)
+                        {
+                            if (byteList.isEmpty())
+                                break;
+                            bytes = byteList.removeFirst();
+                        }
 
-        ExecutorService executor = Executors.newFixedThreadPool(threads);
+                        ClassReader reader = new ClassReader(bytes);
+                        ClassNode node = new ClassNode();
+                        reader.accept(node, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
 
-        Callable<Map<String, ClassWrapper>> runnable = () -> {
-            Map<String, ClassWrapper> map = new HashMap<>();
-            while (true)
-            {
-                byte[] bytes;
-                synchronized (byteList)
-                {
-                    if (byteList.isEmpty())
-                        break;
-
-                    bytes = byteList.removeFirst();
+                        ClassWrapper wrapper = new ClassWrapper(node, true, bytes);
+                        localMap.put(node.name, wrapper);
+                    }
+                    return localMap;
                 }
-
-                ClassReader reader = new ClassReader(bytes);
-                ClassNode node = new ClassNode();
-                reader.accept(node, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
-
-                ClassWrapper wrapper = new ClassWrapper(node, true, bytes);
-                map.put(node.name, wrapper);
-            }
-
-            return map;
-        };
-
-        List<Future<Map<String, ClassWrapper>>> futures = new ArrayList<>();
-        for (int i = 0; i < threads; i++)
-            futures.add(executor.submit(runnable));
-
-        Map<String, ClassWrapper> map = new HashMap<>();
-        for (Future<Map<String, ClassWrapper>> future : futures)
-        {
-            try
-            {
-                map.putAll(future.get());
-            }
-            catch (InterruptedException | ExecutionException e)
-            {
-                log.error("Failed to parse classpath", e);
-            }
-        }
-
-        executor.shutdown();
-        return map;
+        );
     }
 
     public boolean isLibrary(ClassNode classNode)
@@ -605,16 +586,20 @@ public class Obfuscator
         long startTime = System.currentTimeMillis();
 
         ClassNode packagerNode = this.packager.generateEncryptionClass();
-        Map<String, ClassNode> packagerMap = new HashMap<>();
-        packagerMap.put(packagerNode.name + ".class", packagerNode);
-        Map<String, byte[]> toWrite = new HashMap<>(this.processClasses(packagerMap));
+        ClassNode obfuscatedPackagerNode = this.processClass(packagerNode);
+        ModifiedClassWriter writer = new ModifiedClassWriter(this.computeMode);
+        obfuscatedPackagerNode.accept(writer);
+        byte[] packagerBytes = writer.toByteArray();
 
         log.info(Localisation.access("logs.task_finished")
                              .set("time", Utils.formatTime(System.currentTimeMillis() - startTime))
                              .get()
         );
 
-        return toWrite;
+        return new HashMap<>()
+        {{
+            put(obfuscatedPackagerNode.name + ".class", packagerBytes);
+        }};
     }
 
     private void finishOutJar(Map<String, byte[]> classes, ZipOutputStream outJar, boolean stored) throws IOException
@@ -694,10 +679,17 @@ public class Obfuscator
                              .set("classes", classes.size())
                              .get()
         );
-        Map<String, ClassNode> transformed = this.transformClasses(classes, threadCount);
+        Map<String, ClassNode> transformed = this.transformClasses(classes, this.processors, threadCount);
 
         for (INameObfuscationProcessor nameObfuscationProcessor : this.nameObfuscationProcessors)
             nameObfuscationProcessor.transformPost(this, transformed);
+
+        // InvokeDynamic を後から実行することで, NameObfuscationProcessor 後のクラス名変更に対応する
+        if (InvokeDynamic.isEnabled())
+        {
+            // log.info(Localisation.get("logs.obfuscation.transformer.invoke_dynamic"));
+            transformed = this.transformClasses(transformed, List.of(this.invokeDynamic), threadCount);
+        }
 
         Map<String, byte[]> toWrite = this.encodeClasses(transformed, threadCount);
         log.info(Localisation.access("logs.task_finished")
@@ -723,26 +715,20 @@ public class Obfuscator
 
     }
 
-    private Map<String, ClassNode> transformClasses(Map<String, ClassNode> classes, int threadCount)
+    private Map<String, ClassNode> transformClasses(Map<String, ClassNode> classes, List<? extends IClassTransformer> processors, int threadCount)
     {
-        ExecutorService executorService = Executors.newFixedThreadPool(
-                threadCount, new ThreadFactoryBuilder()
-                        .setNameFormat("Worker-%d")
-                        .build()
-        );
-
         LinkedList<Map.Entry<String, ClassNode>> classQueue = new LinkedList<>(classes.entrySet());
-        Map<String, ClassNode> obfuscated = new HashMap<>();
+        Map<String, ClassNode> obfuscated;
 
         AtomicInteger processed = new AtomicInteger(0);
-        Callable<Map<String, ClassNode>> runnable = () -> {
+
+        obfuscated = ParallelExecutor.runInParallelAndMerge(threadCount, () -> () -> {
             Map<String, ClassNode> toWriteThread = new HashMap<>();
-            while (true)
-            {
+
+            while (true) {
                 Map.Entry<String, ClassNode> stringClassNodeEntry;
 
-                synchronized (classQueue)
-                {
+                synchronized (classQueue) {
                     stringClassNodeEntry = classQueue.poll();
                 }
 
@@ -750,121 +736,77 @@ public class Obfuscator
                     break;
 
                 ProcessorCallback callback = new ProcessorCallback();
-
                 String entryName = stringClassNodeEntry.getKey();
                 ClassNode cn = stringClassNodeEntry.getValue();
 
-                try
-                {
+                try {
                     this.computeMode = ModifiedClassWriter.COMPUTE_MAXS;
 
                     boolean isSkippedByScript = !(this.script == null || this.script.isObfuscatorEnabled(cn));
-                    if (isSkippedByScript || this.isExcludedClass(cn.name))
-                    {
+                    if (isSkippedByScript || this.isExcludedClass(cn.name)) {
                         log.info(Localisation.access("logs.obfuscation.transforming.skipped")
                                              .set("proceedClasses", processed.get())
                                              .set("totalClasses", classes.size())
                                              .set("entryName", entryName)
-                                             .get()
-                        );
+                                             .get());
                     }
 
                     log.debug(Localisation.access("logs.obfuscation.transforming.processing")
                                           .set("proceedClasses", processed.get())
                                           .set("totalClasses", classes.size())
                                           .set("entryName", entryName)
-                                          .get()
-                    );
+                                          .get());
 
-                    for (IClassTransformer proc : this.processors)
-                    {
+                    for (IClassTransformer proc : processors) {
                         boolean shouldProcess = shouldProcess(cn, proc);
-                        if (!shouldProcess)
-                        {
+                        if (!shouldProcess) {
                             log.info(Localisation.access("logs.obfuscation.transforming.skipped.annotation")
                                                  .set("proceedClasses", processed.get())
                                                  .set("totalClasses", classes.size())
                                                  .set("entryName", entryName)
-                                                 .get()
-                            );
+                                                 .get());
                             continue;
                         }
 
-                        try
-                        {
+                        try {
                             proc.process(callback, cn);
-                        }
-                        catch (Exception e)
-                        {
-                            log.error(
-                                    Localisation.access("logs.obfuscation.transforming.error")
-                                                .set("proceedClasses", processed.get())
-                                                .set("totalClasses", classes.size())
-                                                .set("entryName", entryName)
-                                                .get(),
-                                    e
-                            );
-
+                        } catch (Exception e) {
+                            log.error(Localisation.access("logs.obfuscation.transforming.error")
+                                                  .set("proceedClasses", processed.get())
+                                                  .set("totalClasses", classes.size())
+                                                  .set("entryName", entryName)
+                                                  .get(), e);
                             throw e;
                         }
                     }
 
-                    if (callback.isForceComputeFrames())
+                    if (callback.isForceComputeFrames()) {
                         cn.methods.forEach(method -> Arrays.stream(method.instructions.toArray())
-                                                           .filter(abstractInsnNode -> abstractInsnNode instanceof FrameNode)
-                                                           .forEach(abstractInsnNode -> method.instructions.remove(
-                                                                   abstractInsnNode)));
+                                                           .filter(insn -> insn instanceof FrameNode)
+                                                           .forEach(insn -> method.instructions.remove(insn)));
+                    }
 
-
-                    this.computeMode = this.computeMode | (callback.isForceComputeFrames() ? ModifiedClassWriter.COMPUTE_MAXS: 0);
+                    this.computeMode = this.computeMode | (callback.isForceComputeFrames() ? ModifiedClassWriter.COMPUTE_MAXS : 0);
 
                     removeObfuscateRuleAnnotations(cn);
 
                     toWriteThread.put(entryName, cn);
                     processed.incrementAndGet();
-                }
-                catch (Exception e)
-                {
-                    log.error(
-                            Localisation.access("logs.obfuscation.transforming.error")
-                                        .set("threadName", Thread.currentThread().getName())
-                                        .set("proceedClasses", processed.get())
-                                        .set("totalClasses", classes.size())
-                                        .set("entryName", entryName)
-                                        .get(),
-                            e
-                    );
+                } catch (Exception e) {
+                    log.error(Localisation.access("logs.obfuscation.transforming.error")
+                                          .set("threadName", Thread.currentThread().getName())
+                                          .set("proceedClasses", processed.get())
+                                          .set("totalClasses", classes.size())
+                                          .set("entryName", entryName)
+                                          .get(), e);
 
+                    JavaObfuscator.setLastException(e);
                     throw e;
                 }
             }
 
             return toWriteThread;
-        };
-
-        List<Future<Map<String, ClassNode>>> futures = new ArrayList<>();
-        for (int i = 0; i < threadCount; i++)
-            futures.add(executorService.submit(runnable));
-
-        for (Future<Map<String, ClassNode>> future : futures)
-            try
-            {
-                obfuscated.putAll(future.get());
-            }
-            catch (InterruptedException e)
-            {
-                log.error("Error getting future", e);
-            }
-            catch (ExecutionException e)
-            {
-                if (e.getCause() instanceof Exception)
-                    JavaObfuscator.setLastException((Exception) e.getCause());
-
-                log.error("Error getting future", e);
-            }
-
-        executorService.shutdown();
-
+        });
         return obfuscated;
     }
 
@@ -924,7 +866,8 @@ public class Obfuscator
 
                     if (this.packager.isEnabled() && !isPackagerClassDecrypter)
                     {
-                        entryName = this.packager.encryptName(entryName.replace(".class", ""));
+                        entryName = this.packager.encryptName(entryName.replace(".class", ""))
+                                + ".class";
                         entryData = this.packager.encryptClass(entryData);
                     }
                 }
@@ -1053,9 +996,20 @@ public class Obfuscator
         return true;
     }
 
-    public ClassNode processClass(ClassNode node) throws IOException
+    public ClassNode processClass(ClassNode node)
     {
-        loadClasspath(this.config.getLibraries());
+        if (!this.classPath.isEmpty())
+        {
+            try
+            {
+                loadClasspath(this.config.getLibraries());
+            }
+            catch (IOException e)
+            {
+                log.error("Failed to load classpath", e);
+                throw new IllegalStateException("Failed to load classpath", e);
+            }
+        }
 
         for (IClassTransformer proc : this.processors)
         {

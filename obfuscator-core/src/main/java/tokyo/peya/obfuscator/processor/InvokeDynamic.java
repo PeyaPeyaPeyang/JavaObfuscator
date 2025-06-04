@@ -96,6 +96,11 @@ public class InvokeDynamic implements IClassTransformer
         ValueManager.registerClass(InvokeDynamic.class);
     }
 
+    public static boolean isEnabled()
+    {
+        return V_ENABLED.get();
+    }
+
     public InvokeDynamic(Obfuscator instance)
     {
         this.instance = instance;

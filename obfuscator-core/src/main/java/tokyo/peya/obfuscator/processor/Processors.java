@@ -57,7 +57,6 @@ public class Processors
 
         processors.add(new Optimiser());
         processors.add(new InlineTransformer(instance));
-        processors.add(new InvokeDynamic(instance));
 
 
         processors.add(new FlowObfuscator(instance));
