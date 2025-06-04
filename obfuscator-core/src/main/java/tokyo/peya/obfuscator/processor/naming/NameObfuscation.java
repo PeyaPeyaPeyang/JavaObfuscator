@@ -510,7 +510,8 @@ public class NameObfuscation implements INameObfuscationProcessor
         classWrapper.classNode.accept(writer);
         classWrapper.originalClass = writer.toByteArray();
 
-        this.obfuscator.getClassPath().put(classWrapper.classNode.name, classWrapper);
+        this.obfuscator.getClasses().remove(classWrapper.originalName + ".class");
+        this.obfuscator.getClasses().put(classWrapper.classNode.name + ".class", classWrapper.classNode);
     }
 
     private void saveMappingsFile(String file, HashMap<String, String> mappings)
