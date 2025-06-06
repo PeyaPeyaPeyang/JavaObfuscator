@@ -367,7 +367,7 @@ public class HideStringsTransformer implements IClassTransformer
         while (preferred == null || (contains = isExistsInList(strings, preferred)))
         {
             if (contains)
-                log.warn("Magic number " + preferred + " is duplicated in the ledger, regenerating...");
+                log.debug("Magic number " + preferred + " is duplicated in the ledger, regenerating...");
 
             preferred = String.valueOf((char) new Random().nextInt(0xFFFF));
         }
