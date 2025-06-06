@@ -135,7 +135,7 @@ public class UniqueNameProvider
     {
         return generateUniqueName(
                 nameCandidate,
-                s -> method.localVariables == null || method.localVariables.stream()
+                s -> method.localVariables != null && method.localVariables.stream()
                                               .anyMatch(lv -> lv.name.equals(s))
         );
     }
