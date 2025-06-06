@@ -99,9 +99,6 @@ public class Packager
         if (!V_ENABLED.get())
             return;
 
-        if (V_AUTO_FIND_MAIN_CLASS.get() && this.mainClass == null)
-            throw new IllegalArgumentException("[Packager] " + Localisation.get(
-                    "ui.transformers.packager.no_main_class_found"));
     }
 
     public boolean isEnabled()
@@ -138,6 +135,10 @@ public class Packager
 
     public ClassNode generateEncryptionClass()
     {
+        if (V_AUTO_FIND_MAIN_CLASS.get() && this.mainClass == null)
+            throw new IllegalArgumentException("[Packager] " + Localisation.get(
+                    "ui.transformers.packager.no_main_class_found"));
+
         if (this.instance.getClasses().keySet()
                          .stream()
                          .noneMatch(s -> s.equals(this.mainClass + ".class")))
