@@ -53,6 +53,13 @@ public class Packager
             DeprecationLevel.AVAILABLE,
             true
     );
+    private static final BooleanValue V_CLASS_NAME_ENCRYPTION = new BooleanValue(
+            PROCESSOR_NAME,
+            "class_name_encryption",
+            "ui.transformers.packager.class_name_encryption",
+            DeprecationLevel.AVAILABLE,
+            true
+    );
     private static final BooleanValue V_AUTO_FIND_MAIN_CLASS = new BooleanValue(
             PROCESSOR_NAME,
             "auto_find_main_class",
@@ -123,6 +130,9 @@ public class Packager
 
     public String encryptName(String name)
     {
+        if (!V_CLASS_NAME_ENCRYPTION.get())
+            return name;
+
         return new String(xor(name.replace("/", ".").getBytes(StandardCharsets.UTF_8), this.key));
     }
 
@@ -422,12 +432,17 @@ public class Packager
             );
             mv.visitCode();
             // .class を付ける
-            mv.visitTypeInsn(Opcodes.NEW, "java/lang/String");
-            mv.visitInsn(Opcodes.DUP);
-            mv.visitVarInsn(Opcodes.ALOAD, 0);
-            mv.visitFieldInsn(Opcodes.GETSTATIC, decryptionClassName, keyFieldName, "[B");
-            mv.visitMethodInsn(Opcodes.INVOKESTATIC, decryptionClassName, xorMethodName, "([B[B)[B", false);
-            mv.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/String", "<init>", "([B)V", false);
+            if (V_CLASS_NAME_ENCRYPTION.get())  // クラス名が暗号化されている場合は, それを復号化する。
+            {
+                mv.visitTypeInsn(Opcodes.NEW, "java/lang/String");
+                mv.visitInsn(Opcodes.DUP);
+                mv.visitVarInsn(Opcodes.ALOAD, 0);
+                mv.visitFieldInsn(Opcodes.GETSTATIC, decryptionClassName, keyFieldName, "[B");
+                mv.visitMethodInsn(Opcodes.INVOKESTATIC, decryptionClassName, xorMethodName, "([B[B)[B", false);
+                mv.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/String", "<init>", "([B)V", false);
+            }
+            else
+                mv.visitVarInsn(Opcodes.ALOAD, 0);
             mv.visitLdcInsn(".class");
             mv.visitMethodInsn(
                     Opcodes.INVOKEVIRTUAL,
