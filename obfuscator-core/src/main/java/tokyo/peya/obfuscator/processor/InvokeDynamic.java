@@ -171,6 +171,8 @@ public class InvokeDynamic implements IClassTransformer
         classNode.methods.add(generatorMethod);
         classNode.fields.add(methodInvocationsField);
         classNode.fields.add(arrayInvocationsField);
+
+        callback.setForceComputeFrames();
     }
 
     private MethodNode createInvocationsGenerator(ClassNode classNode, FieldNode arrayField, FieldNode typeArrayField,
