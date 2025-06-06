@@ -46,6 +46,13 @@ public class Packager
             DeprecationLevel.AVAILABLE,
             false
     );
+    private static final BooleanValue V_DISGUISING_AS_CLASS = new BooleanValue(
+            PROCESSOR_NAME,
+            "disguising_as_class",
+            "ui.transformers.packager.disguising_as_class",
+            DeprecationLevel.AVAILABLE,
+            true
+    );
     private static final BooleanValue V_AUTO_FIND_MAIN_CLASS = new BooleanValue(
             PROCESSOR_NAME,
             "auto_find_main_class",
@@ -97,7 +104,21 @@ public class Packager
 
     public byte[] encryptClass(byte[] data)
     {
-        return xor(data, this.key);
+        if (!this.isEnabled())
+            return data;
+
+        byte[] encryptedData = xor(data, this.key);
+        if (!V_DISGUISING_AS_CLASS.get())
+            return encryptedData;
+
+        byte[] classMagic = {(byte) 0xCA, (byte) 0xFE, (byte) 0xBA, (byte) 0xBE};
+
+        // 暗号化されたデータの先頭にクラスマジックを追加 => デコンパイラがクラスファイルと勘違いし, 壊れる
+        byte[] result = new byte[classMagic.length + encryptedData.length];
+        System.arraycopy(classMagic, 0, result, 0, classMagic.length);
+        System.arraycopy(encryptedData, 0, result, classMagic.length, encryptedData.length);
+
+        return result;
     }
 
     public String encryptName(String name)
@@ -429,6 +450,22 @@ public class Packager
                     false
             );
             mv.visitVarInsn(Opcodes.ASTORE, 1);
+
+            if (V_DISGUISING_AS_CLASS.get())
+            {
+                // 0xCAFEBABE がくっついてるので, スキップして剥がす。
+                mv.visitVarInsn(Opcodes.ALOAD, 1);
+                mv.visitLdcInsn(4L);  // 0xCAFEBABE の長さは 4 バイト
+                mv.visitMethodInsn(
+                        Opcodes.INVOKEVIRTUAL,
+                        "java/io/InputStream",
+                        "skip",
+                        "(J)J",
+                        false
+                );
+                mv.visitInsn(Opcodes.POP2); // 2 スロットぶんスキップ
+            }
+
             Label l1 = new Label();
             mv.visitLabel(l1);
             mv.visitLineNumber(49, l1);
@@ -505,7 +542,7 @@ public class Packager
             mv.visitLocalVariable("chunkName", "Ljava/lang/String;", null, l0, l9, 0);
             mv.visitLocalVariable("is", "Ljava/io/InputStream;", null, l1, l9, 1);
             mv.visitLocalVariable("baos", "Ljava/io/ByteArrayOutputStream;", null, l2, l9, 2);
-            mv.visitLocalVariable("read", "I", null, l6, l9, 3);
+            mv.visitLocalVariable("read", "I", null, l5, l9, 3);
             mv.visitLocalVariable("chunkData", "[B", null, l3, l9, 4);
             mv.visitMaxs(8, 5);
             mv.visitEnd();
