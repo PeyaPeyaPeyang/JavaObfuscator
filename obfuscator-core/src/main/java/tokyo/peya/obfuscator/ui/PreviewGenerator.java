@@ -4,13 +4,19 @@ import lombok.extern.slf4j.Slf4j;
 import org.codehaus.commons.compiler.CompileException;
 import org.codehaus.commons.compiler.ErrorHandler;
 import org.codehaus.commons.compiler.Location;
+import org.codehaus.commons.compiler.util.Disassembler;
 import org.codehaus.commons.compiler.util.reflect.ByteArrayClassLoader;
+import org.codehaus.janino.ClassLoaderIClassLoader;
+import org.codehaus.janino.Java;
+import org.codehaus.janino.Parser;
+import org.codehaus.janino.Scanner;
 import org.codehaus.janino.SimpleCompiler;
+import org.codehaus.janino.UnitCompiler;
+import org.codehaus.janino.util.ClassFile;
 import org.jetbrains.java.decompiler.main.Fernflower;
 import org.jetbrains.java.decompiler.main.extern.IContextSource;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
 import org.jetbrains.java.decompiler.main.extern.IResultSaver;
-import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.FieldVisitor;
@@ -18,23 +24,24 @@ import org.objectweb.asm.Handle;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.RecordComponentVisitor;
 import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.MethodNode;
 import tokyo.peya.obfuscator.JavaObfuscator;
 import tokyo.peya.obfuscator.configuration.Configuration;
-import tokyo.peya.obfuscator.utils.NodeUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
@@ -193,35 +200,62 @@ public class PreviewGenerator
 
     public static byte[] compile(String sourceCode) throws Exception
     {
-        SimpleCompiler compiler = new SimpleCompiler();
-        compiler.setCompileErrorHandler(new CompileErrorHandlerMock());
-        compiler.setDebuggingInformation(true, true, true);
-        compiler.cook(sourceCode);
+        Parser parser = new Parser(new Scanner(null,  new StringReader(sourceCode)));
+        Java.AbstractCompilationUnit compilationUnit = parser.parseAbstractCompilationUnit();
+        UnitCompiler compiler = new UnitCompiler(
+                compilationUnit,
+                new ClassLoaderIClassLoader(ClassLoader.getSystemClassLoader())
+        );
+        compiler.setCompileErrorHandler(new CompileErrorHandlerMock(compiler));
 
-        ClassLoader classLoader = compiler.getClassLoader();
-        Field field = ByteArrayClassLoader.class.getDeclaredField("classes");
-        field.setAccessible(true);
-        // noinspection unchecked
-        HashMap<String, byte[]> classes = (HashMap<String, byte[]>) field.get(classLoader);
-        for (String className : classes.keySet())
+        List<ClassFile> cfs = new ArrayList<>();
+        compiler.compileUnit(true, true, true, cfs::add);
+
+        if (cfs.isEmpty())
         {
-            if (!className.contains("$"))
-            {
-                byte[] classBytes = classes.get(className);
-                if (classBytes != null)
-                    return classBytes;
-            }
+            log.error("Compilation failed, no class files generated");
+            throw new IllegalStateException("Compilation failed, no class files generated");
         }
 
-        return null;
+        ClassFile classFile = cfs.get(0);
+        return classFile.toByteArray();
     }
 
     private static class CompileErrorHandlerMock implements ErrorHandler
     {
+        private static final Field fCompileErrorCount;
+
+        static {
+            try {
+                Field field = UnitCompiler.class.getDeclaredField("compileErrorCount");
+                field.setAccessible(true);
+                fCompileErrorCount = field;
+            } catch (NoSuchFieldException e) {
+                throw new RuntimeException("Failed to access compileErrorCount field", e);
+            }
+        }
+
+
+        private final UnitCompiler compiler;
+        public CompileErrorHandlerMock(UnitCompiler compiler)
+        {
+            this.compiler = compiler;
+        }
+
         @Override
         public void handleError(String s, Location location) throws CompileException
         {
-            log.error("Compile error: {}", s);
+            log.warn("Compile error: {} at {}", s, location);
+            this.resetCompileErrorCount();
+        }
+
+        private void resetCompileErrorCount()
+        {
+            try {
+                fCompileErrorCount.setInt(this.compiler, 0);
+            } catch (IllegalAccessException e) {
+                log.error("Failed to reset compile error count", e);
+            }
         }
     }
 
