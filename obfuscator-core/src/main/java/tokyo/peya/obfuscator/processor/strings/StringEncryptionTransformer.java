@@ -125,7 +125,7 @@ public class StringEncryptionTransformer implements IClassTransformer
 
                 if (method != null)
                 {
-                    method.access = Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC;
+                    method.access = Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC;
                     method.name = "decrypt" + entry.getName();
                     method.desc = "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;";
 

@@ -786,7 +786,12 @@ public class Obfuscator
 
                     if (!callback.getAdditionalClasses().isEmpty())
                         callback.getAdditionalClasses().forEach(
-                                classNode -> toWriteThread.put(reference, classNode)
+                                classNode -> {
+                                    ClassReference classRef = ClassReference.of(classNode);
+                                    toWriteThread.put(classRef, classNode);
+                                    this.classPath.put(classRef, new ClassWrapper(classNode, false, null));
+                                    this.classes.put(classRef, classNode);
+                                }
                         );
 
                     toWriteThread.put(reference, cn);
@@ -998,7 +1003,7 @@ public class Obfuscator
 
     public ClassNode processClass(ClassNode node)
     {
-        if (!this.classPath.isEmpty())
+        if (this.classPath.isEmpty())
         {
             try
             {
