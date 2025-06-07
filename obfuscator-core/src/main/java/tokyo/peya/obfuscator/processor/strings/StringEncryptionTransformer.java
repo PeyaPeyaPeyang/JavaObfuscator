@@ -38,16 +38,15 @@ import tokyo.peya.obfuscator.processor.strings.algorithms.AESEncryptionAlgorithm
 import tokyo.peya.obfuscator.processor.strings.algorithms.BlowfishEncryptionAlgorithm;
 import tokyo.peya.obfuscator.processor.strings.algorithms.DESEncryptionAlgorithm;
 import tokyo.peya.obfuscator.processor.strings.algorithms.XOREncryptionAlgorithm;
+import tokyo.peya.obfuscator.utils.NameUtils;
 import tokyo.peya.obfuscator.utils.NodeUtils;
 import tokyo.peya.obfuscator.utils.StringManipulationUtils;
 
 import java.io.IOException;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 
 @Slf4j(topic = "Processor/StringEncryption")
@@ -92,6 +91,8 @@ public class StringEncryptionTransformer implements IClassTransformer
     private final Obfuscator instance;
     private final List<? extends IStringEncryptionAlgorithm> algorithms;
 
+    private ClassNode decryptionClass;
+
     static
     {
         ValueManager.registerOwner(PROCESSOR_NAME, "ui.transformers.string_encryption");
@@ -102,6 +103,46 @@ public class StringEncryptionTransformer implements IClassTransformer
     {
         this.instance = instance;
         this.algorithms = getAlgorithms();
+    }
+
+    private static ClassNode createDecrypters(String packageName, List<? extends IStringEncryptionAlgorithm> algorithms)
+    {
+        ClassNode cn = new ClassNode();
+        cn.visit(
+                Opcodes.V1_8,
+                Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL | Opcodes.ACC_SUPER,
+                NameUtils.getClassName(packageName, "StringDecrypters"),
+                null,
+                "java/lang/Object",
+                null
+        );
+
+        for (IStringEncryptionAlgorithm entry : algorithms)
+        {
+            try
+            {
+                MethodNode method = NodeUtils.getMethod(NodeUtils.toNode(entry.getClass()), "decrypt");
+
+                if (method != null)
+                {
+                    method.access = Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC;
+                    method.name = "decrypt" + entry.getName();
+                    method.desc = "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;";
+
+                    cn.methods.add(method);
+                }
+                else
+                    throw new IllegalStateException("No decryption method found for " + entry.getClass().getName());
+            }
+            catch (IOException e)
+            {
+                throw new IllegalStateException("No decryption method found for " + entry.getClass().getName(), e);
+            }
+        }
+
+        cn.visitEnd();
+
+        return cn;
     }
 
     private MethodNode createInitStringsMethod(ClassNode node, InsnList stringArrayInstructions)
@@ -147,40 +188,32 @@ public class StringEncryptionTransformer implements IClassTransformer
                         )
         );
 
-        HashMap<IStringEncryptionAlgorithm, String> encryptionMethodMap = new HashMap<>();
-        for (IStringEncryptionAlgorithm algorithm : this.algorithms)
-            encryptionMethodMap.put(
-                    algorithm,
-                    this.instance.getNameProvider().toUniqueMethodName(
-                            node,
-                            "decrypt" + algorithm.getName(),
-                            "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;"
-                    )
-            );
+        if (this.decryptionClass == null)
+        {
+            this.decryptionClass = createDecrypters(NameUtils.getPackageName(node), this.algorithms);
+            callback.addClass(this.decryptionClass);
+        }
 
-        InsnList encryptedStringConstants = this.createEncryptedStringConstants(
+
+        InsnList instructions = this.createEncryptedStringConstants(
                 node,
                 constants,
                 encryptedStringsFieldName,
-                encryptionMethodMap,
                 constantReferences
         );
 
-        MethodNode retrieveStringss = this.createInitStringsMethod(node, encryptedStringConstants);
-        node.methods.add(retrieveStringss);
-        NodeUtils.addInvokeOnClassInitialisation(node, retrieveStringss);
-
-        // 実際に復号化するメソッドを追加
-        deployDecryptionMethods(node, encryptionMethodMap);
+        MethodNode retrieveStrings = this.createInitStringsMethod(node, instructions);
+        node.methods.add(retrieveStrings);
+        NodeUtils.addInvokeOnClassInitialisation(node, retrieveStrings);
     }
 
     private InsnList createEncryptedStringConstants(
             ClassNode node,
             int constants,
             String encryptedStringsFieldName,
-            Map<IStringEncryptionAlgorithm, String> encryptionMethodMap,
             String[] constantReferences)
     {
+
         InsnList instructions = new InsnList();
 
         // 空の配列 (constants 個 ) を生成
@@ -217,17 +250,23 @@ public class StringEncryptionTransformer implements IClassTransformer
 
         for (int j = 0; j < constants; j++)
         {
+            // ランダムなアルゴリズムを選択
             IStringEncryptionAlgorithm processor = this.algorithms.get(random.nextInt(this.algorithms.size()));
             String decryptionKey = StringManipulationUtils.retrieveStrings(5);
 
-            String decrypterName = encryptionMethodMap.get(processor);
+            MethodNode decrypterMethod = NodeUtils.getMethod(
+                    this.decryptionClass,
+                    processor.getDecryptMethodName()
+            );
+            assert decrypterMethod != null;
 
             instructions.add(generateDecrypterInvocation(
                     node,
                     j,
                     encryptedStringsFieldName,
                     decryptionKey,
-                    decrypterName,
+                    this.decryptionClass.name,
+                    decrypterMethod,
                     processor.encrypt(constantReferences[j], decryptionKey)
             ));
         }
@@ -245,7 +284,8 @@ public class StringEncryptionTransformer implements IClassTransformer
                                                         int constantNumber,
                                                         String encryptedStringsField,
                                                         String decryptionKey,
-                                                        String processorMethodName,
+                                                        String decrypterMethodOwnerName,
+                                                        MethodNode decrypterMethod,
                                                         String encryptedString)
     {
         InsnList toAdd = new InsnList();
@@ -270,8 +310,8 @@ public class StringEncryptionTransformer implements IClassTransformer
         toAdd.add(new LdcInsnNode(decryptionKey));
         toAdd.add(new MethodInsnNode(
                           Opcodes.INVOKESTATIC,
-                          node.name,
-                          processorMethodName,
+                          decrypterMethodOwnerName,
+                            decrypterMethod.name,
                           "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;",
                           false
                   )
@@ -282,36 +322,6 @@ public class StringEncryptionTransformer implements IClassTransformer
         /// }
 
         return toAdd;
-    }
-
-    private static void deployDecryptionMethods(ClassNode node, HashMap<IStringEncryptionAlgorithm, String> methods)
-    {
-        for (Map.Entry<IStringEncryptionAlgorithm, String> entry : methods.entrySet())
-        {
-            try
-            {
-                MethodNode method = NodeUtils.getMethod(NodeUtils.toNode(entry.getKey().getClass()), "decrypt");
-
-                if (method != null)
-                {
-                    method.access = Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC;
-                    method.name = entry.getValue();
-                    node.methods.add(method);
-                }
-                else
-                    throw new IllegalStateException("Could not find decryption method for " + entry.getKey()
-                                                                                                   .getClass()
-                                                                                                   .getName());
-            }
-            catch (IOException e)
-            {
-                throw new IllegalStateException(
-                        "Could not find decryption method for " + entry.getKey()
-                                                                       .getClass()
-                                                                       .getName(), e
-                );
-            }
-        }
     }
 
     private static String[] createStringConstantReferences(ClassNode node, String referenceName)
@@ -367,5 +377,4 @@ public class StringEncryptionTransformer implements IClassTransformer
 
         return algorithms;
     }
-
 }

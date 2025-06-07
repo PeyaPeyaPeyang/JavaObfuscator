@@ -12,14 +12,30 @@
 package tokyo.peya.obfuscator;
 
 import lombok.Getter;
+import org.objectweb.asm.tree.ClassNode;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 public class ProcessorCallback
 {
+    private final List<ClassNode> additionalClasses;
     private boolean forceComputeFrames;
+
+    public ProcessorCallback()
+    {
+        this.additionalClasses = new ArrayList<>();
+        this.forceComputeFrames = false;
+    }
 
     public void setForceComputeFrames()
     {
         this.forceComputeFrames = true;
+    }
+
+    public void addClass(ClassNode clazz)
+    {
+        this.additionalClasses.add(clazz);
     }
 }

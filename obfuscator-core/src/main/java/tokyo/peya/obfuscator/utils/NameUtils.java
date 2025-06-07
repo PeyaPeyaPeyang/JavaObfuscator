@@ -10,6 +10,8 @@
 
 package tokyo.peya.obfuscator.utils;
 
+import org.objectweb.asm.tree.ClassNode;
+
 import java.util.Random;
 
 public class NameUtils
@@ -68,5 +70,34 @@ public class NameUtils
             throw new IllegalArgumentException("Illegal class name");
 
         return lin == -1 ? "": in.substring(0, lin);
+    }
+
+    public static String getPackageName(String in)
+    {
+        int lin = in.replace('.', '/').lastIndexOf('/');
+
+        if (lin == 0)
+            throw new IllegalArgumentException("Illegal class name");
+
+        return lin == -1 ? in: in.substring(0, lin + 1);
+    }
+
+    public static String getPackageName(ClassNode classNode)
+    {
+        return getPackageName(classNode.name);
+    }
+
+    public static String getClassName(String packageName, String className)
+    {
+        if (packageName == null || packageName.isEmpty())
+            return className;
+
+        if (className == null || className.isEmpty())
+            return packageName;
+
+        if (packageName.endsWith("/"))
+            return packageName + className;
+        else
+            return packageName + "/" + className;
     }
 }

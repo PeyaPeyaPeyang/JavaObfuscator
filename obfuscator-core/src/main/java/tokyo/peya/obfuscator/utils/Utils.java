@@ -388,7 +388,7 @@ public class Utils
             if (s1.startsWith("Main-Class: "))
                 mainClass = s1.substring("Main-Class: ".length()).trim().replace("\r", "");
 
-        return mainClass;
+        return mainClass.replace(".", "/");
     }
 
     public static String getInternalName(Type type)

@@ -790,6 +790,11 @@ public class Obfuscator
 
                     removeObfuscateRuleAnnotations(cn);
 
+                    if (!callback.getAdditionalClasses().isEmpty())
+                        callback.getAdditionalClasses().forEach(
+                                classNode -> toWriteThread.put(classNode.name + ".class", classNode)
+                        );
+
                     toWriteThread.put(entryName, cn);
                     processed.incrementAndGet();
                 } catch (Exception e) {

@@ -15,6 +15,11 @@ public interface IStringEncryptionAlgorithm
 {
     String getName();
 
+    default String getDecryptMethodName()
+    {
+        return "decrypt" + this.getName();
+    }
+
     String encrypt(String obj, String key);
 
 }
