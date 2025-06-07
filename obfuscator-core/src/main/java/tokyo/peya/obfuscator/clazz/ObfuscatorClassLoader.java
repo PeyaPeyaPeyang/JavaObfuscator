@@ -24,11 +24,11 @@ public class ObfuscatorClassLoader extends ClassLoader
     @Override
     protected Class<?> findClass(String name) throws ClassNotFoundException
     {
-        String internalName = name.replace('.', '/');
+        ClassReference ref = ClassReference.of(name);
 
-        if (JavaObfuscator.getCurrentSession().getClassPath().containsKey(internalName))
+        if (JavaObfuscator.getCurrentSession().getClassPath().containsKey(ref))
         {
-            ClassWrapper classWrapper = JavaObfuscator.getCurrentSession().getClassPath().get(internalName);
+            ClassWrapper classWrapper = JavaObfuscator.getCurrentSession().getClassPath().get(ref);
 
             if (classWrapper == null || classWrapper.originalClass == null)
                 throw new ClassNotFoundException(name);

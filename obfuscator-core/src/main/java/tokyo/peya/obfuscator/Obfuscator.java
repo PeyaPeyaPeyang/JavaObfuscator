@@ -780,7 +780,7 @@ public class Obfuscator
                                                            .forEach(insn -> method.instructions.remove(insn)));
                     }
 
-                    this.computeMode = this.computeMode | (callback.isForceComputeFrames() ? ModifiedClassWriter.COMPUTE_MAXS : 0);
+                    this.computeMode = this.computeMode | (callback.isForceComputeFrames() ? ModifiedClassWriter.COMPUTE_FRAMES : 0);
 
                     removeObfuscateRuleAnnotations(cn);
 

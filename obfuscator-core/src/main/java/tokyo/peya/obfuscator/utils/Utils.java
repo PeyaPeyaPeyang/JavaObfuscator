@@ -82,11 +82,12 @@ public class Utils
 
     public static ClassNode lookupClass(String name)
     {
-        ClassWrapper a = JavaObfuscator.getCurrentSession().getClassPath().get(name);
+        ClassReference ref = ClassReference.of(name);
+        ClassWrapper a = JavaObfuscator.getCurrentSession().getClassPath().get(ref);
 
         if (a != null) return a.classNode;
 
-        return JavaObfuscator.getCurrentSession().getClasses().get(name + ".class");
+        return JavaObfuscator.getCurrentSession().getClasses().get(ref);
     }
 
     public static boolean isWindows()
