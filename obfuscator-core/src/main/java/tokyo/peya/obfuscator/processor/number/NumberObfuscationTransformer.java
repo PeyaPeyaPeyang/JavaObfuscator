@@ -66,7 +66,7 @@ public class NumberObfuscationTransformer implements IClassTransformer
             "shift",
             "ui.transformers.number.shift",
             DeprecationLevel.AVAILABLE,
-            false
+            true
     );
     private static final BooleanValue V_METHOD_AND = new BooleanValue(
             PROCESSOR_NAME,
