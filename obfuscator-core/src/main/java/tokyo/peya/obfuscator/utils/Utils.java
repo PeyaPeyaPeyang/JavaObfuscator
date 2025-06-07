@@ -32,6 +32,7 @@ import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.VarInsnNode;
 import tokyo.peya.obfuscator.JavaObfuscator;
 import tokyo.peya.obfuscator.Localisation;
+import tokyo.peya.obfuscator.clazz.ClassReference;
 import tokyo.peya.obfuscator.clazz.ClassWrapper;
 import tokyo.peya.obfuscator.configuration.DeprecationLevel;
 
@@ -367,20 +368,20 @@ public class Utils
         return sb.toString();
     }
 
-    public static String replaceMainClass(String s, String main)
+    public static String replaceMainClass(String s, ClassReference main)
     {
         StringBuilder sb = new StringBuilder();
 
         for (String s1 : s.split("\n"))
             if (s1.startsWith("Main-Class"))
-                sb.append("Main-Class: ").append(main).append("\n");
+                sb.append("Main-Class: ").append(main.getFullQualifiedDotName()).append("\n");
             else
                 sb.append(s1).append("\n");
 
         return sb.toString();
     }
 
-    public static String getMainClass(String s)
+    public static ClassReference getMainClass(String s)
     {
         String mainClass = null;
 
@@ -388,7 +389,7 @@ public class Utils
             if (s1.startsWith("Main-Class: "))
                 mainClass = s1.substring("Main-Class: ".length()).trim().replace("\r", "");
 
-        return mainClass.replace(".", "/");
+        return mainClass == null ? null : ClassReference.of(mainClass);
     }
 
     public static String getInternalName(Type type)

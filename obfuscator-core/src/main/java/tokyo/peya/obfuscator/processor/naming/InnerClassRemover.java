@@ -18,6 +18,7 @@ import tokyo.peya.obfuscator.IClassTransformer;
 import tokyo.peya.obfuscator.Obfuscator;
 import tokyo.peya.obfuscator.ProcessorCallback;
 import tokyo.peya.obfuscator.annotations.ObfuscationTransformer;
+import tokyo.peya.obfuscator.clazz.ClassReference;
 import tokyo.peya.obfuscator.configuration.DeprecationLevel;
 import tokyo.peya.obfuscator.configuration.ValueManager;
 import tokyo.peya.obfuscator.configuration.values.BooleanValue;
@@ -92,14 +93,14 @@ public class InnerClassRemover implements INameObfuscationProcessor, IClassTrans
     }
 
     @Override
-    public void transformPost(Obfuscator inst, Map<String, ClassNode> nodes)
+    public void transformPost(Obfuscator inst, Map<ClassReference, ClassNode> nodes)
     {
         if (!(V_ENABLED.get() && V_REMAP.get())) // remap のみ
             return;
 
         final List<ClassNode> classNodes = new ArrayList<>(nodes.values());
 
-        final Map<String, ClassNode> updatedClasses = new HashMap<>();
+        final Map<ClassReference, ClassNode> updatedClasses = new HashMap<>();
         final CustomRemapper remapper = new CustomRemapper(this.obfuscator);
 
         for (ClassNode classNode : classNodes)
@@ -107,7 +108,7 @@ public class InnerClassRemover implements INameObfuscationProcessor, IClassTrans
 
         for (final ClassNode classNode : classNodes)
         {
-            nodes.remove(classNode.name + ".class");
+            nodes.remove(ClassReference.of(classNode));
 
             ClassNode newNode = new ClassNode();
             ClassRemapper classRemapper = new ClassRemapper(newNode, remapper);
@@ -115,7 +116,7 @@ public class InnerClassRemover implements INameObfuscationProcessor, IClassTrans
 
             normalizeModifiers(newNode);
 
-            updatedClasses.put(newNode.name + ".class", newNode);
+            updatedClasses.put(ClassReference.of(newNode), newNode);
         }
 
         nodes.putAll(updatedClasses);

@@ -29,12 +29,12 @@ public class ClassTree
     /**
      * Names of classes this represented class inherits from.
      */
-    public Set<String> parentClasses = new HashSet<>();
+    public Set<ClassReference> parentClasses = new HashSet<>();
 
     /**
      * Names of classes this represented class is inherited by.
      */
-    public Set<String> subClasses = new HashSet<>();
+    public Set<ClassReference> subClasses = new HashSet<>();
 
     /**
      * If one of the super-classes is missing this is set to true.

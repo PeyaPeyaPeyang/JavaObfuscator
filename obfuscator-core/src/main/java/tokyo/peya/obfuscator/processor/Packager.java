@@ -22,6 +22,7 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 import tokyo.peya.obfuscator.Localisation;
 import tokyo.peya.obfuscator.Obfuscator;
+import tokyo.peya.obfuscator.clazz.ClassReference;
 import tokyo.peya.obfuscator.configuration.DeprecationLevel;
 import tokyo.peya.obfuscator.configuration.ValueManager;
 import tokyo.peya.obfuscator.configuration.values.BooleanValue;
@@ -30,6 +31,8 @@ import tokyo.peya.obfuscator.configuration.values.StringValue;
 import tokyo.peya.obfuscator.utils.NodeUtils;
 
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Objects;
 import java.util.Random;
 
@@ -58,7 +61,7 @@ public class Packager
             "class_name_encryption",
             "ui.transformers.packager.class_name_encryption",
             DeprecationLevel.AVAILABLE,
-            true
+            false
     );
     private static final BooleanValue V_AUTO_FIND_MAIN_CLASS = new BooleanValue(
             PROCESSOR_NAME,
@@ -79,7 +82,7 @@ public class Packager
     private final byte[] key;
     @Getter
     @Setter
-    private String mainClass;
+    private ClassReference mainClass;
 
     static
     {
@@ -90,7 +93,7 @@ public class Packager
     public Packager(Obfuscator instance)
     {
         this.instance = instance;
-        this.mainClass = V_AUTO_FIND_MAIN_CLASS.get() ? instance.getMainClass(): V_MAIN_CLASS.get();
+        this.mainClass = V_AUTO_FIND_MAIN_CLASS.get() ? instance.getMainClass(): ClassReference.of(V_MAIN_CLASS.get());
 
         this.key = new byte[RANDOM.nextInt(40) + 10];
         for (int i = 0; i < this.key.length; i++)
@@ -130,7 +133,8 @@ public class Packager
         if (!V_CLASS_NAME_ENCRYPTION.get())
             return name;
 
-        return new String(xor(name.replace("/", ".").getBytes(StandardCharsets.UTF_8), this.key));
+        return new String(xor(name.getBytes(StandardCharsets.UTF_8), this.key), StandardCharsets.UTF_8)
+                + ".class"; // .class を付けることで, デコンパイラがクラスファイルと勘違いする
     }
 
     public ClassNode generateEncryptionClass()
@@ -141,7 +145,7 @@ public class Packager
 
         if (this.instance.getClasses().keySet()
                          .stream()
-                         .noneMatch(s -> s.equals(this.mainClass + ".class")))
+                         .noneMatch(this.mainClass::equals))
             throw new IllegalArgumentException("[Packager] " + Localisation.get(
                     "ui.transformers.packager.no_main_class_found"));
 
@@ -224,7 +228,7 @@ public class Packager
             Label l3 = new Label();
             mv.visitLabel(l3);
             mv.visitVarInsn(Opcodes.ALOAD, 1);
-            mv.visitLdcInsn(Objects.requireNonNull(this.mainClass));
+            mv.visitLdcInsn(Objects.requireNonNull(this.mainClass.getFullQualifiedDotName()));
             mv.visitMethodInsn(
                     Opcodes.INVOKEVIRTUAL,
                     "java/lang/ClassLoader",
@@ -569,7 +573,7 @@ public class Packager
         cw.accept(classWriter1);
 
         // this.instance.getClassPath().put(cw.name, new ClassWrapper(cw, false, clazz));
-        this.instance.setMainClass(cw.name);
+        this.instance.setMainClass(ClassReference.of(cw));
 
         return new ClassDecrypterClass(cw);
     }

@@ -30,7 +30,7 @@ public class ClassWrapper
     /**
      * Original name of ClassNode. Really useful when class got renamed.
      */
-    public String originalName;
+    public ClassReference originalRef;
 
     /**
      * Quick way of figuring out if this is represents library class or not.
@@ -62,7 +62,7 @@ public class ClassWrapper
     public ClassWrapper(ClassNode classNode, boolean libraryNode, byte[] originalClass)
     {
         this.classNode = classNode;
-        this.originalName = classNode.name;
+        this.originalRef = ClassReference.of(classNode);
         this.libraryNode = libraryNode;
         this.originalClass = originalClass;
 

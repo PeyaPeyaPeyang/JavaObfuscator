@@ -20,6 +20,7 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 import tokyo.peya.obfuscator.Obfuscator;
+import tokyo.peya.obfuscator.clazz.ClassReference;
 import tokyo.peya.obfuscator.clazz.ClassTree;
 import tokyo.peya.obfuscator.clazz.ClassWrapper;
 import tokyo.peya.obfuscator.clazz.FieldWrapper;
@@ -253,7 +254,7 @@ public class NameObfuscation implements INameObfuscationProcessor
     }
 
     @Override
-    public void transformPost(Obfuscator inst, Map<String, ClassNode> nodes)
+    public void transformPost(Obfuscator inst, Map<ClassReference, ClassNode> nodes)
     {
         if (!V_ENABLED.get())
             return;
@@ -336,8 +337,9 @@ public class NameObfuscation implements INameObfuscationProcessor
         if (hasNativeMethod || !enableClassRename)
         {
             if (hasNativeMethod)
-                log.info("Renaming class " + clazz.originalName + " is automatically excluded because it has native methods.");
-            mappings.put(clazz.originalName, clazz.originalName);
+                log.info("Renaming class " + clazz.originalRef + " is automatically excluded because it has native methods.");
+            String originalName = clazz.originalRef.getFullQualifiedName();
+            mappings.put(originalName, originalName);
             return;
         }
 
@@ -346,24 +348,16 @@ public class NameObfuscation implements INameObfuscationProcessor
             packageName = generateRandomPackage();
         else
         {
-            String className = clazz.originalName;
-            if (className.contains("/"))
-                packageName = className.substring(0, className.lastIndexOf("/") + 1);
-            else
-                packageName = "";
-
+            packageName = clazz.originalRef.getPackage();
             if (!(packageName.isEmpty() || packageName.endsWith("/")))
                 packageName = packageName + "/";
         }
 
-        String newName = packageName + this.obfuscator.getNameProvider().generateClassName();
-        mappings.put(clazz.originalName, newName);
+        ClassReference newName = ClassReference.of(packageName, this.obfuscator.getNameProvider().generateClassName());
+        mappings.put(clazz.originalRef.getFullQualifiedName(), newName.getFullQualifiedName());
 
-        Packager packager = this.obfuscator.getPackager();
-        if (clazz.originalName.equals(this.obfuscator.getMainClass()))  // MANIFEST.MFの改変のため
+        if (clazz.originalRef.equals(this.obfuscator.getMainClass()))  // MANIFEST.MFの改変のため
             this.obfuscator.setMainClass(newName);
-        if (packager.isEnabled() && packager.getMainClass().equals(clazz.originalName))
-            packager.setMainClass(newName);
     }
 
     private void assignRandomSourceNameToClass(ClassNode node)
@@ -392,8 +386,8 @@ public class NameObfuscation implements INameObfuscationProcessor
     private void processMethods(ClassWrapper classWrapper, Map<String, String> mappings)
     {
         Predicate<MethodWrapper> isExclude = method ->
-                isMethodExcluded(classWrapper.originalName, method)
-                        || !canRenameMethodTree(mappings, new HashSet<>(), method, classWrapper.originalName);
+                isMethodExcluded(classWrapper.originalRef.getFullQualifiedDotName(), method)
+                        || !canRenameMethodTree(mappings, new HashSet<>(), method, classWrapper.originalRef);
 
         classWrapper.methods.stream()
                             .filter(isExclude.negate())
@@ -410,13 +404,13 @@ public class NameObfuscation implements INameObfuscationProcessor
         }
 
         if (Modifier.isNative(methodWrapper.methodNode.access))
-            log.warn("Native method found in class " + ownerClass.originalName + " method " + methodWrapper.methodNode.name + methodWrapper.methodNode.desc);
+            log.warn("Native method found in class " + ownerClass.originalRef + " method " + methodWrapper.methodNode.name + methodWrapper.methodNode.desc);
         else
             this.renameMethodTree(
                     mappings,
                     new HashSet<>(),
                     methodWrapper,
-                    ownerClass.originalName,
+                    ownerClass.originalRef,
                     this.obfuscator.getNameProvider()
                                    .generateMethodName(ownerClass.classNode, methodWrapper.originalDescription)
             );
@@ -425,8 +419,8 @@ public class NameObfuscation implements INameObfuscationProcessor
     private void processFields(ClassWrapper classWrapper, Map<String, String> mappings)
     {
         Predicate<FieldWrapper> isExclude = field ->
-                isFieldExcluded(classWrapper.originalName, field)
-                        || !canRenameFieldTree(mappings, new HashSet<>(), field, classWrapper.originalName);
+                isFieldExcluded(classWrapper.originalRef.getFullQualifiedDotName(), field)
+                        || !canRenameFieldTree(mappings, new HashSet<>(), field, classWrapper.originalRef);
 
         classWrapper.fields.stream()
                            .filter(isExclude.negate())
@@ -442,14 +436,14 @@ public class NameObfuscation implements INameObfuscationProcessor
         this.renameFieldTree(
                 new HashSet<>(),
                 field,
-                ownerClass.originalName,
+                ownerClass.originalRef,
                 this.obfuscator.getNameProvider().generateFieldName(ownerClass.classNode),
                 mappings
         );
     }
 
     private void writeClasses(HashMap<String, String> mappings, List<? extends ClassWrapper> classWrappers,
-                              Map<? super String, ? super ClassNode> ledger)
+                              Map<ClassReference, ? super ClassNode> ledger)
     {
         Remapper simpleRemapper = new MemberRemapper(mappings);
 
@@ -458,7 +452,7 @@ public class NameObfuscation implements INameObfuscationProcessor
     }
 
     private void writeClass(ClassWrapper classWrapper, Remapper simpleRemapper,
-                            Map<? super String, ? super ClassNode> ledger)
+                            Map<ClassReference, ? super ClassNode> ledger)
     {
         ClassNode classNode = classWrapper.classNode;
         boolean isPackagerRelatedClass = this.obfuscator.getPackager().isPackagerClassDecrypter(classNode);
@@ -470,7 +464,7 @@ public class NameObfuscation implements INameObfuscationProcessor
             // check native
             if (Modifier.isNative(originalMethodWrapper.methodNode.access))
             {
-                log.info("Automatically excluded " + classWrapper.originalName + "#" + originalMethodWrapper.methodNode.name + " because it is native.");
+                log.info("Automatically excluded " + classWrapper.originalRef + "#" + originalMethodWrapper.methodNode.name + " because it is native.");
                 continue;
             }
 
@@ -500,21 +494,19 @@ public class NameObfuscation implements INameObfuscationProcessor
         if (isPackagerRelatedClass)
             copy = this.obfuscator.getPackager().asPackagerClassDecrypter(copy);
 
-        ledger.remove(classWrapper.originalName + ".class");
+        ledger.remove(classWrapper.originalRef);
         classWrapper.classNode = copy;
-        ledger.put(classWrapper.classNode.name + ".class", classWrapper.classNode);
-        //            JObfImpl.INSTANCE.getClassPath().put();
-        //            this.getClasses().put(classWrapper.classNode.name, classWrapper);
+        ledger.put(ClassReference.of(classWrapper.classNode), classWrapper.classNode);
 
         ClassWriter writer = new ClassWriter(0);
         classWrapper.classNode.accept(writer);
         classWrapper.originalClass = writer.toByteArray();
 
-        this.obfuscator.getClasses().remove(classWrapper.originalName + ".class");
-        this.obfuscator.getClasses().put(classWrapper.classNode.name + ".class", classWrapper.classNode);
+        this.obfuscator.getClasses().remove(classWrapper.originalRef);
+        this.obfuscator.getClasses().put(ClassReference.of(classWrapper.classNode), classWrapper.classNode);
 
-        ledger.remove(classWrapper.originalName + ".class");
-        ledger.put(classWrapper.classNode.name + ".class", classWrapper.classNode);
+        ledger.remove(classWrapper.originalRef);
+        ledger.put(ClassReference.of(classWrapper.classNode), classWrapper.classNode);
     }
 
     private void saveMappingsFile(String file, HashMap<String, String> mappings)
@@ -582,7 +574,7 @@ public class NameObfuscation implements INameObfuscationProcessor
     }
 
     private boolean canRenameMethodTree(Map<String, String> mappings, Set<ClassTree> visited,
-                                        MethodWrapper methodWrapper, String owner)
+                                        MethodWrapper methodWrapper, ClassReference owner)
     {
         ClassTree tree = this.obfuscator.getTree(owner);
 
@@ -600,20 +592,20 @@ public class NameObfuscation implements INameObfuscationProcessor
         if (tree.missingSuperClass || Modifier.isNative(methodWrapper.methodNode.access))
             return false;
 
-        if (mappings.containsKey(owner + '.' + methodWrapper.originalName + methodWrapper.originalDescription))
+        if (mappings.containsKey(owner.getFullQualifiedName() + '.' + methodWrapper.originalName + methodWrapper.originalDescription))
             return true;
 
-        if (!methodWrapper.owner.originalName.equals(owner) && tree.classWrapper.libraryNode)
+        if (!methodWrapper.owner.originalRef.equals(owner) && tree.classWrapper.libraryNode)
             for (MethodNode mn : tree.classWrapper.classNode.methods)
                 if (mn.name.equals(methodWrapper.originalName)
                         && mn.desc.equals(methodWrapper.originalDescription))
                     return false;
 
-        for (String parent : tree.parentClasses)
+        for (ClassReference parent : tree.parentClasses)
             if (!(parent == null || canRenameMethodTree(mappings, visited, methodWrapper, parent)))
                 return false;
 
-        for (String sub : tree.subClasses)
+        for (ClassReference sub : tree.subClasses)
             if (!(sub == null || canRenameMethodTree(mappings, visited, methodWrapper, sub)))
                 return false;
 
@@ -621,26 +613,26 @@ public class NameObfuscation implements INameObfuscationProcessor
     }
 
     private void renameMethodTree(Map<String, String> mappings, Set<ClassTree> visited, MethodWrapper MethodWrapper,
-                                  String className,
+                                  ClassReference classRef,
                                   String newName)
     {
-        ClassTree tree = this.obfuscator.getTree(className);
+        ClassTree tree = this.obfuscator.getTree(classRef);
 
         if (tree.classWrapper.libraryNode || visited.contains(tree))
             return;
 
-        mappings.put(className + '.' + MethodWrapper.originalName + MethodWrapper.originalDescription, newName);
+        mappings.put(classRef.getFullQualifiedName() + '.' + MethodWrapper.originalName + MethodWrapper.originalDescription, newName);
         visited.add(tree);
-        for (String parentClass : tree.parentClasses)
+        for (ClassReference parentClass : tree.parentClasses)
             this.renameMethodTree(mappings, visited, MethodWrapper, parentClass, newName);
 
-        for (String subClass : tree.subClasses)
+        for (ClassReference subClass : tree.subClasses)
             this.renameMethodTree(mappings, visited, MethodWrapper, subClass, newName);
 
     }
 
     private boolean canRenameFieldTree(Map<String, String> mappings, Set<ClassTree> visited, FieldWrapper fieldWrapper,
-                                       String owner)
+                                       ClassReference owner)
     {
         ClassTree tree = this.obfuscator.getTree(owner);
 
@@ -655,25 +647,25 @@ public class NameObfuscation implements INameObfuscationProcessor
         if (tree.missingSuperClass)
             return false;
 
-        if (mappings.containsKey(owner + '.' + fieldWrapper.originalName + '.' + fieldWrapper.originalDescription))
+        if (mappings.containsKey(owner.getFullQualifiedName() + '.' + fieldWrapper.originalName + '.' + fieldWrapper.originalDescription))
             return true;
-        if (!fieldWrapper.owner.originalName.equals(owner) && tree.classWrapper.libraryNode)
+        if (!fieldWrapper.owner.originalRef.equals(owner) && tree.classWrapper.libraryNode)
             for (FieldNode fn : tree.classWrapper.classNode.fields)
                 if (fieldWrapper.originalName.equals(fn.name) && fieldWrapper.originalDescription.equals(fn.desc))
                     return false;
 
-        for (String parent : tree.parentClasses)
+        for (ClassReference parent : tree.parentClasses)
             if (!(parent == null || canRenameFieldTree(mappings, visited, fieldWrapper, parent)))
                 return false;
 
-        for (String sub : tree.subClasses)
+        for (ClassReference sub : tree.subClasses)
             if (!(sub == null || canRenameFieldTree(mappings, visited, fieldWrapper, sub)))
                 return false;
 
         return true;
     }
 
-    private void renameFieldTree(HashSet<ClassTree> visited, FieldWrapper fieldWrapper, String owner, String newName,
+    private void renameFieldTree(HashSet<ClassTree> visited, FieldWrapper fieldWrapper, ClassReference owner, String newName,
                                  Map<String, String> mappings)
     {
         ClassTree tree = this.obfuscator.getTree(owner);
@@ -681,11 +673,11 @@ public class NameObfuscation implements INameObfuscationProcessor
         if (tree.classWrapper.libraryNode || visited.contains(tree))
             return;
 
-        mappings.put(owner + '.' + fieldWrapper.originalName + '.' + fieldWrapper.originalDescription, newName);
+        mappings.put(owner.getFullQualifiedName() + '.' + fieldWrapper.originalName + '.' + fieldWrapper.originalDescription, newName);
         visited.add(tree);
-        for (String parentClass : tree.parentClasses)
+        for (ClassReference parentClass : tree.parentClasses)
             renameFieldTree(visited, fieldWrapper, parentClass, newName, mappings);
-        for (String subClass : tree.subClasses)
+        for (ClassReference subClass : tree.subClasses)
             renameFieldTree(visited, fieldWrapper, subClass, newName, mappings);
     }
 
