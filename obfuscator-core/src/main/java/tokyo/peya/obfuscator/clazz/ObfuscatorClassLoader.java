@@ -11,20 +11,73 @@
 
 package tokyo.peya.obfuscator.clazz;
 
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.tree.ClassNode;
 import tokyo.peya.obfuscator.JavaObfuscator;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ObfuscatorClassLoader extends ClassLoader
 {
     public static ObfuscatorClassLoader INSTANCE = new ObfuscatorClassLoader();
 
+    private Map<ClassReference, ClassNode> tempClasses;
+
+    public ObfuscatorClassLoader()
+    {
+        super(ObfuscatorClassLoader.class.getClassLoader());
+
+        this.tempClasses = new ConcurrentHashMap<>();
+    }
+
+    public static void addTempClass(ClassReference ref, ClassNode classNode)
+    {
+        if (INSTANCE.tempClasses.containsKey(ref))
+            return;
+
+        INSTANCE.tempClasses.put(ref, classNode);
+    }
+
+    public static void removeTempClass(ClassReference ref)
+    {
+        INSTANCE.tempClasses.remove(ref);
+    }
+
     @Override
     protected Class<?> findClass(String name) throws ClassNotFoundException
     {
         ClassReference ref = ClassReference.of(name);
+        if (this.tempClasses.containsKey(ref))
+        {
+            ClassNode classNode = this.tempClasses.get(ref);
+            if (classNode == null)
+                throw new ClassNotFoundException(name);
+
+            ClassWriter classWriter = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+            classNode.accept(classWriter);
+
+            byte[] classBytes = classWriter.toByteArray();
+            try
+            {
+                return defineClass(name, classBytes, 0, classBytes.length);
+            }
+            catch (ClassFormatError classFormatError)
+            {
+                classFormatError.printStackTrace();
+                try
+                {
+                    Files.write(new File("A:/invalid.class").toPath(), classBytes);
+                }
+                catch (IOException e)
+                {
+                    e.printStackTrace();
+                }
+            }
+        }
 
         if (JavaObfuscator.getCurrentSession().getClassPath().containsKey(ref))
         {

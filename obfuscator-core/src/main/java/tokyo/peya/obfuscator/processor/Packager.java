@@ -275,14 +275,12 @@ public class Packager
             Label l6 = new Label();
             mv.visitJumpInsn(Opcodes.GOTO, l6);
             mv.visitLabel(l2);
-            mv.visitFrame(Opcodes.F_SAME1, 0, null, 1, new Object[]{"java/lang/Exception"});
             mv.visitVarInsn(Opcodes.ASTORE, 1);
             Label l7 = new Label();
             mv.visitLabel(l7);
             mv.visitVarInsn(Opcodes.ALOAD, 1);
             mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Exception", "printStackTrace", "()V", false);
             mv.visitLabel(l6);
-            mv.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
             mv.visitInsn(Opcodes.RETURN);
             Label l8 = new Label();
             mv.visitLabel(l8);
@@ -341,7 +339,6 @@ public class Packager
             mv.visitInsn(Opcodes.ARETURN);
             mv.visitLabel(l2);
             mv.visitLineNumber(30, l2);
-            mv.visitFrame(Opcodes.F_SAME1, 0, null, 1, new Object[]{"java/lang/Exception"});
             mv.visitVarInsn(Opcodes.ASTORE, 2);
             Label l4 = new Label();
             mv.visitLabel(l4);
@@ -390,7 +387,6 @@ public class Packager
             mv.visitJumpInsn(Opcodes.GOTO, l3);
             Label l4 = new Label();
             mv.visitLabel(l4);
-            mv.visitFrame(Opcodes.F_APPEND, 2, new Object[]{"[B", Opcodes.INTEGER}, 0, null);
             mv.visitVarInsn(Opcodes.ALOAD, 2);
             mv.visitVarInsn(Opcodes.ILOAD, 3);
             mv.visitVarInsn(Opcodes.ALOAD, 0);
@@ -409,7 +405,6 @@ public class Packager
             mv.visitLabel(l5);
             mv.visitIincInsn(3, 1);
             mv.visitLabel(l3);
-            mv.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
             mv.visitVarInsn(Opcodes.ILOAD, 3);
             mv.visitVarInsn(Opcodes.ALOAD, 0);
             mv.visitInsn(Opcodes.ARRAYLENGTH);
@@ -437,25 +432,39 @@ public class Packager
             );
             mv.visitCode();
             // .class を付ける
+            mv.visitTypeInsn(Opcodes.NEW, "java/lang/String");
+            mv.visitInsn(Opcodes.DUP);
+            mv.visitVarInsn(Opcodes.ALOAD, 0);
             if (V_CLASS_NAME_ENCRYPTION.get())  // クラス名が暗号化されている場合は, それを復号化する。
             {
-                mv.visitTypeInsn(Opcodes.NEW, "java/lang/String");
-                mv.visitInsn(Opcodes.DUP);
-                mv.visitVarInsn(Opcodes.ALOAD, 0);
                 mv.visitFieldInsn(Opcodes.GETSTATIC, decryptionClassName, keyFieldName, "[B");
                 mv.visitMethodInsn(Opcodes.INVOKESTATIC, decryptionClassName, xorMethodName, "([B[B)[B", false);
-                mv.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/String", "<init>", "([B)V", false);
+            }
+            mv.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/String", "<init>", "([B)V", false);
+            if (V_CLASS_NAME_ENCRYPTION.get())
+            {
+
+                mv.visitLdcInsn(".class");
+                mv.visitMethodInsn(
+                        Opcodes.INVOKEVIRTUAL,
+                        "java/lang/String",
+                        "concat",
+                        "(Ljava/lang/String;)Ljava/lang/String;",
+                        false
+                );
             }
             else
-                mv.visitVarInsn(Opcodes.ALOAD, 0);
-            mv.visitLdcInsn(".class");
-            mv.visitMethodInsn(
-                    Opcodes.INVOKEVIRTUAL,
-                    "java/lang/String",
-                    "concat",
-                    "(Ljava/lang/String;)Ljava/lang/String;",
-                    false
-            );
+            {
+                NodeUtils.generateIntPush('.').accept(mv);
+                NodeUtils.generateIntPush('/').accept(mv);
+                mv.visitMethodInsn(
+                        Opcodes.INVOKEVIRTUAL,
+                        "java/lang/String",
+                        "replace",
+                        "(CC)Ljava/lang/String;",
+                        false
+                );
+            }
             mv.visitVarInsn(Opcodes.ASTORE, 0);
             Label l0 = new Label();
             mv.visitLabel(l0);
@@ -507,16 +516,6 @@ public class Packager
             Label l5 = new Label();
             mv.visitLabel(l5);
             mv.visitLineNumber(55, l5);
-            mv.visitFrame(
-                    Opcodes.F_FULL,
-                    5,
-                    new Object[]{
-                            "java/lang/String", "java/io/InputStream", "java/io/ByteArrayOutputStream", Opcodes.INTEGER,
-                            "[B"
-                    },
-                    0,
-                    new Object[]{}
-            );
             mv.visitVarInsn(Opcodes.ALOAD, 2);
             mv.visitVarInsn(Opcodes.ALOAD, 4);
             mv.visitInsn(Opcodes.ICONST_0);
@@ -524,16 +523,6 @@ public class Packager
             mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/io/ByteArrayOutputStream", "write", "([BII)V", false);
             mv.visitLabel(l4);
             mv.visitLineNumber(54, l4);
-            mv.visitFrame(
-                    Opcodes.F_FULL,
-                    5,
-                    new Object[]{
-                            "java/lang/String", "java/io/InputStream", "java/io/ByteArrayOutputStream", Opcodes.TOP,
-                            "[B"
-                    },
-                    0,
-                    new Object[]{}
-            );
             mv.visitVarInsn(Opcodes.ALOAD, 1);
             mv.visitVarInsn(Opcodes.ALOAD, 4);
             mv.visitInsn(Opcodes.ICONST_0);

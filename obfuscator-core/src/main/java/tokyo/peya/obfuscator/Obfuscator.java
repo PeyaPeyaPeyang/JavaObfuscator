@@ -27,6 +27,7 @@ import tokyo.peya.obfuscator.clazz.ClassReference;
 import tokyo.peya.obfuscator.clazz.ClassTree;
 import tokyo.peya.obfuscator.clazz.ClassWrapper;
 import tokyo.peya.obfuscator.clazz.ModifiedClassWriter;
+import tokyo.peya.obfuscator.clazz.ObfuscatorClassLoader;
 import tokyo.peya.obfuscator.configuration.Configuration;
 import tokyo.peya.obfuscator.configuration.ValueManager;
 import tokyo.peya.obfuscator.processor.InvokeDynamic;
@@ -580,8 +581,16 @@ public class Obfuscator
 
         ClassNode packagerNode = this.packager.generateEncryptionClass();
         ClassNode obfuscatedPackagerNode = this.processClass(packagerNode);
-        ModifiedClassWriter writer = new ModifiedClassWriter(this.computeMode);
+        ClassReference packagerRef = ClassReference.of(obfuscatedPackagerNode);
+
+        // クラスパスの整合性
+        ObfuscatorClassLoader.addTempClass(packagerRef, obfuscatedPackagerNode);
+
+        ModifiedClassWriter writer = new ModifiedClassWriter(3);
         obfuscatedPackagerNode.accept(writer);
+
+        ObfuscatorClassLoader.removeTempClass(packagerRef);
+
         byte[] packagerBytes = writer.toByteArray();
 
         log.info(Localisation.access("logs.task_finished")
