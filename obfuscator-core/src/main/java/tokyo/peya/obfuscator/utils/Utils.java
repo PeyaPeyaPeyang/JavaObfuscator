@@ -382,17 +382,6 @@ public class Utils
         return sb.toString();
     }
 
-    public static ClassReference getMainClass(String s)
-    {
-        String mainClass = null;
-
-        for (String s1 : s.split("\n"))
-            if (s1.startsWith("Main-Class: "))
-                mainClass = s1.substring("Main-Class: ".length()).trim().replace("\r", "");
-
-        return mainClass == null ? null : ClassReference.of(mainClass);
-    }
-
     public static String getInternalName(Type type)
     {
         switch (type.toString())

@@ -34,6 +34,8 @@ import tokyo.peya.obfuscator.processor.InvokeDynamic;
 import tokyo.peya.obfuscator.processor.Packager;
 import tokyo.peya.obfuscator.processor.Processors;
 import tokyo.peya.obfuscator.processor.naming.INameObfuscationProcessor;
+import tokyo.peya.obfuscator.processor.naming.entrypoint.EntrypointDelegate;
+import tokyo.peya.obfuscator.processor.naming.entrypoint.EntrypointDelegateProvider;
 import tokyo.peya.obfuscator.ui.PreviewGenerator;
 import tokyo.peya.obfuscator.utils.ExcludePattern;
 import tokyo.peya.obfuscator.utils.MissingClassException;
@@ -89,6 +91,7 @@ public class Obfuscator
     @Getter
     private final Configuration config;
     private final UniqueNameProvider nameProvider;
+    private final EntrypointDelegateProvider entrypointDelegateProvider;
     private final Packager packager;
     private final InvokeDynamic invokeDynamic;
     private final HashMap<String, byte[]> files;
@@ -99,9 +102,11 @@ public class Obfuscator
     private final List<IClassTransformer> processors;
     private final List<INameObfuscationProcessor> nameObfuscationProcessors;
     private final List<Pattern> excludePatterns;
+
     @Setter
     public ScriptBridge script;
-    private boolean mainClassChanged;
+    private EntrypointDelegate entrypointDelegate;
+    private boolean entrypointChanged;
     private ClassReference mainClass;
     private int computeMode;
 
@@ -115,6 +120,7 @@ public class Obfuscator
         this.config = config;
 
         this.nameProvider = new UniqueNameProvider(SETTINGS);
+        this.entrypointDelegateProvider = new EntrypointDelegateProvider();
         this.packager = new Packager(this);
         this.invokeDynamic = new InvokeDynamic(this);
         this.files = new HashMap<>();
@@ -511,8 +517,12 @@ public class Obfuscator
             String entryName = entry.getName();
             if (!entryName.endsWith(".class"))
             {
-                if (entryName.equals("META-INF/MANIFEST.MF"))
-                    this.setMainClass(Utils.getMainClass(new String(entryData, StandardCharsets.UTF_8)));
+                EntrypointDelegate delegate = this.entrypointDelegateProvider.getOptimalDelegateFor(entryName);
+                if (delegate != null)
+                {
+                    this.entrypointDelegate = delegate;
+                    this.setMainClass(delegate.getEntrypointClassReference(entryName, entryData));
+                }
 
                 this.files.put(entryName, entryData);
                 continue;
@@ -644,10 +654,13 @@ public class Obfuscator
             if (entryName.equals(manifestMF))
             {
                 metaInfoProcessed = true;
-                if (this.mainClassChanged)
+                if (this.entrypointChanged && this.entrypointDelegate != null)
                 {
-                    entryData = Utils.replaceMainClass(new String(entryData, StandardCharsets.UTF_8), this.mainClass)
-                                     .getBytes(StandardCharsets.UTF_8);
+                    entryData = this.entrypointDelegate.renameMainClass(
+                            entryName,
+                            this.mainClass,
+                            entryData
+                    );
                     log.info(Localisation.access("logs.obfuscation.resources.main_class.replaced")
                                          .set("newMainClass", this.mainClass)
                                          .get()
@@ -660,7 +673,7 @@ public class Obfuscator
             writeEntry(outJar, entryName, entryData, stored);
         }
 
-        if (!metaInfoProcessed && this.mainClassChanged)
+        if (!metaInfoProcessed && this.entrypointChanged)
         {
             log.info(Localisation.get("logs.obfuscation.resources.main_class.manifest_added"));
             String manifest = "Manifest-Version: 1.0\nMain-Class: " + this.mainClass + "\n";
@@ -715,7 +728,7 @@ public class Obfuscator
             this.packager.setMainClass(newMainClass);
 
         this.mainClass = newMainClass;
-        this.mainClassChanged = true;
+        this.entrypointChanged = true;
     }
 
     private Map<ClassReference, ClassNode> transformClasses(Map<ClassReference, ClassNode> classes, List<? extends IClassTransformer> processors, int threadCount)
