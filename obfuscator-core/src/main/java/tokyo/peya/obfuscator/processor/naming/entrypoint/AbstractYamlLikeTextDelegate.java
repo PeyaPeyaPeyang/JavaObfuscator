@@ -4,12 +4,10 @@ import tokyo.peya.obfuscator.clazz.ClassReference;
 
 public abstract class AbstractYamlLikeTextDelegate extends AbstractPlainTextDelegate
 {
-    private final String keyName;
     private final String linePrefix;
 
     public AbstractYamlLikeTextDelegate(String keyName)
     {
-        this.keyName = keyName;
         this.linePrefix = keyName + ": ";
     }
 
