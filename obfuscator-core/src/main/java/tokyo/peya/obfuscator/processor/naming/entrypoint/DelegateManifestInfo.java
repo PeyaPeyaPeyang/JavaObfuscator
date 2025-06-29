@@ -1,8 +1,6 @@
 package tokyo.peya.obfuscator.processor.naming.entrypoint;
 
-import tokyo.peya.obfuscator.clazz.ClassReference;
-
-public class DelegateManifestInfo extends AbstractYamlLikeTextDelegate
+public class DelegateManifestInfo extends AbstractYamlFileDelegate
 {
     public DelegateManifestInfo()
     {

@@ -1,8 +1,6 @@
 package tokyo.peya.obfuscator.processor.naming.entrypoint;
 
-import tokyo.peya.obfuscator.clazz.ClassReference;
-
-public class DelegateBukkitPluginDescription extends AbstractYamlLikeTextDelegate
+public class DelegateBukkitPluginDescription extends AbstractYamlFileDelegate
 {
     public DelegateBukkitPluginDescription()
     {

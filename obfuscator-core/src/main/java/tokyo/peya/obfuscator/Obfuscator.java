@@ -105,7 +105,6 @@ public class Obfuscator
 
     @Setter
     public ScriptBridge script;
-    private EntrypointDelegate entrypointDelegate;
     private boolean entrypointChanged;
     private ClassReference mainClass;
     private int computeMode;
@@ -515,14 +514,12 @@ public class Obfuscator
             byte[] entryData = entryBuffer.toByteArray();
 
             String entryName = entry.getName();
+            this.entrypointDelegateProvider.enableDelegateAuto(entryName);
             if (!entryName.endsWith(".class"))
             {
                 EntrypointDelegate delegate = this.entrypointDelegateProvider.getOptimalDelegateFor(entryName);
                 if (delegate != null)
-                {
-                    this.entrypointDelegate = delegate;
                     this.setMainClass(delegate.getEntrypointClassReference(entryName, entryData));
-                }
 
                 this.files.put(entryName, entryData);
                 continue;
@@ -640,45 +637,36 @@ public class Obfuscator
 
     private void writeResources(ZipOutputStream outJar, boolean stored) throws IOException
     {
-        String manifestMF = "META-INF/MANIFEST.MF";
-
         long startTime = System.currentTimeMillis();
 
         log.info(Localisation.get("logs.obfuscation.resources.writing"));
-        boolean metaInfoProcessed = false;
         for (Map.Entry<String, byte[]> fileEntry : this.files.entrySet())
         {
             String entryName = fileEntry.getKey();
             byte[] entryData = fileEntry.getValue();
 
-            if (entryName.equals(manifestMF))
+            if (this.entrypointChanged && this.entrypointDelegateProvider.isDelegateEnabled(entryName))
             {
-                metaInfoProcessed = true;
-                if (this.entrypointChanged && this.entrypointDelegate != null)
-                {
-                    entryData = this.entrypointDelegate.renameMainClass(
-                            entryName,
-                            this.mainClass,
-                            entryData
-                    );
-                    log.info(Localisation.access("logs.obfuscation.resources.main_class.replaced")
-                                         .set("newMainClass", this.mainClass)
-                                         .get()
-                    );
-                }
-
-                log.info(Localisation.get("logs.obfuscation.resources.main_class.manifest_proceed"));
+                entryData = this.entrypointDelegateProvider.renameMainClass(
+                        entryName,
+                        this.mainClass,
+                        entryData
+                );
+                log.info(Localisation.access("logs.obfuscation.resources.main_class.replaced")
+                                     .set("newMainClass", this.mainClass)
+                                     .get()
+                );
             }
 
             writeEntry(outJar, entryName, entryData, stored);
         }
-
+/*
         if (!metaInfoProcessed && this.entrypointChanged)
         {
             log.info(Localisation.get("logs.obfuscation.resources.main_class.manifest_added"));
             String manifest = "Manifest-Version: 1.0\nMain-Class: " + this.mainClass + "\n";
             writeEntry(outJar, manifestMF, manifest.getBytes(StandardCharsets.UTF_8), stored);
-        }
+        }*/
 
         log.info(Localisation.access("logs.task_finished")
                              .set("time", Utils.formatTime(System.currentTimeMillis() - startTime))
