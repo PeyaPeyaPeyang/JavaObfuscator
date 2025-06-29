@@ -36,6 +36,15 @@ import tokyo.peya.obfuscator.processor.Processors;
 import tokyo.peya.obfuscator.processor.naming.INameObfuscationProcessor;
 import tokyo.peya.obfuscator.processor.naming.entrypoint.EntrypointDelegate;
 import tokyo.peya.obfuscator.processor.naming.entrypoint.EntrypointDelegateProvider;
+import tokyo.peya.obfuscator.state.ClassReadingContext;
+import tokyo.peya.obfuscator.state.ClassesWritingContext;
+import tokyo.peya.obfuscator.state.ClasspathReadingContext;
+import tokyo.peya.obfuscator.state.EncodingContext;
+import tokyo.peya.obfuscator.state.NameProcessingContext;
+import tokyo.peya.obfuscator.state.ObfuscationState;
+import tokyo.peya.obfuscator.state.ObfuscationStatus;
+import tokyo.peya.obfuscator.state.ProcessingContext;
+import tokyo.peya.obfuscator.state.ResourcesWritingContext;
 import tokyo.peya.obfuscator.ui.PreviewGenerator;
 import tokyo.peya.obfuscator.utils.ExcludePattern;
 import tokyo.peya.obfuscator.utils.MissingClassException;
@@ -53,7 +62,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.annotation.Annotation;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -73,7 +81,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import java.util.zip.CRC32;
@@ -104,6 +112,7 @@ public class Obfuscator
     private final List<Pattern> excludePatterns;
 
     @Setter
+    private ObfuscationStatus status;
     public ScriptBridge script;
     private boolean entrypointChanged;
     private ClassReference mainClass;
@@ -128,6 +137,7 @@ public class Obfuscator
         this.hierarchy = new HashMap<>();
         this.libraryClassNodes = new HashSet<>();
         this.excludePatterns = compileExcludePatterns();
+        this.status = new ObfuscationStatus();
 
         this.mainClass = null;
 
@@ -244,22 +254,29 @@ public class Obfuscator
             this.hierarchy.get(ref).subClasses.add(ClassReference.of(sub.classNode.name));
     }
 
-    private List<byte[]> loadClasspathFile(File file) throws IOException
+    private List<byte[]> loadClasspathFile(File file, ClasspathReadingContext ctxt) throws IOException
     {
         ZipFile zipIn = new ZipFile(file);
         Enumeration<? extends ZipEntry> entries = zipIn.entries();
+        ctxt.setTotalClassesToLoad(zipIn.size());
 
         boolean isModule = file.getName().endsWith(".jmod");
 
         List<byte[]> byteList = new ArrayList<>(zipIn.size());
 
+        long loaded = 0;
         while (entries.hasMoreElements())
         {
             ZipEntry ent = entries.nextElement();
             if (ent.getName().endsWith(".class")
                     && (!isModule || !ent.getName().endsWith("module-info.class")
                     && ent.getName().startsWith("classes/")))
+            {
+                ctxt.setLoadingClassName(file.getName() + " -> " + ent.getName());
                 byteList.add(ByteStreams.toByteArray(zipIn.getInputStream(ent)));
+            }
+
+            ctxt.setTotalClassesLoaded(++loaded);
         }
         zipIn.close();
 
@@ -268,14 +285,17 @@ public class Obfuscator
 
     private void loadClasspath(List<String> libraryFileNames) throws IOException
     {
+        ClasspathReadingContext context = new ClasspathReadingContext(this.status);
+        context.setTotalFilesToRead(libraryFileNames.size());
+        this.status.setState(
+                ObfuscationState.READING_CLASS_PATH,
+                context
+        );
+
         long startTime = System.currentTimeMillis();
         log.info(Localisation.get("logs.obfuscation.classpath.loading"));
 
-        int i = 0;
-
-        LinkedList<byte[]> classList = new LinkedList<>();
-
-        List<File> libraries = new ArrayList<>();
+        List<File> libraryFiles = new ArrayList<>();
         for (String s : libraryFileNames)
         {
             File file = new File(s);
@@ -287,24 +307,28 @@ public class Obfuscator
                 );
                 continue;
             }
-            libraries.add(file);
+            libraryFiles.add(file);
         }
 
-        for (File file : libraries)
+        int i = 0;
+        LinkedList<byte[]> classList = new LinkedList<>();
+        for (File file : libraryFiles)
         {
             if (file.isFile())
             {
                 log.info(Localisation.access("logs.obfuscation.classpath.loading_each")
                                      .set("filePath", file.getAbsolutePath())
-                                     .set("percent", ++i * 100 / libraries.size())
+                                     .set("percent", ++i * 100 / libraryFiles.size())
                                      .get()
                 );
-                classList.addAll(loadClasspathFile(file));
+                classList.addAll(loadClasspathFile(file, context));
+                context.setTotalFilesLoaded(i++);
                 continue;
             }
 
             try (Stream<Path> stream = Files.walk(file.toPath()))
             {
+                AtomicLong totalFiles = new AtomicLong(0);
                 stream.map(Path::toFile)
                       .filter(f -> f.getName().endsWith(".jar")
                               || f.getName().endsWith(".zip")
@@ -317,7 +341,7 @@ public class Obfuscator
                           );
                           try
                           {
-                              classList.addAll(loadClasspathFile(f));
+                              classList.addAll(loadClasspathFile(f, context));
                           }
                           catch (IOException e)
                           {
@@ -327,6 +351,8 @@ public class Obfuscator
                                                    .get()
                               );
                           }
+
+                          context.setTotalFilesLoaded(totalFiles.incrementAndGet());
                       });
             }
         }
@@ -336,7 +362,7 @@ public class Obfuscator
                              .get()
         );
 
-        this.classPath.putAll(parseClassPath(classList, this.config.getNThreads()));
+        this.classPath.putAll(parseClassPath(context, classList, this.config.getNThreads()));
         this.libraryClassNodes.addAll(this.classPath.values());
 
 
@@ -347,9 +373,13 @@ public class Obfuscator
 
     }
 
-    private Map<ClassReference, ClassWrapper> parseClassPath(final LinkedList<byte[]> byteList, int threads)
+    private Map<ClassReference, ClassWrapper> parseClassPath(ClasspathReadingContext ctxt, final LinkedList<byte[]> byteList, int threads)
     {
+        ctxt.reset();
+        ctxt.setTotalClassesToLoad(byteList.size());
+
         log.info(Localisation.get("logs.obfuscation.classpath.parsing_class"));
+        AtomicLong totalClassesRead = new AtomicLong(0);
         return ParallelExecutor.runInParallelAndMerge(
                 threads, () -> () -> {
                     Map<ClassReference, ClassWrapper> localMap = new HashMap<>();
@@ -369,6 +399,8 @@ public class Obfuscator
 
                         ClassWrapper wrapper = new ClassWrapper(node, true, bytes);
                         localMap.put(ClassReference.of(node), wrapper);
+                        ctxt.setLoadingClassName(node.name);
+                        ctxt.setTotalClassesLoaded(totalClassesRead.incrementAndGet());
                     }
                     return localMap;
                 }
@@ -412,7 +444,7 @@ public class Obfuscator
 
             outJar = getOutJarStream(this.config.getOutput(), useStore);
 
-            if (isClass(this.config.getInput()))
+            if (isClass(this.config.getInput()))  // .jar ではなく, .class ファイルが指定された場合の処理
             {
                 this.processOneClassObfuscation(this.config.getInput(), outJar);
                 return;
@@ -432,6 +464,7 @@ public class Obfuscator
         }
         finally
         {
+            this.status.setState(ObfuscationState.DONE, null);
             System.gc();
 
             if (outJar != null)
@@ -484,8 +517,18 @@ public class Obfuscator
 
     private Map<String, byte[]> readJarClasses(ZipInputStream input, ZipOutputStream outJar) throws IOException
     {
-        Map<String, byte[]> classDataMap = new HashMap<>();
+        ClassReadingContext ctxt = new ClassReadingContext(this.status);
+        try (ZipFile zipFile = new ZipFile(this.config.getInput()))
+        {
+            ctxt.setTotalClassesToRead(zipFile.size());
+        }
+        this.status.setState(
+                ObfuscationState.READING_CLASSES,
+                ctxt
+        );
 
+        long classes = 0;
+        Map<String, byte[]> classDataMap = new HashMap<>();
         while (true)
         {
             ZipEntry entry = input.getNextEntry();
@@ -493,11 +536,14 @@ public class Obfuscator
             if (entry == null)
                 break;
 
+            String entryName = entry.getName();
             if (entry.isDirectory())
             {
                 outJar.putNextEntry(entry);
                 continue;
             }
+
+            ctxt.setReadingClassName(this.config.getInput() + " -> " + entry.getName());
 
             byte[] data = new byte[4096];
             ByteArrayOutputStream entryBuffer = new ByteArrayOutputStream();
@@ -513,20 +559,22 @@ public class Obfuscator
 
             byte[] entryData = entryBuffer.toByteArray();
 
-            String entryName = entry.getName();
-            this.entrypointDelegateProvider.enableDelegateAuto(entryName);
+            // メイン・クラスの差し替え
+            this.entrypointDelegateProvider.enableDelegateAuto(entryName, entryData);
+            EntrypointDelegate delegate = this.entrypointDelegateProvider.getOptimalDelegateFor(entryName, entryData);
+            if (delegate != null)
+                this.setMainClass(delegate.getEntrypointClassReference(entryName, entryData));
+
             if (!entryName.endsWith(".class"))
             {
-                EntrypointDelegate delegate = this.entrypointDelegateProvider.getOptimalDelegateFor(entryName);
-                if (delegate != null)
-                    this.setMainClass(delegate.getEntrypointClassReference(entryName, entryData));
-
                 this.files.put(entryName, entryData);
                 continue;
             }
 
             registerClassBytes(entryName, entryData);
             classDataMap.put(entryName, entryData);
+
+            ctxt.setTotalClassesRead(++classes);
         }
 
         return classDataMap;
@@ -618,33 +666,58 @@ public class Obfuscator
                              .get()
         );
         long startTime = System.currentTimeMillis();
-        Map<String, byte[]> toWrite = new HashMap<>(classes);
 
-        if (this.packager.isEnabled())
-            toWrite.putAll(generatePackageDecrypter());
-
-
-        for (Map.Entry<String, byte[]> stringEntry : toWrite.entrySet())
-            writeEntry(outJar, stringEntry.getKey(), stringEntry.getValue(), stored);
+        this.writeClasses(outJar, classes, stored);
 
         log.info(Localisation.access("logs.task_finished")
                              .set("time", Utils.formatTime(System.currentTimeMillis() - startTime))
                              .get()
         );
 
-        writeResources(outJar, stored);
+        this.writeResources(outJar, stored);
+    }
+
+    private void writeClasses(ZipOutputStream outJar, Map<String, byte[]> classes, boolean stored) throws IOException
+    {
+        ClassesWritingContext ctxt = new ClassesWritingContext(this.status);
+        ctxt.setTotalClassesToWrite(classes.size());
+        this.status.setState(
+                ObfuscationState.WRITING_CLASSES,
+                ctxt
+        );
+
+        Map<String, byte[]> toWrite = new HashMap<>(classes);
+
+        if (this.packager.isEnabled())
+            toWrite.putAll(generatePackageDecrypter());
+
+        long written = 0;
+        for (Map.Entry<String, byte[]> stringEntry : toWrite.entrySet())
+        {
+            ctxt.setWritingClassName(stringEntry.getKey());
+            writeEntry(outJar, stringEntry.getKey(), stringEntry.getValue(), stored);
+            ctxt.setTotalClassesWritten(++written);
+        }
     }
 
     private void writeResources(ZipOutputStream outJar, boolean stored) throws IOException
     {
-        long startTime = System.currentTimeMillis();
+        ResourcesWritingContext ctxt = new ResourcesWritingContext(this.status);
+        ctxt.setTotalResourcesToWrite(this.files.size());
+        this.status.setState(
+                ObfuscationState.WRITING_RESOURCES,
+                ctxt
+        );
 
+        long written = 0;
+        long startTime = System.currentTimeMillis();
         log.info(Localisation.get("logs.obfuscation.resources.writing"));
         for (Map.Entry<String, byte[]> fileEntry : this.files.entrySet())
         {
             String entryName = fileEntry.getKey();
             byte[] entryData = fileEntry.getValue();
 
+            ctxt.setWritingResourceName(entryName);
             if (this.entrypointChanged && this.entrypointDelegateProvider.isDelegateEnabled(entryName))
             {
                 entryData = this.entrypointDelegateProvider.renameMainClass(
@@ -659,14 +732,8 @@ public class Obfuscator
             }
 
             writeEntry(outJar, entryName, entryData, stored);
+            ctxt.setTotalResourcesWritten(++written);
         }
-/*
-        if (!metaInfoProcessed && this.entrypointChanged)
-        {
-            log.info(Localisation.get("logs.obfuscation.resources.main_class.manifest_added"));
-            String manifest = "Manifest-Version: 1.0\nMain-Class: " + this.mainClass + "\n";
-            writeEntry(outJar, manifestMF, manifest.getBytes(StandardCharsets.UTF_8), stored);
-        }*/
 
         log.info(Localisation.access("logs.task_finished")
                              .set("time", Utils.formatTime(System.currentTimeMillis() - startTime))
@@ -676,6 +743,14 @@ public class Obfuscator
 
     private Map<String, byte[]> processClasses(Map<ClassReference, ClassNode> classes)
     {
+        ProcessingContext ctxt = new ProcessingContext(this.status);
+        ctxt.setTotalClassesToProcess(classes.size());
+
+        this.status.setState(
+                ObfuscationState.PROCESSING_CLASSES,
+                ctxt
+        );
+
         long startTime = System.currentTimeMillis();
 
         int threadCount = this.config.getNThreads();
@@ -684,17 +759,13 @@ public class Obfuscator
                              .set("classes", classes.size())
                              .get()
         );
-        Map<ClassReference, ClassNode> transformed = this.transformClasses(classes, this.processors, threadCount);
 
-        for (INameObfuscationProcessor nameObfuscationProcessor : this.nameObfuscationProcessors)
-            nameObfuscationProcessor.transformPost(this, transformed);
+        Map<ClassReference, ClassNode> transformed = this.transformClasses(ctxt, classes, this.processors, threadCount);
+        this.processNameObfuscation(transformed);
 
         // InvokeDynamic を後から実行することで, NameObfuscationProcessor 後のクラス名変更に対応する
         if (InvokeDynamic.isEnabled())
-        {
-            // log.info(Localisation.get("logs.obfuscation.transformer.invoke_dynamic"));
-            transformed = this.transformClasses(transformed, List.of(this.invokeDynamic), threadCount);
-        }
+            transformed = this.transformClasses(ctxt, transformed, List.of(this.invokeDynamic), threadCount);
 
         Map<String, byte[]> toWrite = this.encodeClasses(transformed, threadCount);
         log.info(Localisation.access("logs.task_finished")
@@ -703,6 +774,21 @@ public class Obfuscator
         );
 
         return toWrite;
+    }
+
+    private void processNameObfuscation(
+            Map<ClassReference, ClassNode> classes
+    )
+    {
+        NameProcessingContext nameContext = new NameProcessingContext(this.status);
+        nameContext.setTotalNamesToProcess((long) classes.size() * (long) this.nameObfuscationProcessors.size());
+        this.status.setState(
+                ObfuscationState.PROCESSING_CLASS_NAMES,
+                nameContext
+        );
+
+        for (INameObfuscationProcessor nameObfuscationProcessor : this.nameObfuscationProcessors)
+            nameObfuscationProcessor.transformPost(this, nameContext, classes);
     }
 
     public void setMainClass(ClassReference newMainClass)
@@ -719,20 +805,22 @@ public class Obfuscator
         this.entrypointChanged = true;
     }
 
-    private Map<ClassReference, ClassNode> transformClasses(Map<ClassReference, ClassNode> classes, List<? extends IClassTransformer> processors, int threadCount)
+    private Map<ClassReference, ClassNode> transformClasses(ProcessingContext ctxt,
+                                                            Map<ClassReference, ClassNode> classes,
+                                                            List<? extends IClassTransformer> processors,
+                                                            int threadCount)
     {
         LinkedList<Map.Entry<ClassReference, ClassNode>> classQueue = new LinkedList<>(classes.entrySet());
-        Map<ClassReference, ClassNode> obfuscated;
-
-        AtomicInteger processed = new AtomicInteger(0);
-
-        obfuscated = ParallelExecutor.runInParallelAndMerge(threadCount, () -> () -> {
+        AtomicLong processed = new AtomicLong(0);
+        return ParallelExecutor.runInParallelAndMerge(threadCount, () -> () -> {
             Map<ClassReference, ClassNode> toWriteThread = new HashMap<>();
 
-            while (true) {
+            while (true)
+            {
                 Map.Entry<ClassReference, ClassNode> classEntry;
 
-                synchronized (classQueue) {
+                synchronized (classQueue)
+                {
                     classEntry = classQueue.poll();
                 }
 
@@ -743,7 +831,8 @@ public class Obfuscator
                 ClassReference reference = classEntry.getKey();
                 ClassNode cn = classEntry.getValue();
 
-                try {
+                try
+                {
                     this.computeMode = ModifiedClassWriter.COMPUTE_MAXS;
 
                     boolean isSkippedByScript = !(this.script == null || this.script.isObfuscatorEnabled(cn));
@@ -761,7 +850,8 @@ public class Obfuscator
                                           .set("entryName", reference)
                                           .get());
 
-                    for (IClassTransformer proc : processors) {
+                    for (IClassTransformer proc : processors)
+                    {
                         boolean shouldProcess = shouldProcess(cn, proc);
                         if (!shouldProcess) {
                             log.info(Localisation.access("logs.obfuscation.transforming.skipped.annotation")
@@ -772,9 +862,13 @@ public class Obfuscator
                             continue;
                         }
 
-                        try {
+                        try
+                        {
+                            ctxt.setProcessingClassName(reference.getFileNameFull());
                             proc.process(callback, cn);
-                        } catch (Exception e) {
+                        }
+                        catch (Exception e)
+                        {
                             log.error(Localisation.access("logs.obfuscation.transforming.error")
                                                   .set("proceedClasses", processed.get())
                                                   .set("totalClasses", classes.size())
@@ -784,11 +878,10 @@ public class Obfuscator
                         }
                     }
 
-                    if (callback.isForceComputeFrames()) {
+                    if (callback.isForceComputeFrames())
                         cn.methods.forEach(method -> Arrays.stream(method.instructions.toArray())
                                                            .filter(insn -> insn instanceof FrameNode)
                                                            .forEach(insn -> method.instructions.remove(insn)));
-                    }
 
                     this.computeMode = this.computeMode | (callback.isForceComputeFrames() ? ModifiedClassWriter.COMPUTE_FRAMES : 0);
 
@@ -805,7 +898,7 @@ public class Obfuscator
                         );
 
                     toWriteThread.put(reference, cn);
-                    processed.incrementAndGet();
+                    ctxt.setTotalClassesProcessed(processed.incrementAndGet());
                 } catch (Exception e) {
                     log.error(Localisation.access("logs.obfuscation.transforming.error")
                                           .set("threadName", Thread.currentThread().getName())
@@ -821,22 +914,21 @@ public class Obfuscator
 
             return toWriteThread;
         });
-        return obfuscated;
     }
 
     private Map<String, byte[]> encodeClasses(Map<ClassReference, ClassNode> classes, int threadCount)
     {
-        ExecutorService executorService = Executors.newFixedThreadPool(
-                threadCount, new ThreadFactoryBuilder()
-                        .setNameFormat("Worker-%d")
-                        .build()
+        EncodingContext ctxt = new EncodingContext(this.status);
+        ctxt.setTotalClassesToEncode(classes.size());
+        this.status.setState(
+                ObfuscationState.ENCODING_CLASSES,
+                ctxt
         );
 
         LinkedList<Map.Entry<ClassReference, ClassNode>> classQueue = new LinkedList<>(classes.entrySet());
-        Map<String, byte[]> toWrite = new HashMap<>();
 
-        AtomicInteger processed = new AtomicInteger(0);
-        Callable<Map<String, byte[]>> runnable = () -> {
+        AtomicLong processed = new AtomicLong(0);
+        return ParallelExecutor.runInParallelAndMerge(this.config.getNThreads(), () -> () -> {
             Map<String, byte[]> toWriteThread = new HashMap<>();
             while (true)
             {
@@ -855,8 +947,8 @@ public class Obfuscator
 
                 byte[] entryData;
                 ClassNode cn = stringClassNodeEntry.getValue();
-                boolean isPackagerClassDecrypter = this.packager.isEnabled() && this.packager.isPackagerClassDecrypter(
-                        cn);
+                boolean isPackagerClassDecrypter =
+                        this.packager.isEnabled() && this.packager.isPackagerClassDecrypter(cn);
 
                 try
                 {
@@ -871,6 +963,7 @@ public class Obfuscator
 
                     removeObfuscateRuleAnnotations(cn);
 
+                    ctxt.setEncodingClassName(writePath);
                     ModifiedClassWriter writer = new ModifiedClassWriter(
                             mode
 //                                            ModifiedClassWriter.COMPUTE_MAXS |
@@ -903,36 +996,11 @@ public class Obfuscator
 
                 toWriteThread.put(writePath, entryData);
 
-                processed.incrementAndGet();
+                ctxt.setTotalClassesEncoded(processed.incrementAndGet());
             }
 
             return toWriteThread;
-        };
-
-        List<Future<Map<String, byte[]>>> futures = new ArrayList<>();
-        for (int i = 0; i < threadCount; i++)
-            futures.add(executorService.submit(runnable));
-
-        for (Future<Map<String, byte[]>> future : futures)
-            try
-            {
-                toWrite.putAll(future.get());
-            }
-            catch (InterruptedException e)
-            {
-                log.error("Error getting future", e);
-            }
-            catch (ExecutionException e)
-            {
-                if (e.getCause() instanceof Exception)
-                    JavaObfuscator.setLastException((Exception) e.getCause());
-
-                log.error("Error getting future", e);
-            }
-
-        executorService.shutdown();
-
-        return toWrite;
+        });
     }
 
     public void writeEntry(ZipOutputStream outJar, String inJarPath, byte[] value, boolean stored) throws IOException
@@ -1057,9 +1125,11 @@ public class Obfuscator
             put(ClassReference.of(node), node);
         }};
 
+        NameProcessingContext nameContext = new NameProcessingContext(this.status);
+
         // 変形処理をする
         for (INameObfuscationProcessor nameObfuscationProcessor : this.nameObfuscationProcessors)
-            nameObfuscationProcessor.transformPost(this, classPath);
+            nameObfuscationProcessor.transformPost(this, nameContext,  classPath);
 
         // 変形処理後の, メインクラスを探し出す
         ClassNode mainClassNode = classPath.values().stream()

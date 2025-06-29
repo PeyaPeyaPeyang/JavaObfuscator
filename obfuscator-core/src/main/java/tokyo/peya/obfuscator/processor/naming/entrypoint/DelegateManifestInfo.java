@@ -8,8 +8,9 @@ public class DelegateManifestInfo extends AbstractYamlFileDelegate
     }
 
     @Override
-    public boolean canProvideMainClass(String entry)
+    public boolean canProvideMainClass(String entry, String content)
     {
-        return entry.equals("META-INF/MANIFEST.MF") || entry.equals("META-INF/MANIFEST.mf");
+        return (entry.equals("META-INF/MANIFEST.MF") || entry.equals("META-INF/MANIFEST.mf"))
+                && super.canProvideMainClass(entry, content);
     }
 }

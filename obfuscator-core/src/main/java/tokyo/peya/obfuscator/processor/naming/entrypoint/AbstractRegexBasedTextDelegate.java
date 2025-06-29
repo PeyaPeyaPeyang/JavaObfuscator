@@ -24,6 +24,14 @@ public abstract class AbstractRegexBasedTextDelegate extends AbstractPlainTextDe
     }
 
     @Override
+    protected boolean canProvideMainClass(String entryName, String content)
+    {
+        // 正規表現を使用してメインクラス名が存在するかをチェック
+        Matcher matcher = this.pattern.matcher(content);
+        return matcher.find();  // マッチした場合は true を返す
+    }
+
+    @Override
     protected ClassReference getMainClassName(String entryName, String text)
     {
         // 正規表現を使用してメインクラス名を抽出

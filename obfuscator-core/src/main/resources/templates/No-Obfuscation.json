@@ -1,0 +1,44 @@
+{
+  "string_encryption": {
+    "enabled": false
+  },
+  "line_number_remover": {
+    "enabled": false
+  },
+  "number_obfuscation": {
+    "enabled": false
+  },
+  "static_initialisation": {
+    "enabled": false
+  },
+  "hide_strings": {
+    "enabled": false
+  },
+  "packager": {
+    "enabled": false
+  },
+  "optimiser": {
+    "enabled": false
+  },
+  "invoke_dynamic": {
+    "enabled": false
+  },
+  "decompiler_crasher": {
+    "enabled": false
+  },
+  "name_obfuscation": {
+    "enabled": false
+  },
+  "hide_members": {
+    "enabled": false
+  },
+  "shuffler": {
+    "enabled": false
+  },
+  "FlowObfuscator": {
+    "enabled": false
+  },
+  "inner_class_remover": {
+    "enabled": false
+  }
+}

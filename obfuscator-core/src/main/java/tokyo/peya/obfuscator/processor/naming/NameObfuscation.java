@@ -32,6 +32,7 @@ import tokyo.peya.obfuscator.configuration.values.EnabledValue;
 import tokyo.peya.obfuscator.configuration.values.FilePathValue;
 import tokyo.peya.obfuscator.configuration.values.StringValue;
 import tokyo.peya.obfuscator.processor.Packager;
+import tokyo.peya.obfuscator.state.NameProcessingContext;
 import tokyo.peya.obfuscator.utils.ExcludePattern;
 import tokyo.peya.obfuscator.utils.NameUtils;
 import tokyo.peya.obfuscator.utils.NodeUtils;
@@ -254,7 +255,7 @@ public class NameObfuscation implements INameObfuscationProcessor
     }
 
     @Override
-    public void transformPost(Obfuscator inst, Map<ClassReference, ClassNode> nodes)
+    public void transformPost(Obfuscator inst, NameProcessingContext ctxt, Map<ClassReference, ClassNode> nodes)
     {
         if (!V_ENABLED.get())
             return;
@@ -273,9 +274,7 @@ public class NameObfuscation implements INameObfuscationProcessor
 
             log.info("Generating mappings...");
 
-            //NameUtils.setup();
             this.setupRandomizers();
-
             this.processClasses(classWrappers, mappings);
 
             if (V_SAVE_MAPPINGS.get())
@@ -294,7 +293,7 @@ public class NameObfuscation implements INameObfuscationProcessor
 
             log.info("Applying mappings...");
             current = System.currentTimeMillis();
-            this.writeClasses(mappings, classWrappers, nodes);
+            this.writeClasses(ctxt, mappings, classWrappers, nodes);
             log.info(String.format(
                     "... Finished applying mappings (%s)",
                     Utils.formatTime(System.currentTimeMillis() - current)
@@ -442,13 +441,19 @@ public class NameObfuscation implements INameObfuscationProcessor
         );
     }
 
-    private void writeClasses(HashMap<String, String> mappings, List<? extends ClassWrapper> classWrappers,
+    private void writeClasses(NameProcessingContext ctxt,
+                              HashMap<String, String> mappings,
+                              List<? extends ClassWrapper> classWrappers,
                               Map<ClassReference, ? super ClassNode> ledger)
     {
         Remapper simpleRemapper = new MemberRemapper(mappings);
 
         for (ClassWrapper classWrapper : classWrappers)
+        {
+            ctxt.setProcessingName(classWrapper.originalRef.getFullQualifiedName());
             writeClass(classWrapper, simpleRemapper, ledger);
+            ctxt.incrementTotalNamesProcessed();
+        }
     }
 
     private void writeClass(ClassWrapper classWrapper, Remapper simpleRemapper,

@@ -8,8 +8,9 @@ public class DelegateBukkitPluginDescription extends AbstractYamlFileDelegate
     }
 
     @Override
-    public boolean canProvideMainClass(String entryName)
+    public boolean canProvideMainClass(String entryName, String content)
     {
-        return entryName.equals("plugin.yml") || entryName.equals("plugin.yaml");
+        return (entryName.equals("plugin.yml") || entryName.equals("plugin.yaml"))
+                && super.canProvideMainClass(entryName, content);
     }
 }

@@ -43,6 +43,7 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Consumer;
 
 @Slf4j(topic = "Main")
 public class JavaObfuscator
@@ -268,11 +269,11 @@ public class JavaObfuscator
         if (!(scriptContent == null || scriptContent.isEmpty()))
             config.setScript(scriptContent);
 
-        return runObfuscator(config);
+        return runObfuscator(config, null);
     }
 
     @SneakyThrows(InterruptedException.class)
-    public static boolean runObfuscator(Configuration config)
+    public static boolean runObfuscator(Configuration config, Consumer<? super Obfuscator> onObfuscatorCreateD)
     {
         syncLogger();
         int threads = config.getNThreads();
@@ -298,6 +299,8 @@ public class JavaObfuscator
         {
             lastException = null;
             Obfuscator obfuscator = JavaObfuscator.currentSession = new Obfuscator(config);
+            if (onObfuscatorCreateD != null)
+                onObfuscatorCreateD.accept(obfuscator);
             obfuscator.process();
             succeed = true;
         }

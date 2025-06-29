@@ -24,6 +24,7 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
 import javax.swing.JTabbedPane;
@@ -42,6 +43,7 @@ import org.fife.ui.rtextarea.RTextScrollPane;
 import org.objectweb.asm.tree.ClassNode;
 import tokyo.peya.obfuscator.JavaObfuscator;
 import tokyo.peya.obfuscator.Localisation;
+import tokyo.peya.obfuscator.Obfuscator;
 import tokyo.peya.obfuscator.configuration.ConfigManager;
 import tokyo.peya.obfuscator.configuration.Configuration;
 import tokyo.peya.obfuscator.configuration.Value;
@@ -49,6 +51,14 @@ import tokyo.peya.obfuscator.configuration.ValueManager;
 import tokyo.peya.obfuscator.configuration.values.BooleanValue;
 import tokyo.peya.obfuscator.configuration.values.FilePathValue;
 import tokyo.peya.obfuscator.configuration.values.StringValue;
+import tokyo.peya.obfuscator.state.ClassReadingContext;
+import tokyo.peya.obfuscator.state.ClassesWritingContext;
+import tokyo.peya.obfuscator.state.ClasspathReadingContext;
+import tokyo.peya.obfuscator.state.EncodingContext;
+import tokyo.peya.obfuscator.state.NameProcessingContext;
+import tokyo.peya.obfuscator.state.ObfuscationState;
+import tokyo.peya.obfuscator.state.ProcessingContext;
+import tokyo.peya.obfuscator.state.ResourcesWritingContext;
 import tokyo.peya.obfuscator.templating.Template;
 import tokyo.peya.obfuscator.templating.Templates;
 import tokyo.peya.obfuscator.utils.JObfFileFilter;
@@ -81,7 +91,6 @@ import java.util.ResourceBundle;
 
 public class GUI extends JFrame
 {
-    private static Method $$$cachedGetBundleMethod$$$;
     public JTextPane logArea;
     private JTabbedPane tabbedPane1;
     private JPanel panel1;
@@ -111,11 +120,29 @@ public class GUI extends JFrame
     private RSyntaxTextArea originalArea;
     private RSyntaxTextArea obfuscatedArea;
     private JButton pickAnotherClassButton;
+    private JProgressBar progressBar1;
+    private JLabel labelStatus;
     private List<String> libraryList = new ArrayList<>();
 
     static
     {
         injectUnicodeFont();
+    }
+
+    private void updateStatusLabel()
+    {
+        if (this.inputTextField.getText().isEmpty())
+        {
+            this.labelStatus.setText(Localisation.get("ui.status.preparation.specify_input"));
+            return;
+        }
+        else if (this.outputTextField.getText().isEmpty())
+        {
+            this.labelStatus.setText(Localisation.get("ui.status.preparation.specify_output"));
+            return;
+        }
+
+        this.labelStatus.setText(Localisation.get("ui.status.ready"));
     }
 
     public GUI()
@@ -124,19 +151,24 @@ public class GUI extends JFrame
         $$$setupUI$$$();
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setContentPane(this.panel1);
-        setSize(1020, 800);
+        setSize(1020, 820);
         setLocationRelativeTo(null);
         setTitle(JavaObfuscator.VERSION);
 
+        this.updateStatusLabel();
         this.inputBrowseButton.addActionListener(e -> {
             String file = Utils.chooseFile(null, GUI.this, new JarFileFilter());
             if (file != null)
                 this.inputTextField.setText(file);
+
+            this.updateStatusLabel();
         });
         this.outputBrowseButton.addActionListener(e -> {
             String file = Utils.chooseFile(null, GUI.this, new JarFileFilter(), true);
             if (file != null)
                 this.outputTextField.setText(file);
+
+            this.updateStatusLabel();
         });
         this.obfuscateButton.addActionListener(e -> startObfuscator());
         this.buildButton.addActionListener(e -> buildConfig());
@@ -346,6 +378,125 @@ public class GUI extends JFrame
         this.setVisible(true);
     }
 
+    private void addObfuscatorListener(Obfuscator obfuscator)
+    {
+        obfuscator.getStatus().setStateChangeListener(
+                ObfuscationState.READING_CLASS_PATH,
+                ClasspathReadingContext.class,
+                context -> {
+                    this.progressBar1.setValue(context.getProgressPercentage());
+                    this.labelStatus.setText(Localisation.access("ui.status.reading_class_path")
+                                                         .set("readClasses", context.getTotalClassesLoaded())
+                                                         .set("readFiles", context.getTotalFilesLoaded())
+                                                         .set("totalFiles", context.getTotalFilesToRead())
+                                                         .set("totalClasses", context.getTotalClassesToLoad())
+                                                         .set("readingClass", context.getLoadingClassName())
+                                                         .get());
+                }
+        );
+        obfuscator.getStatus().setStateChangeListener(
+                ObfuscationState.READING_CLASSES,
+                ClassReadingContext.class,
+                context -> {
+                    this.progressBar1.setValue((int) (context.getTotalClassesRead() * 100 / context.getTotalClassesToRead()));
+                    this.labelStatus.setText(Localisation.access("ui.status.reading_classes")
+                                                         .set("readClasses", context.getTotalClassesRead())
+                                                         .set("totalClasses", context.getTotalClassesToRead())
+                                                            .set("readingClass", context.getReadingClassName())
+                                                         .get());
+                    // Status: Reading classes (%%readClasses%%/%%totalClasses%%) -> Reading %%readingClass%% ...
+                    // ステータス: クラスを読み込み中（%%readClasses%%/%%totalClasses%%） -> %%readingClass%% を読み込んでいます…
+                }
+        );
+
+        obfuscator.getStatus().setStateChangeListener(
+                ObfuscationState.PROCESSING_CLASSES,
+                ProcessingContext.class,
+                context -> {
+                    this.progressBar1.setValue((int) (context.getTotalClassesProcessed() * 100 / context.getTotalClassesToProcess()));
+                    this.labelStatus.setText(Localisation.access("ui.status.processing_classes")
+                                                         .set("processedClasses", context.getTotalClassesProcessed())
+                                                         .set("totalClasses", context.getTotalClassesToProcess())
+                                                         .set("processingClass", context.getProcessingClassName())
+                                                         .get());
+                    // ステータス: クラスを処理中（%%processedClasses%%/%%totalClasses%%） -> %%processingClass%% を処理中…
+                    // Status: Processing classes (%%processedClasses%%/%%totalClasses%%) -> Processing %%processingClass%% ...
+                }
+        );
+
+        obfuscator.getStatus().setStateChangeListener(
+                ObfuscationState.PROCESSING_CLASS_NAMES,
+                NameProcessingContext.class,
+                context -> {
+                    this.progressBar1.setValue((int) (context.getTotalNamesProcessed() * 100 / context.getTotalNamesToProcess()));
+                    this.labelStatus.setText(Localisation.access("ui.status.processing_class_names")
+                                                         .set("processedClasses", context.getTotalNamesProcessed())
+                                                         .set("totalClasses", context.getTotalNamesToProcess())
+                                                         .set("processingClass", context.getProcessingName())
+                                                         .get());
+                    // ステータス: クラス名を処理中（%%processedClasses%%/%%totalClasses%%） -> %%processingClass%% の名前を処理中…
+                    // Status: Processing class names (%%processedClasses%%/%%totalClasses%%) -> Processing name of %%processingClass%% ...
+                }
+        );
+
+        obfuscator.getStatus().setStateChangeListener(
+                ObfuscationState.ENCODING_CLASSES,
+                EncodingContext.class,
+                context -> {
+                    this.progressBar1.setValue((int) (context.getTotalClassesEncoded() * 100 / context.getTotalClassesToEncode()));
+                    this.labelStatus.setText(Localisation.access("ui.status.encoding_classes")
+                                                         .set("encodedClasses", context.getTotalClassesEncoded())
+                                                         .set("totalClasses", context.getTotalClassesToEncode())
+                                                         .set("encodingClass", context.getEncodingClassName())
+                                                         .get());
+                    // ステータス: クラスをエンコード中（%%encodedClasses%%/%%totalClasses%%） -> %%encodingClass%% をエンコード中…
+                    // Status: Encoding classes (%%encodedClasses%%/%%totalClasses%%) -> Encoding %%encodingClass%% ...
+                }
+        );
+
+        obfuscator.getStatus().setStateChangeListener(
+                ObfuscationState.WRITING_CLASSES,
+                ClassesWritingContext.class,
+                context -> {
+                    this.progressBar1.setValue((int) (context.getTotalClassesWritten() * 100 / context.getTotalClassesToWrite()));
+                    this.labelStatus.setText(Localisation.access("ui.status.writing_classes")
+                                                         .set("writtenClasses", context.getTotalClassesWritten())
+                                                         .set("totalClasses", context.getTotalClassesToWrite())
+                                                         .set("writingClass", context.getWritingClassName())
+                                                         .get());
+                    // ステータス: クラスを書き込み中（%%writtenClasses%%/%%totalClasses%%） -> %%writingClass%% を書き込み中…
+                    // Status: Writing classes (%%writtenClasses%%/%%totalClasses%%) -> Writing %%writingClass%% ...
+                }
+        );
+
+        obfuscator.getStatus().setStateChangeListener(
+                ObfuscationState.WRITING_RESOURCES,
+                ResourcesWritingContext.class,
+                context -> {
+                    this.progressBar1.setValue((int) (context.getTotalResourcesWritten() * 100 / context.getTotalResourcesToWrite()));
+                    this.labelStatus.setText(Localisation.access("ui.status.writing_resources")
+                                                         .set("writtenResources", context.getTotalResourcesWritten())
+                                                         .set("totalResources", context.getTotalResourcesToWrite())
+                                                            .set("writingResource", context.getWritingResourceName())
+                                                         .get());
+                    // ステータス: リソースを書き込み中（%%writtenResources%%/%%totalResources%%） -> %%writingResource%% を書き込み中…
+                    // Status: Writing resources (%%writtenResources%%/%%totalResources%%) -> Writing %%writingResource%% ...
+                }
+        );
+
+        obfuscator.getStatus().setStateChangeListener(
+                ObfuscationState.DONE,
+                null,
+                context -> {
+                    this.progressBar1.setIndeterminate(false);
+                    this.progressBar1.setValue(100);
+                    this.labelStatus.setText(Localisation.get("ui.status.done"));
+                    // ステータス: 完了
+                    // Status: Done
+                }
+        );
+    }
+
     public void addJavaBaseLibraries()
     {
         String javaHome = System.getProperty("java.home");
@@ -426,7 +577,7 @@ public class GUI extends JFrame
     private void $$$setupUI$$$()
     {
         panel1 = new JPanel();
-        panel1.setLayout(new GridLayoutManager(2, 1, new Insets(0, 1, 0, 1), -1, -1));
+        panel1.setLayout(new GridLayoutManager(4, 1, new Insets(0, 1, 0, 1), -1, -1));
         tabbedPane1 = new JTabbedPane();
         panel1.add(
                 tabbedPane1,
@@ -1288,9 +1439,53 @@ public class GUI extends JFrame
                         false
                 )
         );
+        labelStatus = new JLabel();
+        labelStatus.setText("Label");
+        panel1.add(
+                labelStatus,
+                new GridConstraints(
+                        3,
+                        0,
+                        1,
+                        1,
+                        GridConstraints.ANCHOR_WEST,
+                        GridConstraints.FILL_NONE,
+                        GridConstraints.SIZEPOLICY_FIXED,
+                        GridConstraints.SIZEPOLICY_FIXED,
+                        null,
+                        null,
+                        null,
+                        0,
+                        false
+                )
+        );
+        progressBar1 = new JProgressBar();
+        progressBar1.setString("");
+        progressBar1.setStringPainted(false);
+        progressBar1.setValue(0);
+        panel1.add(
+                progressBar1,
+                new GridConstraints(
+                        2,
+                        0,
+                        1,
+                        1,
+                        GridConstraints.ANCHOR_CENTER,
+                        GridConstraints.FILL_HORIZONTAL,
+                        GridConstraints.SIZEPOLICY_WANT_GROW,
+                        GridConstraints.SIZEPOLICY_FIXED,
+                        null,
+                        null,
+                        null,
+                        0,
+                        false
+                )
+        );
         label1.setLabelFor(inputTextField);
         label2.setLabelFor(outputTextField);
     }
+
+    private static Method $$$cachedGetBundleMethod$$$ = null;
 
     private String $$$getMessageFromBundle$$$(String path, String key)
     {
@@ -1406,7 +1601,7 @@ public class GUI extends JFrame
                         JavaObfuscator.VERBOSE = this.verbose.isSelected();
                         Configuration config = createConfiguration();
 
-                        boolean succeed = JavaObfuscator.runObfuscator(config);
+                        boolean succeed = JavaObfuscator.runObfuscator(config, this::addObfuscatorListener);
                         if (!(succeed || JavaObfuscator.getLastException() == null))
                             showExceptionNotification(JavaObfuscator.getLastException());
 

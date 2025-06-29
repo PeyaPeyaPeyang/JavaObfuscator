@@ -31,19 +31,19 @@ public class EntrypointDelegateProvider
         this.delegates.add(delegate);
     }
 
-    public EntrypointDelegate getOptimalDelegateFor(String entryName)
+    public EntrypointDelegate getOptimalDelegateFor(String entryName, byte[] entryData)
     {
         for (EntrypointDelegate delegate : this.delegates)
-            if (delegate.canProvideMainClass(entryName))
+            if (delegate.canProvideMainClass(entryName, entryData))
                 return delegate;
 
         return null;
     }
 
-    public void enableDelegateAuto(@NotNull String entryName)
+    public void enableDelegateAuto(@NotNull String entryName, byte[] entryData)
     {
         // Delegate が検出できた場合は，enabledDelegates に追加する
-        EntrypointDelegate delegate = this.getOptimalDelegateFor(entryName);
+        EntrypointDelegate delegate = this.getOptimalDelegateFor(entryName, entryData);
         if (delegate != null)
             this.enabledDelegates.put(entryName, delegate);
     }

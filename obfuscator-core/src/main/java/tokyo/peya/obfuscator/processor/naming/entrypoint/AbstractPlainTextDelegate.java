@@ -7,8 +7,16 @@ import java.util.zip.ZipEntry;
 
 public abstract class AbstractPlainTextDelegate implements EntrypointDelegate
 {
+    protected abstract boolean canProvideMainClass(String entryName, String content);
     protected abstract ClassReference getMainClassName(String entryName, String text);
     protected abstract String renameMainClass(String entryName, ClassReference renamedClassReference, String text);
+
+    @Override
+    public boolean canProvideMainClass(String entryName, byte[] data)
+    {
+        String text = new String(data);
+        return canProvideMainClass(entryName, text);
+    }
 
     @Override
     public ClassReference getEntrypointClassReference(String entryName, byte[] data)

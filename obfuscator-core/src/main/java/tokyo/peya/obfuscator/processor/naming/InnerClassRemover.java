@@ -23,6 +23,7 @@ import tokyo.peya.obfuscator.configuration.DeprecationLevel;
 import tokyo.peya.obfuscator.configuration.ValueManager;
 import tokyo.peya.obfuscator.configuration.values.BooleanValue;
 import tokyo.peya.obfuscator.configuration.values.EnabledValue;
+import tokyo.peya.obfuscator.state.NameProcessingContext;
 
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -93,7 +94,7 @@ public class InnerClassRemover implements INameObfuscationProcessor, IClassTrans
     }
 
     @Override
-    public void transformPost(Obfuscator inst, Map<ClassReference, ClassNode> nodes)
+    public void transformPost(Obfuscator inst, NameProcessingContext ctxt, Map<ClassReference, ClassNode> nodes)
     {
         if (!(V_ENABLED.get() && V_REMAP.get())) // remap のみ
             return;
@@ -108,6 +109,8 @@ public class InnerClassRemover implements INameObfuscationProcessor, IClassTrans
 
         for (final ClassNode classNode : classNodes)
         {
+            ctxt.setProcessingName(classNode.name);
+
             nodes.remove(ClassReference.of(classNode));
 
             ClassNode newNode = new ClassNode();
@@ -117,6 +120,7 @@ public class InnerClassRemover implements INameObfuscationProcessor, IClassTrans
             normalizeModifiers(newNode);
 
             updatedClasses.put(ClassReference.of(newNode), newNode);
+            ctxt.incrementTotalNamesProcessed();
         }
 
         nodes.putAll(updatedClasses);
