@@ -122,6 +122,13 @@ public class NameObfuscation implements INameObfuscationProcessor
             "randomise_package_structure",
             "ui.transformers.name.randomise_package",
             DeprecationLevel.AVAILABLE,
+            true
+    );
+    private static final BooleanValue V_CAMOUFLAGE_PACKAGE = new BooleanValue(
+            PROCESSOR_NAME,
+            "camouflage_package",
+            "ui.transformers.name.camouflage_package",
+            DeprecationLevel.AVAILABLE,
             false
     );
     private static final StringValue V_NEW_PACKAGE = new StringValue(
@@ -202,16 +209,16 @@ public class NameObfuscation implements INameObfuscationProcessor
         }
     }
 
-    public String generateRandomPackage()
+    public String generateRandomPackage(String oldPackage)
     {
         String retVal;
         if (this.packageNames.size() == 1)
         {
             String packageName = this.packageNames.get(0);
-            if (packageName.equalsIgnoreCase("common"))
+            if (V_CAMOUFLAGE_PACKAGE.get())
                 retVal = CommonPackageTrees.getRandomPackage();
             else if (packageName.isEmpty())
-                retVal = NameUtils.crazyString(random.nextInt(10) + 5);
+                retVal = this.obfuscator.getNameProvider().generateClassName(oldPackage);
             else
                 retVal = packageName;
         }
@@ -344,7 +351,7 @@ public class NameObfuscation implements INameObfuscationProcessor
 
         String packageName;
         if (V_RANDOM_PACKAGE.get())
-            packageName = generateRandomPackage();
+            packageName = generateRandomPackage(clazz.originalRef.getPackage());
         else
         {
             packageName = clazz.originalRef.getPackage();

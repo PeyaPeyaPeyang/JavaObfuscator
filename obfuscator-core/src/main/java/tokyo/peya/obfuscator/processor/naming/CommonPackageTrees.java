@@ -13,81 +13,133 @@ import java.util.Random;
  */
 public class CommonPackageTrees
 {
-    private static final Tree com;
-    private static final Tree org;
-    private static final Tree javax;
-    private static final Tree net;
-    private static final Random random = new Random();
-    public static List<Tree> root;
+    private static final Random RANDOM = new Random();
+    private static final List<Tree> TREE_ROOTS = new ArrayList<>();
 
-    static
-    {
-        root = new ArrayList<>();
-
-        com = new Tree("com");
-
-        // Google
-        Tree comgoogle = com.add("google");
-        Tree comgooglecommon = comgoogle.add("common");
-        comgooglecommon.add(Arrays.asList(
-                "annotations",
-                "base",
-                "cache",
-                "collect",
-                "escape",
-                "eventbus",
-                "graph",
-                "hash",
-                "html",
-                "io",
-                "math",
-                "net",
-                "primitives",
-                "reflect",
-                "util",
-                "xml"
+    static {
+        Tree treeCom = getOrCreateRoot("com");
+        treeCom.addPath("google").add(Arrays.asList(
+                "common.annotations.beta",
+                "common.base.internal",
+                "common.cache.local",
+                "common.collect.immutable",
+                "common.eventbus.publisher",
+                "common.hash.bloom",
+                "common.html.parser",
+                "common.math.stats",
+                "common.math.geometry",
+                "common.net.http",
+                "common.util.logging",
+                "common.xml.serializer",
+                "common.xml.parser"
         ));
-        comgoogle.add("java");
+        treeCom.addPath("mysql.cj").add(Arrays.asList(
+                "jdbc",
+                "protocol",
+                "exceptions",
+                "util",
+                "conf",
+                "log",
+                "authentication",
+                "xdevapi",
+                "xdevapi.impl",
+                "performance"
+        ));
+        treeCom.addPath("fasterxml.jackson").add(Arrays.asList(
+                "annotation.introspect",
+                "core.json",
+                "core.yaml",
+                "databind.deser"
+        ));
 
-        com.add("fasterxml").add("jackson").add("core");
+        Tree treeOrg = getOrCreateRoot("org");
+        treeOrg.addPath("apache.commons").add(Arrays.asList(
+                "codec.binary",
+                "collections4.map",
+                "configuration2.env",
+                "io.comparator",
+                "math3.stat",
+                "text.similarity",
+                "text.translate"
+        ));
+        treeOrg.addPath("springframework").add(Arrays.asList(
+                "beans.factory.support",
+                "context.annotation",
+                "core.io.support",
+                "web.servlet.handler",
+                "web.servlet.view",
+                "web.reactive.function.server",
+                "data.redis.connection",
+                "boot.autoconfigure.jdbc"
+        ));
+        treeOrg.addPath("mockito").add(Arrays.asList(
+                "core",
+                "junit.jupiter",
+                "invocation",
+                "mock",
+                "stubbing"
+        ));
+        treeOrg.addPath("sqlite").add(Arrays.asList(
+                "jdbc.core.connection",
+                "jdbc.core.statement",
+                "jdbc.core.resultset",
+                "jdbc.native.api",
+                "jdbc.native.buffer",
+                "sqlite.core.auth",
+                "sqlite.sqlite3.platform.linux",
+                "sqlite.sqlite3.platform.windows",
+                "sqlite.sqlite3.platform.macos"
+        ));
 
-        org = new Tree("org");
-        Tree orgapache = org.add("apache");
-        Tree orgapachecommons = orgapache.add("commons");
-        orgapachecommons.add("codec");
-        orgapachecommons.add("io");
-        orgapachecommons.add("logging");
-        orgapache.add("http");
-        org.add("json");
-        org.add("reflections");
-        org.add("scala");
-        org.add("yaml");
 
-        javax = new Tree("javax");
-        javax.add("vecmath");
+        Tree treeNet = getOrCreateRoot("net");
+        treeNet.addPath("minecraft").add(Arrays.asList(
+                "client.render.gui",
+                "client.sound",
+                "server.command",
+                "network.protocol",
+                "block.state",
+                "block.material",
+                "item.enchantment"
+        ));
+    }
 
-        net = new Tree("net");
-        net.add("jodah").add("typetools");
+    private static Tree getOrCreateRoot(String name)
+    {
+        // あれば返す
+        for (Tree root : TREE_ROOTS)
+            if (root.data.equals(name))
+                return root;
 
-
-        root.addAll(Arrays.asList(com, org, javax, net));
+        Tree newRoot = new Tree(name, null);
+        TREE_ROOTS.add(newRoot);
+        return newRoot;
     }
 
     public static String getRandomPackage()
     {
         Tree current = null;
         StringBuilder path = new StringBuilder();
+        int depth = 0;
+        final int MAX_DEPTH = 10;  // 最大深さ制限（好きに調整してOK）
+
         while (true)
         {
             if (current == null)
-                current = root.get(random.nextInt(root.size()));
+                current = TREE_ROOTS.get(RANDOM.nextInt(TREE_ROOTS.size()));
 
             path.append(current.data).append("/");
 
-            if (random.nextBoolean() || current.leaves.size() <= 0)
+            depth++;
+
+            if (current.leaves.isEmpty() || depth >= MAX_DEPTH)
                 return path.toString();
 
-            int i = random.nextInt(current.leaves.size());
+            double stopProbability = 0.3;
+            if (RANDOM.nextDouble() < stopProbability)
+                return path.toString();
+
+            int i = RANDOM.nextInt(current.leaves.size());
             current = current.leaves.get(i);
         }
     }
@@ -104,8 +156,7 @@ public class CommonPackageTrees
             if (current != null)
                 current = current.get(part);
             else
-            {
-                for (Tree root : CommonPackageTrees.root)
+                for (Tree root : CommonPackageTrees.TREE_ROOTS)
                 {
                     if (root.data.equals(part))
                     {
@@ -113,7 +164,6 @@ public class CommonPackageTrees
                         break;
                     }
                 }
-            }
         }
 
         return current != null && !current.leaves.isEmpty();
@@ -137,11 +187,6 @@ class Tree
         this.parent = parent;
     }
 
-    public Tree add(String childData)
-    {
-        return add(new Tree(childData, this));
-    }
-
     public Tree add(Tree child)
     {
         this.leaves.add(child);
@@ -151,9 +196,7 @@ class Tree
     public void add(List<String> children)
     {
         for (String s : children)
-        {
-            add(s);
-        }
+            addPath(s);
     }
 
     public Tree get(Tree child)
@@ -170,4 +213,27 @@ class Tree
         }
         return null;
     }
+
+
+    public Tree addPath(String dottedPath)
+    {
+        String[] parts = dottedPath.split("\\.");
+        if (parts.length == 0)
+            return this;
+
+        Tree current = this;
+        for (String part : parts)
+        {
+            Tree next = current.get(part);
+            if (next == null)
+            {
+                next = new Tree(part, current);
+                current.add(next);
+            }
+            current = next;
+        }
+
+        return current;
+    }
+
 }
