@@ -91,7 +91,7 @@ public class NumberObfuscationTransformer implements IClassTransformer
     );
     private static final BooleanValue V_METHOD_SIMPLE_MATH = new BooleanValue(
             PROCESSOR_NAME,
-            "simle_math",
+            "simple_math",
             "ui.transformers.number.simple_math",
             DeprecationLevel.AVAILABLE,
             true

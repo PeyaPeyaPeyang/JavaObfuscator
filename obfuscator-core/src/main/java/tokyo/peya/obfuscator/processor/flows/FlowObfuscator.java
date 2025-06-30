@@ -42,7 +42,7 @@ import java.util.Random;
 
 public class FlowObfuscator implements IClassTransformer
 {
-    private static final String PROCESSOR_NAME = "FlowObfuscator";
+    private static final String PROCESSOR_NAME = "flow";
     private static final Random random = new Random();
     private static final EnabledValue V_ENABLED = new EnabledValue(
             PROCESSOR_NAME,
@@ -101,7 +101,7 @@ public class FlowObfuscator implements IClassTransformer
     );
     private static final BooleanValue V_MANGLE_LOCALS = new BooleanValue(
             PROCESSOR_NAME,
-            "Mangle_local_variables",
+            "mangle_local_variables",
             "ui.transformers.flow_obfuscator.mangle_local_variables",
             DeprecationLevel.SOME_DEPRECATION,
             false
