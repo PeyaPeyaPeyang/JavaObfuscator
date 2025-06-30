@@ -13,11 +13,8 @@ package tokyo.peya.obfuscator;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
-import com.formdev.flatlaf.FlatDarculaLaf;
-import com.formdev.flatlaf.util.StringUtils;
+import ch.qos.logback.classic.LoggerContext;
 import com.google.common.io.ByteStreams;
-import javax.swing.JTextPane;
-import javax.swing.UIManager;
 import joptsimple.OptionException;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
@@ -25,17 +22,14 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.objectweb.asm.tree.ClassNode;
 import org.slf4j.LoggerFactory;
 import tokyo.peya.obfuscator.configuration.ConfigManager;
 import tokyo.peya.obfuscator.configuration.Configuration;
 import tokyo.peya.obfuscator.processor.Processors;
-import tokyo.peya.obfuscator.templating.Templates;
-import tokyo.peya.obfuscator.ui.GUI;
 import tokyo.peya.obfuscator.utils.ConsoleUtils;
-import tokyo.peya.obfuscator.utils.Utils;
 
-import java.awt.GraphicsEnvironment;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -45,7 +39,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 
-@Slf4j(topic = "Main")
+@Slf4j
 public class JavaObfuscator
 {
     public static final String SHORT_VERSION =
@@ -55,26 +49,94 @@ public class JavaObfuscator
     public static final String VERSION = "Java Obfuscator " + SHORT_VERSION;
 
     public static boolean VERBOSE;
-    private static GUI gui;
     @Getter
     private static Obfuscator currentSession;
     @Setter
     @Getter
     private static Exception lastException;
 
-    public static JTextPane getGui()
-    {
-        return gui != null ? gui.logArea: null;
-    }
 
-    public static void main(String[] args) throws Exception
+    public static void initialise()
     {
         if (JavaObfuscator.class.getPackage().getImplementationVersion() == null)  // デバッガの場合
             VERBOSE = true;
 
-        Class.forName(Obfuscator.class.getCanonicalName());
+        try
+        {
+            Class.forName(Obfuscator.class.getCanonicalName());
+        }
+        catch (ClassNotFoundException e)
+        {
+            log.error("Obfuscator class not found! Please make sure you are running the obfuscator jar file.");
+            System.exit(1);
+        }
         Processors.loadProcessors();
+    }
 
+    public static void main(String[] args) throws Exception
+    {
+        initialise();
+
+        try
+        {
+            boolean embedded = false;
+            printHeader(embedded);
+
+            runObfuscatorWithArguments(args, embedded);
+        }
+        catch (OptionException e)
+        {
+            log.error(e.getMessage() + " (Tip: try --help and even if you specified a config you have to specify an input and output jar)");
+        }
+        finally
+        {
+            LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
+            context.stop();
+        }
+    }
+
+    private static void runObfuscatorWithArguments(String[] args, boolean embedded) throws  Exception
+    {
+        OptionParser parser = createParser();
+        OptionSet options = parser.parse(args);
+
+        if (options.has("help"))
+        {
+            System.out.println(VERSION);
+            parser.printHelpOn(System.out);
+            return;
+        }
+        else if (options.has("version"))
+        {
+            System.out.println(VERSION);
+            return;
+        }
+
+        if (options.has("verbose"))
+            VERBOSE = true;
+
+        String jarIn = (String) options.valueOf("jarIn");
+        String jarOut = (String) options.valueOf("jarOut");
+        File configPath = options.has("config") ? (File) options.valueOf("config"): null;
+
+        String scriptContent = null;
+        if (options.has("scriptFile"))
+            scriptContent = Files.readString(((File) options.valueOf("scriptFile")).toPath());
+
+        int threads = Math.max(1, (Integer) options.valueOf("threads"));
+        File mapping = options.has("mapping") ? (File) options.valueOf("mapping"): null;
+
+        List<String> libraries = new ArrayList<>();
+
+        if (options.has("cp"))
+            for (Object cp : options.valuesOf("cp"))
+                libraries.add(cp.toString());
+
+        runObfuscator(jarIn, jarOut, configPath, libraries, embedded, scriptContent, threads, mapping);
+    }
+
+    private static OptionParser createParser()
+    {
         OptionParser parser = new OptionParser();
         parser.accepts("jarIn").withRequiredArg().required();
         parser.accepts("jarOut").withRequiredArg();
@@ -95,81 +157,7 @@ public class JavaObfuscator
         parser.accepts("help").forHelp();
         parser.accepts("version").forHelp();
 
-        try
-        {
-            OptionSet options = parser.parse(args);
-
-            if (options.has("help"))
-            {
-                System.out.println(VERSION);
-                parser.printHelpOn(System.out);
-                return;
-            }
-            else if (options.has("version"))
-            {
-                System.out.println(VERSION);
-                return;
-            }
-
-            if (options.has("verbose"))
-                VERBOSE = true;
-
-            String jarIn = (String) options.valueOf("jarIn");
-            String jarOut = (String) options.valueOf("jarOut");
-            File configPath = options.has("config") ? (File) options.valueOf("config"): null;
-
-            String scriptContent = null;
-            if (options.has("scriptFile"))
-                scriptContent = Files.readString(((File) options.valueOf("scriptFile")).toPath());
-
-            boolean embedded = false;
-            int threads = Math.max(1, (Integer) options.valueOf("threads"));
-            File mapping = options.has("mapping") ? (File) options.valueOf("mapping"): null;
-
-            List<String> libraries = new ArrayList<>();
-
-            if (options.has("cp"))
-                for (Object cp : options.valuesOf("cp"))
-                    libraries.add(cp.toString());
-
-            printHeader(embedded);
-            runObfuscator(jarIn, jarOut, configPath, libraries, embedded, scriptContent, threads, mapping);
-        }
-        catch (OptionException e)
-        {
-            log.error(e.getMessage() + " (Tip: try --help and even if you specified a config you have to specify an input and output jar)");
-
-            if (GraphicsEnvironment.isHeadless())
-            {
-                log.info("This build is a headless build, so GUI is not available");
-                return;
-            }
-
-            log.info("Starting in GUI Mode");
-
-            try
-            {
-                if (Utils.isWindows())
-                    FlatDarculaLaf.setup();
-                else
-                    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-            }
-            catch (Exception e1)
-            {
-                try
-                {
-                    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-                }
-                catch (Exception e2)
-                {
-                    log.error("Failed to set LookAndFeel", e2);
-                }
-            }
-
-            Templates.loadTemplates();
-
-            gui = new GUI();
-        }
+        return parser;
     }
 
     private static void printHeader(boolean embedded)

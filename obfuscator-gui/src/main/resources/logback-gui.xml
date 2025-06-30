@@ -26,6 +26,9 @@
         </encoder>
     </appender>
 
+    <!-- Form -->
+    <appender name="FORM" class="tokyo.peya.obfuscator.ui.Appender"/>
+
 
     <!--
     Async appenders can drastically speed up logging as well as your application's
@@ -37,6 +40,7 @@
     application has different requirements.
      -->
     <appender name="ASYNC" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="FORM"/>
         <appender-ref ref="CONSOLE"/>
         <queueSize>1000</queueSize>
     </appender>
@@ -57,7 +61,7 @@
     <logger name="tokyo.peya" level="DEBUG"/>
 
     <root level="DEBUG">
-        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="ASYNC"/>
     </root>
 
     <statusListener class="ch.qos.logback.core.status.NopStatusListener" />

@@ -24,6 +24,7 @@ import javax.swing.text.Element;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import tokyo.peya.obfuscator.JavaObfuscator;
+import tokyo.peya.obfuscator.ObfuscatorGUI;
 
 import java.awt.Color;
 
@@ -185,7 +186,7 @@ public class Appender extends AppenderBase<ILoggingEvent>
         // Safe way to update JTextPane
         SwingUtilities.invokeLater(() -> {
             // Alias for JTextPane in the application frame
-            final JTextPane textArea = JavaObfuscator.getGui();
+            final JTextPane textArea = ObfuscatorGUI.getGui();
             if (textArea == null)
                 return;
             try

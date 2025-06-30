@@ -12,7 +12,6 @@
 package tokyo.peya.obfuscator;
 
 import com.google.common.io.ByteStreams;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -45,7 +44,6 @@ import tokyo.peya.obfuscator.state.ObfuscationState;
 import tokyo.peya.obfuscator.state.ObfuscationStatus;
 import tokyo.peya.obfuscator.state.ProcessingContext;
 import tokyo.peya.obfuscator.state.ResourcesWritingContext;
-import tokyo.peya.obfuscator.ui.PreviewGenerator;
 import tokyo.peya.obfuscator.utils.ExcludePattern;
 import tokyo.peya.obfuscator.utils.MissingClassException;
 import tokyo.peya.obfuscator.utils.ParallelExecutor;
@@ -76,11 +74,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -584,7 +577,7 @@ public class Obfuscator
     {
         try
         {
-            ClassNode cn = PreviewGenerator.toClassNode(classBytes);
+            ClassNode cn = toClassNode(classBytes);
             this.classes.put(ClassReference.of(cn.name), cn);
         }
         catch (Exception e)
@@ -595,6 +588,15 @@ public class Obfuscator
             );
             this.files.put(file, classBytes);
         }
+    }
+
+    public static ClassNode toClassNode(byte[] classBytes)
+    {
+        ClassReader classReader = new ClassReader(classBytes);
+        ClassNode classNode = new ClassNode();
+        classReader.accept(classNode, 0);
+
+        return classNode;
     }
 
     private void processJarObfuscation(boolean stored, ZipInputStream inJar, ZipOutputStream outJar) throws Exception
