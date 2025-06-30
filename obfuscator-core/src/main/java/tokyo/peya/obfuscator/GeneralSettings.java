@@ -19,7 +19,7 @@ import tokyo.peya.obfuscator.configuration.values.FilePathValue;
 import tokyo.peya.obfuscator.configuration.values.StringValue;
 
 @Getter
-public class JObfSettings
+public class GeneralSettings
 {
     private static final String PROCESSOR_NAME = "general";
     private final StringValue excludedClasses = new StringValue(
@@ -69,7 +69,7 @@ public class JObfSettings
     static
     {
         ValueManager.registerOwner(PROCESSOR_NAME, "ui.transformers.general");
-        ValueManager.registerClass(JObfSettings.class);
+        ValueManager.registerClass(GeneralSettings.class);
     }
 }
 

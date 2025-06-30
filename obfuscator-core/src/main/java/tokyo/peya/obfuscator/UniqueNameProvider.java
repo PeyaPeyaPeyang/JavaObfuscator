@@ -40,7 +40,7 @@ public class UniqueNameProvider
     private int methods;
     private int fields;
 
-    public UniqueNameProvider(JObfSettings settings)
+    public UniqueNameProvider(GeneralSettings settings)
     {
         normalizeSettings(settings);
 
@@ -148,7 +148,7 @@ public class UniqueNameProvider
             this.usedFields.put(newName, this.usedFields.get(old));
     }
 
-    private static void normalizeSettings(JObfSettings settings)
+    private static void normalizeSettings(GeneralSettings settings)
     {
         if (settings.getGeneratorChars().get().isEmpty())
         {

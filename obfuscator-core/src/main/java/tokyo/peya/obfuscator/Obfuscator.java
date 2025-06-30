@@ -88,7 +88,7 @@ import java.util.zip.ZipOutputStream;
 @Slf4j(topic = "Obfuscator")
 public class Obfuscator
 {
-    private static final JObfSettings SETTINGS = new JObfSettings();
+    private static final GeneralSettings SETTINGS = new GeneralSettings();
     @Getter
     private final Configuration config;
     private final UniqueNameProvider nameProvider;
