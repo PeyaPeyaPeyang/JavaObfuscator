@@ -11,66 +11,69 @@
 
 package tokyo.peya.obfuscator;
 
-import javax.script.Invocable;
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
+import lombok.extern.slf4j.Slf4j;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.Function;
+import org.mozilla.javascript.Scriptable;
 import org.objectweb.asm.tree.ClassNode;
 
+@Slf4j(topic = "ScriptEngine")
 public class ScriptBridge
 {
 
-    private final ScriptEngine jsEngine;
+    private final Scriptable scope;
 
     public ScriptBridge(String script)
     {
         try
         {
-            this.jsEngine = new ScriptEngineManager().getEngineByName("rhino");
-            this.jsEngine.eval(script);
+            Context context = Context.enter();
+            this.scope = context.initStandardObjects();
+
+            context.evaluateString(this.scope, script, "bridge_script", 1, null);
         }
         catch (Exception e)
         {
-            throw new IllegalStateException("Failed to compile Script", e);
+            log.error("Failed to initialize ScriptBridge", e);
+            throw new IllegalStateException("Failed to initialize ScriptBridge", e);
+        }
+        finally
+        {
+            Context.exit(); // enterしたらexit必須
         }
     }
 
     public boolean remapClass(ClassNode node)
     {
-        try
-        {
-            Invocable invocable = (Invocable) this.jsEngine;
-
-            return (boolean) invocable.invokeFunction("isRemappingEnabledForClass", node);
-        }
-        catch (NoSuchMethodException e)
-        {
-            return true;
-        }
-        catch (ScriptException e)
-        {
-            e.printStackTrace();
-            return true;
-        }
+        return invokeBooleanFunction("isRemappingEnabledForClass", node);
     }
 
     public boolean isObfuscatorEnabled(ClassNode node)
     {
-        try
-        {
-            Invocable invocable = (Invocable) this.jsEngine;
-
-            return (boolean) invocable.invokeFunction("isObfuscatorEnabledForClass", node);
-        }
-        catch (NoSuchMethodException e)
-        {
-            return true;
-        }
-        catch (ScriptException e)
-        {
-            e.printStackTrace();
-            return true;
-        }
+        return invokeBooleanFunction("isObfuscatorEnabledForClass", node);
     }
 
+    private boolean invokeBooleanFunction(String functionName, ClassNode node)
+    {
+        Context cx = Context.enter();
+        try
+        {
+            Object fObj = this.scope.get(functionName, this.scope);
+            if (!(fObj instanceof Function fn))
+                return true;
+
+            // nodeをJavaオブジェクトとして渡す
+            Object result = fn.call(cx, this.scope, this.scope, new Object[]{node});
+            return Context.toBoolean(result);
+
+        } catch (Exception e)
+        {
+            log.error("Error invoking function {}: {}", functionName, e.getMessage(), e);
+            return true;
+        }
+        finally
+        {
+            Context.exit();
+        }
+    }
 }
