@@ -1,9 +1,10 @@
 {
-  "ShuffleMembers": {
-    "enabled": true
-  },
-  "InvokeDynamic": {
-    "enabled": true
+  "string_encryption": {
+    "enabled": true,
+    "algorithm_aes": true,
+    "algorithm_xor": true,
+    "algorithm_blowfish": true,
+    "algorithm_des": true
   },
   "line_number_remover": {
     "enabled": true,
@@ -11,25 +12,74 @@
     "remove_line_numbers": true,
     "add_confusing_local_variables": true
   },
-  "flow_obfuscator": {
-    "enabled": true,
-    "replace_goto": true,
-    "replace_if": true,
-    "bad_pop": true
-  },
-  "hide_members": {
-    "enabled": true
-  },
-  "string_encryption": {
-    "enabled": true,
-    "hide_strings": true
-  },
   "number_obfuscation": {
     "enabled": true,
     "extract_to_array": true,
     "obfuscate_zero": true,
     "shift": true,
     "and": true,
+    "xor": true,
+    "string_length": true,
+    "simple_math": true,
     "multiple_instructions": true
+  },
+  "static_initialisation": {
+    "enabled": true
+  },
+  "hide_strings": {
+    "enabled": true,
+    "optimise_ledger": true
+  },
+  "packager": {
+    "enabled": false,
+    "disguising_as_class": true,
+    "class_name_encryption": false,
+    "auto_find_main_class": true
+  },
+  "invoke_dynamic": {
+    "enabled": true
+  },
+  "general": {
+    "generator_characters": "Il"
+  },
+  "decompiler_crasher": {
+    "enabled": false,
+    "invalid_signatures": true,
+    "empty_annotation_spam": true
+  },
+  "name_obfuscation": {
+    "enabled": true,
+    "allow_missing_libraries": false,
+    "enabled_for_class_names": true,
+    "enabled_for_method_names": true,
+    "enabled_for_field_names": true,
+    "randomise_package_structure": true
+  },
+  "hide_members": {
+    "enabled": true
+  },
+  "shuffler": {
+    "enabled": true,
+    "shuffle_class_structure": true,
+    "shuffle_method_structure": true,
+    "shuffle_field_structure": true,
+    "shuffle_annotations": true,
+    "shuffle_source_file": true
+  },
+  "flow": {
+    "enabled": true,
+    "mangle_comparisons": true,
+    "replace_goto": true,
+    "replace_if": true,
+    "bad_pop": true,
+    "bad_concat": true,
+    "mangle_switches": true,
+    "mangle_return": true,
+    "mangle_local_variables": false
+  },
+  "inner_class_remover": {
+    "enabled": true,
+    "relocate_classes": true,
+    "remove_metadata": true
   }
 }

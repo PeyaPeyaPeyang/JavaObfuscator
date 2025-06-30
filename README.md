@@ -114,10 +114,10 @@ java -jar obfuscator.jar # GUI つき
     "and": true,
     "xor": true,
     "string_length": true,
-    "simle_math": true,
+    "simple_math": true,
     "multiple_instructions": true
   },
-  "FlowObfuscator": {
+  "flow_obfuscator": {
     "enabled": true,
     "mangle_comparisons": true,
     "replace_goto": true,
@@ -126,7 +126,7 @@ java -jar obfuscator.jar # GUI つき
     "bad_concat": true,
     "mangle_switches": false,
     "mangle_return": false,
-    "Mangle_local_variables": false
+    "mangle_local_variables": false
   },
   "inner_class_remover": {
     "enabled": true,

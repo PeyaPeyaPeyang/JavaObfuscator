@@ -35,7 +35,7 @@
   "shuffler": {
     "enabled": false
   },
-  "FlowObfuscator": {
+  "flow_obfuscator": {
     "enabled": false
   },
   "inner_class_remover": {
